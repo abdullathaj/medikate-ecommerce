@@ -1,0 +1,87 @@
+{% extends "admin/dashboard.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <h2 class="mb-4 text-center">Product Management</h2>
+
+    <!-- Search + Create Button -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <form method="GET" class="d-flex" style="flex: 1; max-width: 400px;">
+            <input type="text" name="q" class="form-control me-2" placeholder="Search products..." value="{{ request.GET.q }}">
+            <button type="submit" class="btn btn-success"><i class="fas fa-search"></i></button>
+        </form>
+        <a href="{% url 'admin_add_product' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Create Product
+        </a>
+    </div>
+
+    <!-- Product Table -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle">
+            <thead class="table-success">
+                <tr>
+                    <th>ID</th>
+                    <th>Product Name</th>
+                    <th>Variant Name</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Size</th>
+                    <th>Image</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for varient in varients %}
+                <tr>
+                    <td>{{ varient.product.id }}</td>
+                    <td>{{ varient.product.name }}</td>
+                    <td>{{ varient.varient_name }}</td>
+                    <td>{{ varient.product.category.name }}</td>
+                    <td>{{ varient.price }}</td>
+                    <td>{{ varient.stock }}</td>
+                    <td>{{ varient.size|default:"N/A" }}</td>
+                    <td>
+                        {% with image=varient.product.product.first %}
+                            {% if image %}
+                                <img src="{{ image.image.url }}" alt="{{ varient.product.name }}" style="max-width: 50px; height: auto;">
+                            {% else %}
+                                <span>No Image</span>
+                            {% endif %}
+                        {% endwith %}
+                    </td>
+                    <td>
+                        {% if varient.is_active %}
+                            <span class="badge bg-success">Visible</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Hidden</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            <a href="{% url 'admin_edit_product' varient.product.id %}" class="btn btn-info btn-sm">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <form method="POST" action="{% url 'admin_hide_product' varient.id %}" class="d-inline">
+                                {% csrf_token %}
+                                {% if varient.is_active %}
+                                    <button type="submit" class="btn btn-warning btn-sm">Hide</button>
+                                {% else %}
+                                    <button type="submit" class="btn btn-success btn-sm">Show</button>
+                                {% endif %}
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10" class="text-center">No products found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

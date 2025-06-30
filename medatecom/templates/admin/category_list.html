@@ -1,0 +1,71 @@
+{% extends "admin/dashboard.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4">Category Management</h2>
+
+    <!-- Search + Create Button -->
+    <div class="d-flex justify-content-between mb-3">
+        <form method="GET" class="d-flex" style="flex: 1; max-width: 400px;">
+            <input type="text" name="q" class="form-control me-2" placeholder="Search categories..." value="{{ request.GET.q }}">
+            <button type="submit" class="btn btn-success"><i class="fas fa-search"></i></button>
+        </form>
+
+        <a href="{% url 'admin_add_category' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Create Category
+        </a>
+    </div>
+
+    <!-- Category Table -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle">
+            <thead class="table-success">
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Visibility</th>
+                    <th>Edit</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for category in categories %}
+                <tr>
+                    <td>{{ category.id }}</td>
+                    <td>{{ category.name }}</td>
+                    <td>{{ category.description }}</td>
+                    <td>
+                        {% if category.is_active %}
+                            <span class="badge bg-success">Visible</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Hidden</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <form method="POST" action="{% url 'admin_hide_category' category.id %}">
+                            {% csrf_token %}
+                            {% if category.is_active %}
+                                <button type="submit" class="btn btn-warning btn-sm">Hide</button>
+                            {% else %}
+                                <button type="submit" class="btn btn-success btn-sm">Show</button>
+                            {% endif %}
+                        </form>
+                    </td>
+                    <td>
+                        <a href="{% url 'admin_edit_category' category.id %}" class="btn btn-info btn-sm">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center">No categories found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

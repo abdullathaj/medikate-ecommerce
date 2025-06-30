@@ -1,0 +1,24 @@
+{% extends 'admin/dashboard.html' %}
+{% block content %}
+<div class="container">
+    <h3 class="mb-4">Edit User: {{ user.username }}</h3>
+    <form method="POST">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label>Username</label>
+            <input type="text" name="username" value="{{ user.username }}" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label>Email</label>
+            <input type="email" name="email" value="{{ user.email }}" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label> Name</label>
+            <input type="text" name="first_name" value="{{ user.first_name }}" class="form-control">
+        </div>
+        
+        <button type="submit" class="btn btn-success">Save Changes</button>
+        <a href="{% url 'customer_details' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

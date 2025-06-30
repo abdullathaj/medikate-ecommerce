@@ -1,0 +1,80 @@
+{% extends "admin/dashboard.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4">User Management</h2>
+
+    <!-- Search + Add User -->
+    <div class="d-flex justify-content-between mb-3">
+        <!-- Search Bar -->
+        <form method="GET" class="d-flex" style="flex: 1; max-width: 400px;">
+            <input type="text" name="q" class="form-control me-2" placeholder="Search users..." value="{{ request.GET.q }}">
+            <button type="submit" class="btn btn-success"><i class="fas fa-search"></i></button>
+        </form>
+
+        <!-- Add User Button -->
+        <a href="{% url 'add_user' %}" class="btn btn-primary">
+            <i class="fas fa-user-plus"></i> Add User
+        </a>
+    </div>
+
+    <!-- User Table -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle">
+            <thead class="table-success">
+                <tr>
+                    <th>User ID</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th> Name</th>
+                   
+                    <th>Superuser</th>
+                    
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.first_name|capfirst }}</td>
+                    
+                    <td>
+                        {% if user.is_superuser %}
+                            <span class="badge bg-success">Yes</span>
+                        {% else %}
+                            <span class="badge bg-secondary">No</span>
+                        {% endif %}
+                    </td>
+                    <td class="d-flex gap-1">
+    {% if not user.is_superuser %}
+        <form method="POST" action="{% url 'block_user' user.id %}">
+            {% csrf_token %}
+            {% if user.is_active %}
+                <button type="submit" class="btn btn-warning btn-sm">Block</button>
+            {% else %}
+                <button type="submit" class="btn btn-success btn-sm">Unblock</button>
+            {% endif %}
+        </form>
+    {% else %}
+        <span class="text-muted">N/A</span>
+    {% endif %}
+    
+    <!-- Edit Button -->
+    <a href="{% url 'edit_user' user.id %}" class="btn btn-info btn-sm text-white">Edit</a>
+</td>
+
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center">No users found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

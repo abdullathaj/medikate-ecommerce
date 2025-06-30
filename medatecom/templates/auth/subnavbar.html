@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #4a90e2, #7bb3f0);
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .nav-item {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            padding: 10px 20px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-item:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .nav-item.categories {
+            background-color: rgba(255, 255, 255, 0.15);
+            font-weight: 600;
+        }
+
+        .nav-item.login {
+            background-color: rgba(255, 255, 255, 0.9);
+            color: #4a90e2;
+            font-weight: 600;
+        }
+
+        .nav-item.login:hover {
+            background-color: white;
+            color: #357abd;
+        }
+
+        @media (max-width: 768px) {
+            .nav-container {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 10px;
+            }
+            
+            .nav-item {
+                font-size: 14px;
+                padding: 8px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+    <div class="nav-container">
+        <a href="#" class="nav-item categories">Categories</a>
+        <a href="#" class="nav-item">Home</a>
+        <a href="#" class="nav-item">Product</a>
+        <a href="#" class="nav-item">About</a>
+        <a href="#" class="nav-item">Contact us</a>
+        {% if not request.user.is_authenticated %}
+        <a href="{% url 'login' %}" class="nav-item login">Login</a>
+        {% else %}
+        <a href="{% url 'logout' %}" class="nav-item logout">Logout</a>
+        {% endif %}
+    </div>
+</nav>
+</body>
+</html>

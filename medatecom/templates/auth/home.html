@@ -1,0 +1,437 @@
+{% extends 'auth/navbar.html' %}
+{% load static %}
+
+{% block content %}
+    {% include 'auth/subnavbar.html' %}
+
+    <!-- Hero Section: Carousel -->
+    <section class="hero-section">
+        <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
+            <!-- Carousel Indicators -->
+            <div class="carousel-indicators">
+                <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+                <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
+                <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
+                <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="3" aria-label="Slide 4"></button>
+            </div>
+
+            <!-- Carousel Items -->
+            <div class="carousel-inner">
+                <div class="carousel-item active">
+                    <img src="static\home\images\5-medicine-carousel-gustoimagesscience-photo-library.jpg" class="d-block w-100" alt="Oral Care Products">
+                    <div class="carousel-caption d-none d-md-block">
+                        <h2 class="display-4 fw-bold">Oral Care Essentials</h2>
+                        <p class="lead">Discover toothbrushes, toothpaste, and more for a healthy smile.</p>
+                        <a href="" class="btn btn-primary mt-2">Shop Now</a>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <img src="" class="d-block w-100" alt="Hair Care Products">
+                    <div class="carousel-caption d-none d-md-block">
+                        <h2 class="display-4 fw-bold">Healthy Hair Solutions</h2>
+                        <p class="lead">Explore shampoos, conditioners, and treatments for vibrant hair.</p>
+                        <a href="" class="btn btn-primary mt-2">Shop Now</a>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <img src="" class="d-block w-100" alt="Skin Care Products">
+                    <div class="carousel-caption d-none d-md-block">
+                        <h2 class="display-4 fw-bold">Nourish Your Skin</h2>
+                        <p class="lead">Find creams, cleansers, and serums for radiant skin.</p>
+                        <a href="" class="btn btn-primary mt-2">Shop Now</a>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <img src="" class="d-block w-100" alt="Baby Care Products">
+                    <div class="carousel-caption d-none d-md-block">
+                        <h2 class="display-4 fw-bold">Gentle Baby Care</h2>
+                        <p class="lead">Safe and trusted products for your little ones.</p>
+                        <a href="" class="btn btn-primary mt-2">Shop Now</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Carousel Controls -->
+            <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+            </button>
+        </div>
+    </section>
+
+    <!-- Product Listing Section -->
+    <section class="product-listing-section container my-5">
+        <h2 class="text-center mb-4">Featured Products</h2>
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+            {% for product in products %}
+                <!-- Product Card -->
+                <div class="col">
+                    <div class="product-card">
+                        <div class="product-tumb">
+                            {% with product_image=product.product.first %}
+                                {% if product_image %}
+                                    <img src="{{ product_image.image.url }}" alt="{{ product.name }}">
+                                {% else %}
+                                    <img src="https://via.placeholder.com/150?text={{ product.name|urlencode }}" alt="{{ product.name }}">
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+                        <div class="product-details">
+                            <span class="product-catagory">{{ product.category.name }}</span>
+                            <h4><a href="{% url 'product_details' product.id %}">{{ product.name }}</a></h4>
+                            <p>{{ product.category.description|truncatewords:15 }}</p>
+                            <div class="product-rating">
+                                <span class="star filled">★</span>
+                                <span class="star filled">★</span>
+                                <span class="star filled">★</span>
+                                <span class="star filled">★</span>
+                                <span class="star">★</span>
+                                <span class="rating-text">(4.0)</span>
+                            </div>
+                            <div class="product-bottom-details">
+                                {% with variant=product.product_varient.first %}
+                                    {% if variant %}
+                                        <div class="product-price">
+                                            <small>${{ variant.price|add:"3.00" }}</small>${{ variant.price }}
+                                        </div>
+                                        <div class="product-links">
+                                            <a href="" title="Add to Wishlist"><i class="fas fa-heart"></i></a>
+                                            <a href="" title="Add to Cart"><i class="fas fa-shopping-cart"></i></a>
+                                            <a href="" class="buy-now-btn">Buy Now</a>
+                                        </div>
+                                    {% else %}
+                                        <div class="product-price">N/A</div>
+                                        <div class="product-links">
+                                            <a href="" title="Add to Wishlist"><i class="fas fa-heart"></i></a>
+                                            <a href="" title="Add to Cart"><i class="fas fa-shopping-cart"></i></a>
+                                            <a href="" class="buy-now-btn">Buy Now</a>
+                                        </div>
+                                    {% endif %}
+                                {% endwith %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col">
+                    <p class="text-center">No products available.</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if products.has_other_pages %}
+            <nav aria-label="Product pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if products.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ products.previous_page_number }}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% for num in products.paginator.page_range %}
+                        {% if products.number == num %}
+                            <li class="page-item active" aria-current="page">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if products.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ products.next_page_number }}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    </section>
+
+    <style>
+        /* Hero Section Styles */
+        .hero-section {
+            margin-bottom: 2rem;
+        }
+
+        .carousel {
+            max-height: 500px;
+            overflow: hidden;
+        }
+
+        .carousel-item img {
+            object-fit: cover;
+            height: 500px;
+            width: 100%;
+        }
+
+        .carousel-caption {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 1rem;
+        }
+
+        .carousel-caption h2 {
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+        }
+
+        .carousel-caption p {
+            color: #f5f5f5;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+        }
+
+        .carousel-caption .btn-primary {
+            background-color: #26A69A; /* Matches navbar/footer color */
+            border-color: #26A69A;
+        }
+
+        .carousel-caption .btn-primary:hover {
+            background-color: #00897B; /* Darker teal for hover */
+            border-color: #00897B;
+        }
+
+        /* Product Card Styles */
+        .product-listing-section {
+            padding: 2rem 0;
+        }
+
+        .product-card {
+            width: 100%;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            overflow: hidden;
+        }
+
+        .product-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .product-tumb {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            background: #f6faff;
+            padding: 20
+
+System: px;
+            transition: background 0.3s ease;
+        }
+
+        .product-tumb img {
+            max-width: 80%;
+            max-height: 80%;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:hover .product-tumb img {
+            transform: scale(1.08);
+        }
+
+        .product-details {
+            padding: 15px;
+        }
+
+        .product-catagory {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            color: #4b6cb7;
+            margin-bottom: 8px;
+        }
+
+        .product-details h4 a {
+            font-weight: 700;
+            font-size: 16px;
+            display: block;
+            margin-bottom: 10px;
+            color: #182848;
+            transition: color 0.3s ease;
+        }
+
+        .product-details h4 a:hover {
+            color: #4b6cb7;
+        }
+
+        .product-details p {
+            font-size: 12px;
+            line-height: 16px;
+            margin-bottom: 10px;
+            color: #5f6c85;
+        }
+
+        .product-rating {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .star {
+            font-size: 12px;
+            color: #d1d9e6;
+            margin-right: 3px;
+        }
+
+        .star.filled {
+            color: #3b82f6;
+        }
+
+        .rating-text {
+            font-size: 12px;
+            color: #5f6c85;
+            margin-left: 5px;
+        }
+
+        .product-bottom-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 12px;
+        }
+
+        .product-price {
+            font-size: 16px;
+            color: #4b6cb7;
+            font-weight: 700;
+        }
+
+        .product-price small {
+            font-size: 12px;
+            font-weight: 400;
+            text-decoration: line-through;
+            color: #5f6c85;
+            margin-right: 5px;
+        }
+
+        .product-links {
+            text-align: right;
+            display: flex;
+            align-items: center;
+        }
+
+        .product-links a {
+            display: inline-block;
+            margin-left: 8px;
+            color: #6b7280;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+
+        .product-links a:hover {
+            color: #4b6cb7;
+        }
+
+        .buy-now-btn {
+            background:rgb(17, 16, 8);
+            color: white;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 6px 12px;
+            border-radius: 15px;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+
+        .buy-now-btn:hover {
+            background:rgb(244, 221, 15);
+            transform: translateY(-1px);
+            color: #fff;
+        }
+
+        /* Pagination Styles */
+        .pagination .page-link {
+            color: #4b6cb7;
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: #4b6cb7;
+            border-color: #4b6cb7;
+            color: #fff;
+        }
+
+        .pagination .page-link:hover {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+            color: #fff;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .carousel {
+                max-height: 400px;
+            }
+
+            .carousel-item img {
+                height: 400px;
+            }
+
+            .carousel-caption h2 {
+                font-size: 1.5rem;
+            }
+
+            .carousel-caption p {
+                font-size: 0.9rem;
+            }
+
+            .carousel-caption .btn {
+                font-size: 0.9rem;
+                padding: 0.5rem 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .carousel {
+                max-height: 300px;
+            }
+
+            .carousel-item img {
+                height: 300px;
+            }
+
+            .carousel-caption h2 {
+                font-size: 1.2rem;
+            }
+
+            .carousel-caption p {
+                font-size: 0.8rem;
+            }
+
+            .carousel-caption .btn {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.8rem;
+            }
+
+            .product-card {
+                width: 100%;
+            }
+        }
+    </style>
+    <!-- Include Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+{% endblock %}
