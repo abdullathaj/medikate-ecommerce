@@ -240,6 +240,8 @@ def resend_password_otp_view(request):
 
         otp = str(random.randint(100000, 999999))
         expiry_time = timezone.now() + timedelta(seconds=120)
+        # to show otp in the terminal
+        print(f'Resend otp is {otp}')
 
         request.session['reset_otp'] = otp
         request.session['expiry_time'] = expiry_time.isoformat()
@@ -284,7 +286,7 @@ def logout_view(request):
     logout(request)
     return redirect('login')
 
-
+# -----------------------------------------------------------------------------------------------------------------------------
 
 # ADMIN AUTHENTICATION AND AUTHORISATION
 from .decorators import superuser_required
