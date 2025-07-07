@@ -1,5 +1,6 @@
 {% extends 'auth/base_auth.html' %}
 {% load static %}
+{% load socialaccount %}
 
 {% block content %}
 <!-- Bootstrap 5 CSS -->
@@ -49,10 +50,14 @@
             </div>
             <button type="submit" class="btn btn-success w-100 mt-3">Log In</button>
         </form>
+
         <div class="d-flex justify-content-center mt-4">
-            {% comment %} <a href="{% url 'social:begin' 'google-oauth2' %}" class="btn btn-outline-dark w-100 w-md-50">Sign In with Google</a> {% endcomment %}
-        </div>
-        <div class="text-center mt-3">
+            <a href="{% provider_login_url 'google' %}" class="btn btn-outline-dark w-100">
+                <i class="fab fa-google me-2"></i> Sign In with Google
+            </a>       
+         </div>
+         
+        <div class="text-center mt-3">+
             <div>
                 <a href="{% url 'forgot_password' %}" class="text-success fw-bold text-decoration-none">Forgot Password?</a>
             </div>

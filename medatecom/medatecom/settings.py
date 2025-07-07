@@ -91,7 +91,8 @@ SOCIALACCOUNT_PROVIDERS = {
         }
     }
 }
-
+# TO AVOID THE INTERMEDIATE CONFIRMATION PAGE
+SOCIALACCOUNT_LOGIN_ON_GET=True
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
