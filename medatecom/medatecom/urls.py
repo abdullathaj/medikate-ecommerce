@@ -28,6 +28,8 @@ urlpatterns = [
     path('ecomadmin/',include('ecomadmin.urls')),
     path('ecomproducts/',include('ecomproducts.urls')),
     path('ecomorders/',include('ecomorders.urls')),
+    # allauth AUTHENTICATION
+    path('accounts/', include('allauth.urls')),
 
 ]
 if settings.DEBUG:

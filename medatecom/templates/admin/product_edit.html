@@ -100,7 +100,9 @@
                     </div>
                     <!-- Render existing variant forms -->
                     {% for form in varient_form %}
+
                         <div class="variant-form active mb-3">
+                            {{form.id}}
                             <div class="card">
                                 <div class="card-body">
                                     <h3 class="h6">Variant {{ forloop.counter }}</h3>

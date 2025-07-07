@@ -3,11 +3,12 @@ from ecomusers.models import User
 from ecomproducts.models import Categories,Product,Product_Varients,ProductImage
 from django.contrib.admin.views.decorators import staff_member_required
 from django.views.decorators.cache import never_cache
-from .forms import Useraddform,CategoryAddForm,ProductAddForm,ProductImageForm,VarientAddForm
+from .forms import Useraddform,CategoryAddForm,ProductAddForm,ProductImageForm,VarientAddForm,VarientFormset,ImageFormset
 from django.db.models import Q
 from django.contrib import messages
 from django.forms import inlineformset_factory
 from django.core.exceptions import ValidationError
+
 
 
 
@@ -157,8 +158,9 @@ def admin_product_details(request):
 # ADMIN ADDING NEW PRODUCT,VATIENT AND IMAGES
 
 def admin_add_product(request):
-    varient_formset=inlineformset_factory(Product,Product_Varients,form=VarientAddForm,extra=1,can_delete=False)
-    image_formset=inlineformset_factory(Product,ProductImage,form=ProductImageForm,extra=3,can_delete=False,max_num=3,min_num=3)
+    varient_formset=VarientFormset
+    image_formset=ImageFormset
+       
     if request.method=='POST':
         product_form=ProductAddForm(request.POST)
         varient_form=varient_formset(request.POST,prefix='varients')
@@ -196,7 +198,6 @@ def admin_edit_product(request,product_id):
     varient_formset = inlineformset_factory(Product, Product_Varients, form=VarientAddForm, extra=1, can_delete=True)
     image_formset = inlineformset_factory(Product, ProductImage, form=ProductImageForm, extra=3, can_delete=True, max_num=3, min_num=3)
     form_errors = []
-
     if request.method == 'POST':
         product_form = ProductAddForm(request.POST, instance=product)
         varient_form = varient_formset(request.POST, instance=product, prefix='varients')
@@ -224,8 +225,12 @@ def admin_edit_product(request,product_id):
                 return redirect('admin_product_list')
             else:
                 form_errors = varient_form.non_form_errors() + image_form.non_form_errors()
+                print(varient_form.non_form_errors())
+                print(image_form.non_form_errors())
+                print(form_errors)
         except ValidationError as e:
             form_errors = e.messages
+            print(form_errors)
     else:
         product_form = ProductAddForm(instance=product)
         varient_form = varient_formset(instance=product, prefix='varients')
