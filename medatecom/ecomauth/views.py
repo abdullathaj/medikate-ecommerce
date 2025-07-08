@@ -281,8 +281,19 @@ def loginview(request):
     return render(request, 'auth/login.html')
 
 # VIEW FOR LOGOUT
+from allauth.socialaccount.models import SocialToken
+import requests
 @never_cache
 def logout_view(request):
+    # Get the user's Google token
+    try:
+        social_token = SocialToken.objects.get(account__user=request.user, account__provider='google')
+        token = social_token.token
+        # Revoke the token via Google's API
+        print(token)
+        requests.post('https://accounts.google.com/o/oauth2/revoke', params={'token': token})
+    except SocialToken.DoesNotExist:
+        pass
     logout(request)
     return redirect('login')
 
