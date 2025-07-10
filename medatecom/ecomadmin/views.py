@@ -166,21 +166,35 @@ def admin_add_product(request):
         varient_form=varient_formset(request.POST,prefix='varients')
         image_form=image_formset(request.POST,request.FILES,prefix='images')
         if product_form.is_valid() and varient_form.is_valid() and image_form.is_valid():
-            product=product_form.save()
-            varients=varient_form.save(commit=False)
-            if not varients:
-                raise ValidationError('Atleast one Varient is required..')
-            for varient in varients:
-                varient.product = product
-                varient.save()
-            images = image_form.save(commit=False)
-            if len(images) != 3:
-                raise ValidationError("exactly 3 images needed")
-            for image in images:
-                image.product = product
-                image.save()
+            try:
+                product=product_form.save()
+                varients=varient_form.save(commit=False)
+                if not varients:
+                    raise ValidationError('Atleast one Varient is required..')
+                for varient in varients:
+                    varient.product = product
+                    varient.save()
+                images = image_form.save(commit=False)
+                if len([img for img in images if img.image]) != 3:
+                    raise ValidationError("exactly 3 images needed")
+                for image in images:
+                    if image.image:  # Only save images with uploads
+                        image.product = product
+                        image.save()
 
-            return redirect('admin_product_list')
+                return redirect('admin_product_list')
+            except ValidationError as e:
+                form_errors = e.messages
+                print("Validation Errors:", form_errors)
+        else:
+            form_errors = (
+                product_form.errors.as_data() +
+                varient_form.non_form_errors() +
+                image_form.non_form_errors() +
+                [form.errors for form in varient_form] +
+                [form.errors for form in image_form]
+            )
+            print("Form Errors:", form_errors)
     else:
         product_form=ProductAddForm()
         varient_form=varient_formset(prefix='varients')
@@ -195,8 +209,8 @@ def admin_add_product(request):
 def admin_edit_product(request,product_id):
     
     product = get_object_or_404(Product, id=product_id)
-    varient_formset = inlineformset_factory(Product, Product_Varients, form=VarientAddForm, extra=1, can_delete=True)
-    image_formset = inlineformset_factory(Product, ProductImage, form=ProductImageForm, extra=3, can_delete=True, max_num=3, min_num=3)
+    varient_formset = VarientFormset
+    image_formset = ImageFormset
     form_errors = []
     if request.method == 'POST':
         product_form = ProductAddForm(request.POST, instance=product)
@@ -206,31 +220,48 @@ def admin_edit_product(request,product_id):
             if product_form.is_valid() and varient_form.is_valid() and image_form.is_valid():
                 product = product_form.save()
                 varients = varient_form.save(commit=False)
-                if not varients:
+                if not varients and not varient_form.deleted_objects:
                     raise ValidationError('At least one variant is required.')
                 for varient in varients:
                     varient.product = product
                     varient.save()
                 for obj in varient_form.deleted_objects:
                     obj.delete()
+                    # HANDLING IMAGES
                 images = image_form.save(commit=False)
-                if len(images) != 3:
-                    raise ValidationError("Exactly 3 images are required.")
-                for image in images:
-                    image.product = product
-                    image.save()
+               
+                existing_images = ProductImage.objects.filter(product=product).exclude(
+                    id__in=[img.id for img in image_form.deleted_objects if img.id]
+                )
+                new_images = [img for img in images if img.image]  # Only images with new uploads
+                total_images = len(existing_images) + len(new_images)
+                # Delete images marked for deletion
                 for obj in image_form.deleted_objects:
                     obj.delete()
+                # Save new images
+                for image in new_images:
+                    image.product = product
+                    image.save()
+                # Check total images after processing
+                total_images = ProductImage.objects.filter(product=product).count()
+                if total_images != 3:
+                    raise ValidationError(f"Exactly 3 images are required. Currently, there are {total_images} images.")
+                
+                
                 messages.success(request, f"Product '{product.name}' updated successfully.")
                 return redirect('admin_product_list')
             else:
-                form_errors = varient_form.non_form_errors() + image_form.non_form_errors()
-                print(varient_form.non_form_errors())
-                print(image_form.non_form_errors())
-                print(form_errors)
+                form_errors = (
+                    product_form.errors.as_data() +
+                    varient_form.non_form_errors() +
+                    image_form.non_form_errors() +
+                    [form.errors for form in varient_form] +
+                    [form.errors for form in image_form]
+                )
+                print('Form Errors:',form_errors)
         except ValidationError as e:
             form_errors = e.messages
-            print(form_errors)
+            print('Validation Errors:',form_errors)
     else:
         product_form = ProductAddForm(instance=product)
         varient_form = varient_formset(instance=product, prefix='varients')

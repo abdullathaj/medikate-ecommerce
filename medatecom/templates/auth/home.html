@@ -96,7 +96,7 @@
                                 {% with variant=product.product_varient.first %}
                                     {% if variant %}
                                         <div class="product-price">
-                                            <small>${{ variant.price|add:"3.00" }}</small>${{ variant.price }}
+                                            <small>${{ variant.price|add:"3.00" }}</small>Rs.{{ variant.price }}
                                         </div>
                                         <div class="product-links">
                                             <a href="" title="Add to Wishlist"><i class="fas fa-heart"></i></a>

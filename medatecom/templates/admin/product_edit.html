@@ -42,6 +42,10 @@
                         <label for="{{ product_form.name.id_for_label }}" class="form-label">Product Name</label>
                         {{ product_form.name }}
                     </div>
+                    <div class="col-md-12 mb-3">
+                        <label for="{{ product_form.description.id_for_label }}" class="form-label">Description</label>
+                        {{ product_form.description }}
+                    </div>
                 </div>
             </div>
         </div>
@@ -100,9 +104,8 @@
                     </div>
                     <!-- Render existing variant forms -->
                     {% for form in varient_form %}
-
                         <div class="variant-form active mb-3">
-                            {{form.id}}
+                            {{ form.id }}
                             <div class="card">
                                 <div class="card-body">
                                     <h3 class="h6">Variant {{ forloop.counter }}</h3>
@@ -154,7 +157,7 @@
         <!-- Image Formset -->
         <div class="card mb-4">
             <div class="card-header">
-                <h2 class="h5 mb-0">Product Images (Exactly 3)</h2>
+                <h2 class="h5 mb-0">Product Images (Exactly 3, Shared Across All Variants)</h2>
             </div>
             <div class="card-body">
                 {{ image_form.management_form }}
@@ -172,14 +175,15 @@
                         <div class="col-md-4 mb-3">
                             <div class="card">
                                 <div class="card-body">
+                                    {{ form.id }}
                                     <h3 class="h6">Image {{ forloop.counter }}</h3>
                                     {% if form.instance.image %}
                                         <div class="mb-3">
                                             <img src="{{ form.instance.image.url }}" alt="Product Image" style="max-width: 100px; height: auto;">
-                                            <label class="form-label mt-2">Replace Image</label>
+                                            <label class="form-label mt-2">Replace Image (optional)</label>
                                         </div>
                                     {% else %}
-                                        <label for="{{ form.image.id_for_label }}" class="form-label">Upload Image</label>
+                                        <label for="{{ form.image.id_for_label }}" class="form-label">Upload Image (required)</label>
                                     {% endif %}
                                     {% if form.errors %}
                                         <div class="alert alert-danger">
@@ -240,7 +244,7 @@
             if (input.type !== 'checkbox') {
                 input.value = '';
             } else {
-                input.checked = true; // Default to checked for is_active
+                input.checked = input.name.includes('is_active'); // Checked for is_active, unchecked for DELETE
             }
         });
         

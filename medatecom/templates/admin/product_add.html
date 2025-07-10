@@ -2,9 +2,9 @@
 {% load static %}
 
 {% block content %}
-<div class="container mt-4">
-    <h1 class="mb-4">Add New Product</h1>
-    <form method="post" enctype="multipart/form-data" id="productForm">
+<div class="container-fluid py-4">
+    <h1 class="mb-4 text-center">Add New Product</h1>
+    <form method="post" enctype="multipart/form-data" id="productForm" class="bg-light p-4 rounded shadow-sm">
         {% csrf_token %}
 
         <!-- Product Form -->
@@ -24,13 +24,19 @@
                         </ul>
                     </div>
                 {% endif %}
-                <div class="mb-3">
-                    <label for="{{ product_form.category.id_for_label }}" class="form-label">Category</label>
-                    {{ product_form.category }}
-                </div>
-                <div class="mb-3">
-                    <label for="{{ product_form.name.id_for_label }}" class="form-label">Product Name</label>
-                    {{ product_form.name }}
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ product_form.category.id_for_label }}" class="form-label">Category</label>
+                        {{ product_form.category }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ product_form.name.id_for_label }}" class="form-label">Product Name</label>
+                        {{ product_form.name }}
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <label for="{{ product_form.description.id_for_label }}" class="form-label">Description</label>
+                        {{ product_form.description }}
+                    </div>
                 </div>
             </div>
         </div>
@@ -58,21 +64,23 @@
                         <div class="card mb-3">
                             <div class="card-body">
                                 <h3 class="h6">Variant <span class="variant-number"></span></h3>
-                                <div class="mb-3">
-                                    <label class="form-label">Variant Name</label>
-                                    <input type="text" class="form-control" name="varients-TEMPLATE-varient_name">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Price</label>
-                                    <input type="number" step="0.01" class="form-control" name="varients-TEMPLATE-price">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Stock</label>
-                                    <input type="number" class="form-control" name="varients-TEMPLATE-stock">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Size (Optional)</label>
-                                    <input type="text" class="form-control" name="varients-TEMPLATE-size">
+                                <div class="row">
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label">Variant Name</label>
+                                        <input type="text" class="form-control" name="varients-TEMPLATE-varient_name" placeholder="Enter variant name">
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label">Price</label>
+                                        <input type="number" step="0.01" class="form-control" name="varients-TEMPLATE-price" placeholder="Enter price">
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label">Stock</label>
+                                        <input type="number" class="form-control" name="varients-TEMPLATE-stock" placeholder="Enter stock quantity">
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label">Size (Optional)</label>
+                                        <input type="text" class="form-control" name="varients-TEMPLATE-size" placeholder="Enter size (optional)">
+                                    </div>
                                 </div>
                                 <div class="form-check mb-3">
                                     <input type="checkbox" class="form-check-input" name="varients-TEMPLATE-is_active" checked>
@@ -81,9 +89,10 @@
                             </div>
                         </div>
                     </div>
-                    <!-- Render existing variant forms -->
+                    <!-- Render variant forms -->
                     {% for form in varient_form %}
                         <div class="variant-form active mb-3">
+                            {{ form.id }}
                             <div class="card">
                                 <div class="card-body">
                                     <h3 class="h6">Variant {{ forloop.counter }}</h3>
@@ -98,21 +107,23 @@
                                             </ul>
                                         </div>
                                     {% endif %}
-                                    <div class="mb-3">
-                                        <label for="{{ form.varient_name.id_for_label }}" class="form-label">Variant Name</label>
-                                        {{ form.varient_name }}
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="{{ form.price.id_for_label }}" class="form-label">Price</label>
-                                        {{ form.price }}
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="{{ form.stock.id_for_label }}" class="form-label">Stock</label>
-                                        {{ form.stock }}
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="{{ form.size.id_for_label }}" class="form-label">Size (Optional)</label>
-                                        {{ form.size }}
+                                    <div class="row">
+                                        <div class="col-md-3 mb-3">
+                                            <label for="{{ form.varient_name.id_for_label }}" class="form-label">Variant Name</label>
+                                            {{ form.varient_name }}
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label for="{{ form.price.id_for_label }}" class="form-label">Price</label>
+                                            {{ form.price }}
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label for="{{ form.stock.id_for_label }}" class="form-label">Stock</label>
+                                            {{ form.stock }}
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label for="{{ form.size.id_for_label }}" class="form-label">Size (Optional)</label>
+                                            {{ form.size }}
+                                        </div>
                                     </div>
                                     <div class="form-check mb-3">
                                         {{ form.is_active }}
@@ -129,7 +140,7 @@
         <!-- Image Formset -->
         <div class="card mb-4">
             <div class="card-header">
-                <h2 class="h5 mb-0">Product Images (Exactly 3)</h2>
+                <h2 class="h5 mb-0">Product Images (Exactly 3, Shared Across All Variants)</h2>
             </div>
             <div class="card-body">
                 {{ image_form.management_form }}
@@ -144,10 +155,12 @@
                 {% endif %}
                 <div class="row">
                     {% for form in image_form %}
-                        <div class="col-md-4">
-                            <div class="card mb-3">
+                        <div class="col-md-4 mb-3">
+                            <div class="card">
                                 <div class="card-body">
+                                    {{ form.id }}
                                     <h3 class="h6">Image {{ forloop.counter }}</h3>
+                                    <label for="{{ form.image.id_for_label }}" class="form-label">Upload Image (required)</label>
                                     {% if form.errors %}
                                         <div class="alert alert-danger">
                                             <ul class="errorlist">
@@ -160,7 +173,6 @@
                                         </div>
                                     {% endif %}
                                     <div class="mb-3">
-                                        <label for="{{ form.image.id_for_label }}" class="form-label">Upload Image</label>
                                         {{ form.image }}
                                     </div>
                                 </div>
@@ -172,7 +184,7 @@
         </div>
 
         <!-- Submit Button -->
-        <div class="mb-4">
+        <div class="text-end mb-4">
             <button type="submit" class="btn btn-primary me-2">Add Product</button>
             <a href="{% url 'admin_product_list' %}" class="btn btn-outline-secondary">Cancel</a>
         </div>
@@ -204,7 +216,7 @@
             if (input.type !== 'checkbox') {
                 input.value = '';
             } else {
-                input.checked = true; // Default to checked for is_active
+                input.checked = input.name.includes('is_active'); // Checked for is_active
             }
         });
         

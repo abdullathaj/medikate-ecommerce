@@ -76,7 +76,7 @@
                 <div class="product-price mb-3">
                       {% with variant=varients.first %}
                         {% if variant %}
-                            <span class="current-price fs-4 fw-bold">${{ variant.price }}</span>
+                            <span class="current-price fs-4 fw-bold">Rs.{{ variant.price }}</span>
                             <small class="original-price text-muted text-decoration-line-through ms-2">${{ variant.price|add:"3.00" }}</small>
                             {% if variant.stock < 5 %}
                                 <span class="text-danger d-block mt-2 stock-status">Out of Stock</span>
@@ -104,6 +104,13 @@
         .product-details-section {
             padding: 2rem 0;
         }
+       {% comment %} .img-large {
+            width: 100%;
+            height: 400px; /* Use fixed height instead of max-height */
+            object-fit: contain;
+            border-radius: 12px;
+            display: block;
+        }  {% endcomment %}
 
         .carousel {
             max-height: 400px;
@@ -112,10 +119,10 @@
         }
 
         .carousel-item img {
-            object-fit: cover;
+            object-fit: contain;
             height: 400px;
             width: 100%;
-        }
+        } 
 
         .product-catagory {
             font-size: 14px;
@@ -193,6 +200,20 @@
         }
 
         /* Responsive Adjustments */
+        
+        {% comment %} @media (max-width: 768px) {
+    .img-large {
+        max-height: 300px;
+    }
+}
+
+        @media (max-width: 480px) {
+    .img-large {
+            max-height: 250px;
+    }
+} {% endcomment %}
+        
+        
         @media (max-width: 768px) {
             .carousel {
                 max-height: 300px;

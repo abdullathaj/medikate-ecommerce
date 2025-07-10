@@ -57,7 +57,7 @@ class ProductImageForm(ModelForm):
         }
 
 
-VarientFormset=inlineformset_factory(Product,Product_Varients,form=VarientAddForm,extra=1,can_delete=False)
+VarientFormset=inlineformset_factory(Product,Product_Varients,form=VarientAddForm,extra=0,can_delete=True,min_num=1,validate_min=True)
 ImageFormset=inlineformset_factory(Product,ProductImage,form=ProductImageForm,
-                                    extra=3,can_delete=False,max_num=3,min_num=3,
+                                    extra=0,can_delete=True,max_num=3,min_num=3,
                                     validate_min=True,validate_max=True)
