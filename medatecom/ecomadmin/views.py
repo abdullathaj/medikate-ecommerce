@@ -13,8 +13,11 @@ from django.core.exceptions import ValidationError
 
 
 # Create your views here.
+
 # DASHBOARD for Admin
-#@staff_member_required
+
+@staff_member_required
+@never_cache
 def admin_dashboard(request):
 
     
@@ -23,7 +26,8 @@ def admin_dashboard(request):
 
 
 # USER MANAGEMENT FOR ADMIN
-#@staff_member_required
+@staff_member_required
+@never_cache
 def admin_customer_details(request):
     users = User.objects.all()
     print(users)
@@ -37,8 +41,10 @@ def admin_customer_details(request):
 
     return render(request,'admin/customer_details.html',{'users':users})
 
+
 # ADD NEW USER
 @staff_member_required
+@never_cache
 def admin_add_user(request):
    if request.method=='POST':
        form=Useraddform(request.POST)
@@ -51,8 +57,10 @@ def admin_add_user(request):
        form=Useraddform()       
    return render(request, 'admin/add_user.html', {'form': form}) 
 
+
 # ADMIN EDIT USER 
 @staff_member_required
+@never_cache
 def admin_edit_user(request,user_id):
     user=get_object_or_404(User,id=user_id)
     if request.method=='POST':
@@ -69,6 +77,7 @@ def admin_edit_user(request,user_id):
 # ADMIN BLOCK AND UNBLOCK USER
 
 @staff_member_required
+@never_cache
 def admin_block_user(request,user_id):
     user=get_object_or_404(User,id=user_id)
     if request.method=='POST' and not user.is_superuser:
@@ -78,8 +87,13 @@ def admin_block_user(request,user_id):
         messages.success(request,f'User {user.username} has been {status}...')
     return redirect(admin_customer_details)
 
+
 # ADMIN CATEGORY MANAGEMENT
+
+
 # CATEGORY TABLE
+@staff_member_required
+@never_cache
 def admin_category_list(request):
     categories=Categories.objects.all()
     query=request.GET.get('q','')
@@ -91,8 +105,10 @@ def admin_category_list(request):
 
     return render(request,'admin/category_list.html',{'categories':categories})
 
-# ADMIN ADDING NEW CATEGORY
 
+# ADMIN ADDING NEW CATEGORY
+@staff_member_required
+@never_cache
 def admin_add_category(request):
 
     if request.method == 'POST':
@@ -110,7 +126,8 @@ def admin_add_category(request):
 
 
 # ADMIN HIDE AND SHOWING CATEGORIES
- 
+@staff_member_required
+@never_cache 
 def admin_hide_category(request, category_id):
     category = get_object_or_404(Categories, id=category_id)
 
@@ -121,8 +138,10 @@ def admin_hide_category(request, category_id):
 
     return redirect('admin_categories')
 
-# ADMIN EDITING CATEGORIES
 
+# ADMIN EDITING CATEGORIES
+@staff_member_required
+@never_cache
 def admin_edit_category(request, category_id):
     category = get_object_or_404(Categories, id=category_id)
 
@@ -142,6 +161,10 @@ def admin_edit_category(request, category_id):
 
 
 # ADMIN PRODUCT MANAGEMENT
+
+# PRODUCT TABLE
+@staff_member_required
+@never_cache
 def admin_product_details(request):
     products=Product.objects.all()
     varients=Product_Varients.objects.all()
@@ -155,8 +178,10 @@ def admin_product_details(request):
 
     return render(request,'admin/product_list.html',{'products':products,'varients':varients})
 
-# ADMIN ADDING NEW PRODUCT,VATIENT AND IMAGES
 
+# ADMIN ADDING NEW PRODUCT,VATIENT AND IMAGES
+@staff_member_required
+@never_cache
 def admin_add_product(request):
     varient_formset=VarientFormset
     image_formset=ImageFormset
@@ -204,8 +229,10 @@ def admin_add_product(request):
 
     return render(request,'admin/product_add.html',{ 'product_form':product_form,'varient_form':varient_form,'image_form':image_form})
 
-# ADMIN EDITING THE PRODUCT,VARIENT AND IMAGES
 
+# ADMIN EDITING THE PRODUCT,VARIENT AND IMAGES
+@staff_member_required
+@never_cache
 def admin_edit_product(request,product_id):
     
     product = get_object_or_404(Product, id=product_id)
@@ -275,8 +302,10 @@ def admin_edit_product(request,product_id):
         'product': product,
     })
 
-# ADMIN HIDING AND SHOWING EXISTING PRODUCTS
 
+# ADMIN HIDING AND SHOWING EXISTING PRODUCTS
+@staff_member_required
+@never_cache
 def admin_hide_product(request, varient_id):
     varient = get_object_or_404(Product_Varients, id=varient_id)
 

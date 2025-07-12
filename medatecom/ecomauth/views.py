@@ -10,11 +10,14 @@ from django.contrib import messages
 from django.utils import timezone
 from datetime import timedelta
 from django.utils.dateparse import parse_datetime
+from allauth.socialaccount.models import SocialToken # GOOGLE AUTHENTICATION
+import requests
 
 # VIEWS FOR USER AUTHENTICARION AND AUTHERISATION.
 
 
 #User Registration
+@never_cache
 def registerview(request):
     
     if request.method == 'POST':
@@ -67,7 +70,7 @@ def registerview(request):
     return render(request, 'auth/register.html')
 
 # VIEWS FOR OTP VERIFICATION OF THE USER
-
+@never_cache
 def otp_verify_view(request):
     # ACTION OF VERIFY OTP BUTTON
     if request.method=='POST':
@@ -118,6 +121,7 @@ def otp_verify_view(request):
     return render(request,'auth/otpverify.html')
 
 # VIEW FOR RESEND OTP BUTTON
+@never_cache
 def resend_otp_view(request):
     if request.method=='POST':
         otp_method=request.POST.get('otp_method')
@@ -157,6 +161,7 @@ def resend_otp_view(request):
 
 
 # VIEW FOR FORGOT PASSWORD
+@never_cache
 def forgot_password_view(request):
     if request.method=='POST':
         email=request.POST.get('email')
@@ -190,7 +195,7 @@ def forgot_password_view(request):
     return render(request,'auth/forgot_password.html')
 
 # VIEW FOR NEW PASSWORD AND CONFIRMATION
-
+@never_cache
 def reset_password_view(request):
     if request.method =='POST':
         new_password=request.POST.get('new_password')
@@ -230,7 +235,7 @@ def reset_password_view(request):
     return render(request,'auth/reset_password.html')       
 
 # RESEND OTP FOR PASSWORD RESET
-
+@never_cache
 def resend_password_otp_view(request):
     if request.method == 'POST':
         email = request.session.get('reset_email')
@@ -259,6 +264,7 @@ def resend_password_otp_view(request):
 
 
 # Usre Login
+@never_cache
 def loginview(request):
     if request.method == 'POST':
         name =request.POST['username']
@@ -269,11 +275,18 @@ def loginview(request):
         
         user = authenticate(request,username= name,password=password)
         print(user)
-    
-
+        
 
         if user is not None:
             login(request,user)
+
+    # SESSION HANDLING AFTER USER AUTHENTICATION AND LOGIN
+
+            request.session['user_id']=user.id
+            request.session['username']=user.username
+            request.session['email']=user.email
+            request.session.set_expiry(3600)
+
             return redirect('login_home')
         else:
             return render(request,'auth/login.html')
@@ -281,9 +294,10 @@ def loginview(request):
     return render(request, 'auth/login.html')
 
 # VIEW FOR LOGOUT
-from allauth.socialaccount.models import SocialToken
-import requests
+
+
 @never_cache
+@login_required
 def logout_view(request):
     # Get the user's Google token
     try:
@@ -294,6 +308,8 @@ def logout_view(request):
         requests.post('https://accounts.google.com/o/oauth2/revoke', params={'token': token})
     except SocialToken.DoesNotExist:
         pass
+    request.session.flush()  # REMOVING SESSION DATA AFTER USER LOGOUT
+
     logout(request)
     return redirect('login')
 
@@ -303,6 +319,7 @@ def logout_view(request):
 from .decorators import superuser_required
 
 # VIEW FOR ADMIN LOGIN 
+@never_cache
 def admin_login_view(request):
     if request.method=='POST':
         username=request.POST.get('username')
@@ -329,6 +346,7 @@ def admin_dashboard_view(request):
 
 
 # VIEW FOR ADMIN LOGOUT
+@superuser_required
 @never_cache
 def admin_logout_view(request):
 

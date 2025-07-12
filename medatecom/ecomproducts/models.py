@@ -30,7 +30,7 @@ class Product_Varients(models.Model):
     def __str__(self):
         return f'{self.product.name} {self.varient_name}'
 
-class ProductImage(models.Model):
+class ProductImage(models.Model): # related_name SHOULD HAVE TO CHANGE TO product_image
     product=models.ForeignKey(Product,on_delete=models.CASCADE,related_name='product')
     image=models.ImageField(upload_to='admin/images')
 

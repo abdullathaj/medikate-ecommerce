@@ -1,9 +1,12 @@
 from django.shortcuts import render,redirect,get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.cache import never_cache
 from ecomproducts.models import Product,Product_Varients,ProductImage,Categories
 from django.core.paginator import Paginator
 
 # Create your views here.
-#home page for User
+# home page for User BEFORE LOGIN
+
 def userhomeview(request):
      # Fetch active products with related category and filter active variants
     products = Product.objects.filter(
@@ -20,7 +23,11 @@ def userhomeview(request):
     return render(request, 'auth/home.html',{'products': page_obj})
 
 # HOME PAGE AFTER LOGIN
+
+@login_required(login_url='login') # REDIRECT TO LOGIN PAGE FOR UNAUTHENTICATED USERS.
+@never_cache
 def home_after_login(request):
+
     products = Product.objects.filter(
         product_varient__is_active=True,
         category__is_active=True

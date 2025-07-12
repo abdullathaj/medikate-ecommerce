@@ -2,294 +2,319 @@
 {% load static %}
 
 {% block content %}
-    {% include 'auth/subnavbar.html' %}
+{% include 'auth/subnavbar.html' %}
 
-    <!-- Product Details Section -->
-    <section class="product-details-section container my-5">
-        <div class="row">
-            <!-- Product Images Carousel -->
-            <div class="col-lg-6">
-                <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
-                    <!-- Carousel Indicators -->
-                    <div class="carousel-indicators">
-                        {% for image in product.product.all|slice:":3" %}
-                            <button type="button" data-bs-target="#productCarousel" data-bs-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" aria-current="true"{% endif %} aria-label="Slide {{ forloop.counter }}"></button>
-                        {% endfor %}
+<!-- Product Details Section -->
+<section class="product-details-section container my-5">
+    <div class="row">
+        <!-- Product Images Carousel -->
+        <div class="col-lg-6">
+            <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
+                <!-- Carousel Indicators -->
+                
+                <div class="carousel-indicators">
+                    {% for image in product.product.all|slice:":3" %}
+                    <button type="button" data-bs-target="#productCarousel" data-bs-slide-to="{{ forloop.counter0 }}"
+                        {% if forloop.first %}class="active" aria-current="true" {% endif %}
+                        aria-label="Slide {{ forloop.counter }}"></button>
+                    {% endfor %}
+                </div>
+
+                <!-- Carousel Items -->
+                <div class="carousel-inner">
+                    {% for image in product.product.all|slice:":3" %}
+                    <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                        <img src="{{ image.image.url }}" class="d-block w-100" alt="{{ product.name }}">
                     </div>
-
-                    <!-- Carousel Items -->
-                    <div class="carousel-inner">
-                        {% for image in product.product.all|slice:":3" %}
-                            <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                                <img src="{{ image.image.url }}" class="d-block w-100" alt="{{ product.name }}">
-                            </div>
-                        {% empty %}
-                            <div class="carousel-item active">
-                                <img src="https://via.placeholder.com/400?text={{ product.name|urlencode }}" class="d-block w-100" alt="{{ product.name }}">
-                            </div>
-                        {% endfor %}
+                    {% empty %}
+                    <div class="carousel-item active">
+                        <img src="https://via.placeholder.com/400?text={{ product.name|urlencode }}"
+                            class="d-block w-100" alt="{{ product.name }}">
                     </div>
-
-                    <!-- Carousel Controls -->
-                    {% if product.product.all|length > 1 %}
-                        <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
-                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Previous</span>
-                        </button>
-                        <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
-                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Next</span>
-                        </button>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Product Information -->
-            <div class="col-lg-6">
-                <h2 class="mb-3">{{ product.name }}</h2>
-                <span class="product-catagory d-block mb-2">{{ product.category.name }}</span>
-                <div class="product-rating mb-3">
-                    <span class="star filled">★</span>
-                    <span class="star filled">★</span>
-                    <span class="star filled">★</span>
-                    <span class="star filled">★</span>
-                    <span class="star">★</span>
-                    <span class="rating-text">(4.0)</span>
-                </div>
-                <p class="product-description mb-4">{{ product.category.description|default:"No description available." }}</p>
-
-                <!-- Variants Selection -->
-                <div class="mb-4">
-                    <h5>Available Variants</h5>
-                    <select class="form-select" id="variantSelect" aria-label="Select Variant">
-                        {% for varient in varients %}
-                            <option value="{{ varient.id }}" data-price="{{ varient.price }}" data-stock="{{ varient.stock }}">
-                                {{ varient.varient_name }} {% if varient.size %}({{ varient.size }}){% endif %}
-                            </option>
-                        {% empty %}
-                            <option disabled>No variants available</option>
-                        {% endfor %}
-                    </select>
+                    {% endfor %}
                 </div>
 
-                <!-- Price and Stock -->
-                <div class="product-price mb-3">
-                      {% with variant=varients.first %}
-                        {% if variant %}
-                            <span class="current-price fs-4 fw-bold">Rs.{{ variant.price }}</span>
-                            <small class="original-price text-muted text-decoration-line-through ms-2">${{ variant.price|add:"3.00" }}</small>
-                            {% if variant.stock < 5 %}
-                                <span class="text-danger d-block mt-2 stock-status">Out of Stock</span>
-                            {% else %}
-                                <span class="text-success d-block mt-2 stock-status">In Stock ({{ variant.stock }} available)</span>
-                            {% endif %}
-                        {% else %}
-                            <span class="text-muted">Price not available</span>
-                        {% endif %}
-                    {% endwith %}
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="product-actions">
-                    <a href="#" class="btn btn-primary buy-now-btn me-2">Buy Now</a>
-                    <a href="#" class="btn btn-outline-secondary" title="Add to Cart"><i class="fas fa-shopping-cart"></i> Add to Cart</a>
-                    <a href="#" class="btn btn-outline-secondary ms-2" title="Add to Wishlist"><i class="fas fa-heart"></i></a>
-                </div>
+                <!-- Carousel Controls -->
+                {% if product.product.all|length > 1 %}
+                <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel"
+                    data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#productCarousel"
+                    data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Next</span>
+                </button>
+                {% endif %}
             </div>
         </div>
-    </section>
 
-    <style>
-        /* Product Details Section */
-        .product-details-section {
-            padding: 2rem 0;
+        <!-- Product Information -->
+        <div class="col-lg-6">
+            <h2 class="mb-3">{{ product.name }}</h2>
+            <span class="product-catagory d-block mb-2">{{ product.category.name }}</span>
+            <div class="product-rating mb-3">
+                <span class="star filled">★</span>
+                <span class="star filled">★</span>
+                <span class="star filled">★</span>
+                <span class="star filled">★</span>
+                <span class="star">★</span>
+                <span class="rating-text">(4.0)</span>
+            </div>
+            <p class="product-description mb-4">{{ product.category.description|default:"No description available." }}
+            </p>
+
+            <!-- Variants Selection -->
+            <div class="mb-4">
+                <h5>Available Variants</h5>
+                <select class="form-select" id="variantSelect" aria-label="Select Variant">
+                    {% for varient in varients %}
+                    <option value="{{ varient.id }}" data-price="{{ varient.price }}" data-stock="{{ varient.stock }}">
+                        {{ varient.varient_name }} {% if varient.size %}({{ varient.size }}){% endif %}
+                    </option>
+                    {% empty %}
+                    <option disabled>No variants available</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Price and Stock -->
+            <div class="product-price mb-3">
+                {% with variant=varients.first %}
+                {% if variant %}
+                <span class="current-price fs-4 fw-bold">Rs.{{ variant.price }}</span>
+                <small class="original-price text-muted text-decoration-line-through ms-2">${{ variant.price|add:"3.00"
+                    }}</small>
+                {% if variant.stock < 5 %} <span class="text-danger d-block mt-2 stock-status">Out of Stock</span>
+                    {% else %}
+                    <span class="text-success d-block mt-2 stock-status">In Stock ({{ variant.stock }} available)</span>
+                    {% endif %}
+                    {% else %}
+                    <span class="text-muted">Price not available</span>
+                    {% endif %}
+                    {% endwith %}
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="product-actions">
+                <a href="#" class="btn btn-primary buy-now-btn me-2">Buy Now</a>
+                <a href="#" class="btn btn-outline-secondary" title="Add to Cart"><i class="fas fa-shopping-cart"></i>
+                    Add to Cart</a>
+                <a href="#" class="btn btn-outline-secondary ms-2" title="Add to Wishlist"><i
+                        class="fas fa-heart"></i></a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    /* Product Details Section */
+    .product-details-section {
+        padding: 2rem 0;
+    }
+
+        
+    
+
+    .img-large {
+        width: 100%;
+        height: 400px;
+        /* Use fixed height instead of max-height */
+        object-fit: contain;
+        border-radius: 12px;
+        display: block;
+    }
+
+        
+    
+
+    .carousel {
+        max-height: 400px;
+        overflow: hidden;
+        border-radius: 12px;
+    }
+
+    .carousel-item img {
+        object-fit: contain;
+        height: 400px;
+        width: 100%;
+    }
+
+    .product-catagory {
+        font-size: 14px;
+        font-weight: 500;
+        text-transform: uppercase;
+        color: #4b6cb7;
+    }
+
+    .product-description {
+        font-size: 14px;
+        color: #5f6c85;
+        line-height: 1.6;
+    }
+
+    .product-rating {
+        display: flex;
+        align-items: center;
+    }
+
+    .star {
+        font-size: 14px;
+        color: #d1d9e6;
+        margin-right: 3px;
+    }
+
+    .star.filled {
+        color: #3b82f6;
+    }
+
+    .rating-text {
+        font-size: 14px;
+        color: #5f6c85;
+        margin-left: 5px;
+    }
+
+    .product-price .current-price {
+        color: #4b6cb7;
+    }
+
+    .product-price .original-price {
+        font-size: 14px;
+    }
+
+    .btn-primary,
+    .buy-now-btn {
+        background-color: #4b6cb7;
+        border-color: #4b6cb7;
+        color: #fff;
+        padding: 8px 16px;
+        border-radius: 15px;
+        transition: background 0.3s ease, transform 0.2s ease;
+    }
+
+    .btn-primary:hover,
+    .buy-now-btn:hover {
+        background-color: #3b82f6;
+        border-color: #3b82f6;
+        transform: translateY(-1px);
+    }
+
+    .btn-outline-secondary {
+        color: #6b7280;
+        border-color: #6b7280;
+        padding: 8px 12px;
+        border-radius: 15px;
+        transition: color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .btn-outline-secondary:hover {
+        color: #4b6cb7;
+        border-color: #4b6cb7;
+    }
+
+    .form-select {
+        max-width: 300px;
+        font-size: 14px;
+    }
+
+    /* Responsive Adjustments */
+
+       
+/* 
+    @media (max-width: 768px) {
+        .img-large {
+            max-height: 300px;
         }
-       {% comment %} .img-large {
-            width: 100%;
-            height: 400px; /* Use fixed height instead of max-height */
-            object-fit: contain;
-            border-radius: 12px;
-            display: block;
-        }  {% endcomment %}
+    }
 
+    @media (max-width: 480px) {
+        .img-large {
+            max-height: 250px;
+        }
+    } */
+
+        
+
+
+    @media (max-width: 768px) {
         .carousel {
-            max-height: 400px;
-            overflow: hidden;
-            border-radius: 12px;
+            max-height: 300px;
         }
 
         .carousel-item img {
-            object-fit: contain;
-            height: 400px;
-            width: 100%;
-        } 
+            height: 300px;
+        }
 
-        .product-catagory {
-            font-size: 14px;
-            font-weight: 500;
-            text-transform: uppercase;
-            color: #4b6cb7;
+        .product-details-section h2 {
+            font-size: 1.5rem;
         }
 
         .product-description {
-            font-size: 14px;
-            color: #5f6c85;
-            line-height: 1.6;
-        }
-
-        .product-rating {
-            display: flex;
-            align-items: center;
-        }
-
-        .star {
-            font-size: 14px;
-            color: #d1d9e6;
-            margin-right: 3px;
-        }
-
-        .star.filled {
-            color: #3b82f6;
-        }
-
-        .rating-text {
-            font-size: 14px;
-            color: #5f6c85;
-            margin-left: 5px;
+            font-size: 13px;
         }
 
         .product-price .current-price {
-            color: #4b6cb7;
+            font-size: 1.25rem;
         }
-
-        .product-price .original-price {
-            font-size: 14px;
-        }
-
-        .btn-primary, .buy-now-btn {
-            background-color: #4b6cb7;
-            border-color: #4b6cb7;
-            color: #fff;
-            padding: 8px 16px;
-            border-radius: 15px;
-            transition: background 0.3s ease, transform 0.2s ease;
-        }
-
-        .btn-primary:hover, .buy-now-btn:hover {
-            background-color: #3b82f6;
-            border-color: #3b82f6;
-            transform: translateY(-1px);
-        }
-
-        .btn-outline-secondary {
-            color: #6b7280;
-            border-color: #6b7280;
-            padding: 8px 12px;
-            border-radius: 15px;
-            transition: color 0.3s ease, border-color 0.3s ease;
-        }
-
-        .btn-outline-secondary:hover {
-            color: #4b6cb7;
-            border-color: #4b6cb7;
-        }
-
-        .form-select {
-            max-width: 300px;
-            font-size: 14px;
-        }
-
-        /* Responsive Adjustments */
-        
-        {% comment %} @media (max-width: 768px) {
-    .img-large {
-        max-height: 300px;
     }
-}
 
-        @media (max-width: 480px) {
-    .img-large {
+    @media (max-width: 480px) {
+        .carousel {
             max-height: 250px;
+        }
+
+        .carousel-item img {
+            height: 250px;
+        }
+
+        .product-details-section h2 {
+            font-size: 1.25rem;
+        }
+
+        .product-description {
+            font-size: 12px;
+        }
+
+        .product-price .current-price {
+            font-size: 1.1rem;
+        }
+
+        .btn-primary,
+        .btn-outline-secondary {
+            font-size: 12px;
+            padding: 6px 10px;
+        }
     }
-} {% endcomment %}
-        
-        
-        @media (max-width: 768px) {
-            .carousel {
-                max-height: 300px;
+</style>
+<!-- Include Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<!-- JavaScript for dynamic price and stock update -->
+<script>
+    
+    document.addEventListener('DOMContentLoaded', function () {
+        const variantSelect = document.getElementById('variantSelect');
+        const priceElement = document.querySelector('.product-price .current-price');
+        const originalPriceElement = document.querySelector('.product-price .original-price');
+        const stockElement = document.querySelector('.product-price .text-danger, .product-price .text-success');
+
+        variantSelect.addEventListener('change', function () {
+            const selectedOption = variantSelect.options[variantSelect.selectedIndex];
+            const price = selectedOption.getAttribute('data-price');
+            const stock = parseInt(selectedOption.getAttribute('data-stock'));
+
+            priceElement.textContent = `$${price}`;
+            originalPriceElement.textContent = `$${parseFloat(price) + 3.00}`;
+            if (stock < 5) {
+                stockElement.textContent = 'Out of Stock';
+                stockElement.classList.remove('text-success');
+                stockElement.classList.add('text-danger');
+            } else {
+                stockElement.textContent = `In Stock (${stock} available)`;
+                stockElement.classList.remove('text-danger');
+                stockElement.classList.add('text-success');
             }
-
-            .carousel-item img {
-                height: 300px;
-            }
-
-            .product-details-section h2 {
-                font-size: 1.5rem;
-            }
-
-            .product-description {
-                font-size: 13px;
-            }
-
-            .product-price .current-price {
-                font-size: 1.25rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .carousel {
-                max-height: 250px;
-            }
-
-            .carousel-item img {
-                height: 250px;
-            }
-
-            .product-details-section h2 {
-                font-size: 1.25rem;
-            }
-
-            .product-description {
-                font-size: 12px;
-            }
-
-            .product-price .current-price {
-                font-size: 1.1rem;
-            }
-
-            .btn-primary, .btn-outline-secondary {
-                font-size: 12px;
-                padding: 6px 10px;
-            }
-        }
-    </style>
-    <!-- Include Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <!-- JavaScript for dynamic price and stock update -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const variantSelect = document.getElementById('variantSelect');
-            const priceElement = document.querySelector('.product-price .current-price');
-            const originalPriceElement = document.querySelector('.product-price .original-price');
-            const stockElement = document.querySelector('.product-price .text-danger, .product-price .text-success');
-
-            variantSelect.addEventListener('change', function() {
-                const selectedOption = variantSelect.options[variantSelect.selectedIndex];
-                const price = selectedOption.getAttribute('data-price');
-                const stock = parseInt(selectedOption.getAttribute('data-stock'));
-
-                priceElement.textContent = `$${price}`;
-                originalPriceElement.textContent = `$${parseFloat(price) + 3.00}`;
-                if (stock < 5) {
-                    stockElement.textContent = 'Out of Stock';
-                    stockElement.classList.remove('text-success');
-                    stockElement.classList.add('text-danger');
-                } else {
-                    stockElement.textContent = `In Stock (${stock} available)`;
-                    stockElement.classList.remove('text-danger');
-                    stockElement.classList.add('text-success');
-                }
-            });
         });
-    </script>
+    });
+</script>
 {% endblock %}

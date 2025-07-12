@@ -18,7 +18,7 @@
             <!-- Carousel Items -->
             <div class="carousel-inner">
                 <div class="carousel-item active">
-                    <img src="static\home\images\5-medicine-carousel-gustoimagesscience-photo-library.jpg" class="d-block w-100" alt="Oral Care Products">
+                    <img src="{% static 'home/images/oralbanner.jpg' %}" class="d-block w-100" alt="Oral Care Products">
                     <div class="carousel-caption d-none d-md-block">
                         <h2 class="display-4 fw-bold">Oral Care Essentials</h2>
                         <p class="lead">Discover toothbrushes, toothpaste, and more for a healthy smile.</p>
@@ -26,7 +26,7 @@
                     </div>
                 </div>
                 <div class="carousel-item">
-                    <img src="" class="d-block w-100" alt="Hair Care Products">
+                    <img src="{% static 'home/images/haircarebanner.jpg' %}" class="d-block w-100" alt="Hair Care Products">
                     <div class="carousel-caption d-none d-md-block">
                         <h2 class="display-4 fw-bold">Healthy Hair Solutions</h2>
                         <p class="lead">Explore shampoos, conditioners, and treatments for vibrant hair.</p>
@@ -34,7 +34,7 @@
                     </div>
                 </div>
                 <div class="carousel-item">
-                    <img src="" class="d-block w-100" alt="Skin Care Products">
+                    <img src="{% static 'home/images/skincarebanner.jpg' %}" class="d-block w-100" alt="Skin Care Products">
                     <div class="carousel-caption d-none d-md-block">
                         <h2 class="display-4 fw-bold">Nourish Your Skin</h2>
                         <p class="lead">Find creams, cleansers, and serums for radiant skin.</p>
@@ -42,7 +42,7 @@
                     </div>
                 </div>
                 <div class="carousel-item">
-                    <img src="" class="d-block w-100" alt="Baby Care Products">
+                    <img src="{% static 'home/images/babycarebanner.jpg' %}" class="d-block w-100" alt="Baby Care Products">
                     <div class="carousel-caption d-none d-md-block">
                         <h2 class="display-4 fw-bold">Gentle Baby Care</h2>
                         <p class="lead">Safe and trusted products for your little ones.</p>
@@ -237,11 +237,10 @@
             justify-content: center;
             height: 200px;
             background: #f6faff;
-            padding: 20
+            padding: 20px;
+             }
 
-System: px;
-            transition: background 0.3s ease;
-        }
+       
 
         .product-tumb img {
             max-width: 80%;
