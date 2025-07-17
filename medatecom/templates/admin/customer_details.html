@@ -21,7 +21,7 @@
 
     <!-- User Table -->
     <div class="table-responsive">
-        <table class="table table-bordered table-striped align-middle">
+        <table  id='user-listing' class="table table-bordered table-striped align-middle">
             <thead class="table-success">
                 <tr>
                     <th>User ID</th>
@@ -35,7 +35,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for user in users %}
+                {% for user in page_obj %}
                 <tr>
                     <td>{{ user.id }}</td>
                     <td>{{ user.username }}</td>
@@ -75,6 +75,44 @@
                 {% endfor %}
             </tbody>
         </table>
+          <!-- Pagination Controls -->
+<div class="d-flex justify-content-center mt-4">
+    <nav aria-label="Page navigation">
+        <ul class="pagination">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}page={{ page_obj.previous_page_number }} #user-listing" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">&laquo;</span>
+                </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item"><a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}page={{ num }} #user-listing">{{ num }}</a></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}page={{ page_obj.next_page_number }} #user-listing" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">&raquo;</span>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
     </div>
 </div>
 {% endblock %}

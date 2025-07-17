@@ -19,6 +19,7 @@ def userhomeview(request):
     paginator = Paginator(products, 4)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+
     
     return render(request, 'auth/home.html',{'products': page_obj})
 
@@ -38,7 +39,7 @@ def home_after_login(request):
     paginator = Paginator(products, 4)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    
+   
 
     return render(request,'auth/home.html',{'products':page_obj})
 

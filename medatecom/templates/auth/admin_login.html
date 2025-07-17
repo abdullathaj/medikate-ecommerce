@@ -9,7 +9,7 @@
 <div class="d-flex justify-content-center align-items-center">
     <div class="login-form bg-white bg-opacity-10 border border-white border-opacity-25 rounded-3 shadow-lg p-4 p-md-5">
         <h2 class="text-center text-success fw-bold mb-4">Admin Login to MediKate</h2>
-        {% if form.non_field_errors %}
+        {% comment %} {% if form.non_field_errors %}
             <div class="alert alert-danger text-center" role="alert">
                 {% for error in form.non_field_errors %}
                     {{ error }}
@@ -22,14 +22,17 @@
                     {{ message }}
                 {% endfor %}
             </div>
-        {% endif %}
+        {% endif %} {% endcomment %}
+
+         
+
         <form method="POST" action="{% url 'admin_login' %}" class="d-flex flex-column gap-3">
             {% csrf_token %}
             <div class="row g-3">
                 <div class="col-12 form-group username">
                     <label for="username" class="form-label"><i class="fas fa-user me-2 text-success"></i>Username</label>
                     <input type="text" id="username" name="username" class="form-control" placeholder="Enter your username" required>
-                    {% if form.username.errors %}
+                    {% comment %} {% if form.username.errors %}
                         <div class="invalid-feedback field-error d-block">
                             {% for error in form.username.errors %}
                                 {{ error }}
@@ -37,7 +40,7 @@
                         </div>
                     {% else %}
                         <div class="invalid-feedback field-error"></div>
-                    {% endif %}
+                    {% endif %} {% endcomment %}
                 </div>
                 <div class="col-12 form-group password">
                     <label for="password" class="form-label"><i class="fas fa-lock me-2 text-success"></i>Password</label>
@@ -56,6 +59,21 @@
             <button type="submit" class="btn btn-success w-100 mt-3">Log In</button>
         </form>
     </div>
+    <!-- Toast Container -->
+                    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1055">
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="toast align-items-center text-white bg-{% if message.tags == 'success' %}success{% elif message.tags == 'error' %}danger{% else %}info{% endif %} border-0 show" role="alert" aria-live="assertive" aria-atomic="true">
+                                    <div class="d-flex">
+                                        <div class="toast-body">
+                                            {{ message }}
+                                        </div>
+                                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
 </div>
 
 <style>
@@ -132,6 +150,16 @@
 
 {% block extra_scripts %}
 <script>
+
+     // Toast Message
+    document.addEventListener('DOMContentLoaded', function () {
+        const toastElList = [].slice.call(document.querySelectorAll('.toast'));
+        toastElList.forEach(function (toastEl) {
+            const toast = new bootstrap.Toast(toastEl, { delay: 4000 });
+            toast.show();
+        });
+    });
+
     document.addEventListener('DOMContentLoaded', () => {
         const form = document.querySelector('.login-form form');
         const inputs = {

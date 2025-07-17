@@ -63,15 +63,16 @@
         </div>
     </section>
 
-    <!-- Product Listing Section -->
-    <section class="product-listing-section container my-5">
+   
+   <!-- Product Listing Section -->
+    <section  id='product-listing' class="product-listing-section container my-5">
         <h2 class="text-center mb-4">Featured Products</h2>
         <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
             {% for product in products %}
                 <!-- Product Card -->
                 <div class="col">
                     <div class="product-card">
-                        <div class="product-tumb">
+                        <div class="product-thumb">
                             {% with product_image=product.product.first %}
                                 {% if product_image %}
                                     <img src="{{ product_image.image.url }}" alt="{{ product.name }}">
@@ -96,7 +97,7 @@
                                 {% with variant=product.product_varient.first %}
                                     {% if variant %}
                                         <div class="product-price">
-                                            <small>${{ variant.price|add:"3.00" }}</small>Rs.{{ variant.price }}
+                                            <small>Rs.{{ variant.price|add:"3.00" }}</small>Rs.{{ variant.price }}
                                         </div>
                                         <div class="product-links">
                                             <a href="" title="Add to Wishlist"><i class="fas fa-heart"></i></a>
@@ -129,7 +130,7 @@
                 <ul class="pagination justify-content-center">
                     {% if products.has_previous %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ products.previous_page_number }}" aria-label="Previous">
+                            <a class="page-link" href="?page={{ products.previous_page_number }} #product-listing" aria-label="Previous">
                                 <span aria-hidden="true">&laquo;</span>
                             </a>
                         </li>
@@ -143,17 +144,17 @@
                     {% for num in products.paginator.page_range %}
                         {% if products.number == num %}
                             <li class="page-item active" aria-current="page">
-                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                <a class="page-link" href="?page={{ num }}  #product-listing">{{ num }}</a>
                             </li>
-                        {% else %}
+                        {% else %} 
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                <a class="page-link" href="?page={{ num }}  #product-listing">{{ num }}</a>
                             </li>
                         {% endif %}
                     {% endfor %}
                     {% if products.has_next %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ products.next_page_number }}" aria-label="Next">
+                            <a class="page-link" href="?page={{ products.next_page_number }}  #product-listing" aria-label="Next">
                                 <span aria-hidden="true">&raquo;</span>
                             </a>
                         </li>
@@ -231,7 +232,7 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
         }
 
-        .product-tumb {
+        .product-thumb {
             display: flex;
             align-items: center;
             justify-content: center;
@@ -242,14 +243,14 @@
 
        
 
-        .product-tumb img {
+        .product-thumb img {
             max-width: 80%;
             max-height: 80%;
             object-fit: contain;
             transition: transform 0.3s ease;
         }
 
-        .product-card:hover .product-tumb img {
+        .product-card:hover .product-thumb img {
             transform: scale(1.08);
         }
 
@@ -433,4 +434,7 @@
     </style>
     <!-- Include Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+   
+
 {% endblock %}

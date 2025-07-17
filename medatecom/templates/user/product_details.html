@@ -24,12 +24,12 @@
                 <div class="carousel-inner">
                     {% for image in product.product.all|slice:":3" %}
                     <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                        <img src="{{ image.image.url }}" class="d-block w-100" alt="{{ product.name }}">
+                        <img src="{{ image.image.url }}" class="d-block w-100 zoom-image" alt="{{ product.name }}" loading="lazy">
                     </div>
                     {% empty %}
                     <div class="carousel-item active">
                         <img src="https://via.placeholder.com/400?text={{ product.name|urlencode }}"
-                            class="d-block w-100" alt="{{ product.name }}">
+                            class="d-block w-100 zoom-image" alt="{{ product.name }}" loading="lazy">
                     </div>
                     {% endfor %}
                 </div>
@@ -84,7 +84,7 @@
                 {% with variant=varients.first %}
                 {% if variant %}
                 <span class="current-price fs-4 fw-bold">Rs.{{ variant.price }}</span>
-                <small class="original-price text-muted text-decoration-line-through ms-2">${{ variant.price|add:"3.00"
+                <small class="original-price text-muted text-decoration-line-through ms-2">Rs.{{ variant.price|add:"3.00"
                     }}</small>
                 {% if variant.stock < 5 %} <span class="text-danger d-block mt-2 stock-status">Out of Stock</span>
                     {% else %}
@@ -116,15 +116,15 @@
 
         
     
-
-    .img-large {
+ /* Use fixed height instead of max-height */
+    /* .img-large {
         width: 100%;
         height: 400px;
-        /* Use fixed height instead of max-height */
+       
         object-fit: contain;
         border-radius: 12px;
         display: block;
-    }
+                } */
 
         
     
@@ -133,13 +133,19 @@
         max-height: 400px;
         overflow: hidden;
         border-radius: 12px;
+        position: relative;
     }
 
-    .carousel-item img {
+    .carousel-item img.zoom-image {
         object-fit: contain;
         height: 400px;
         width: 100%;
+        transition: transform 0.3s ease;
     }
+
+    .carousel-item.active:hover img.zoom-image {
+    transform: scale(1.2); 
+        }
 
     .product-catagory {
         font-size: 14px;
@@ -242,7 +248,7 @@
             max-height: 300px;
         }
 
-        .carousel-item img {
+        .carousel-item img.zoom-image {
             height: 300px;
         }
 
@@ -264,7 +270,7 @@
             max-height: 250px;
         }
 
-        .carousel-item img {
+        .carousel-item img.zoom-image {
             height: 250px;
         }
 
@@ -303,8 +309,8 @@
             const price = selectedOption.getAttribute('data-price');
             const stock = parseInt(selectedOption.getAttribute('data-stock'));
 
-            priceElement.textContent = `$${price}`;
-            originalPriceElement.textContent = `$${parseFloat(price) + 3.00}`;
+            priceElement.textContent = `Rs.${price}`;
+            originalPriceElement.textContent = `Rs.${parseFloat(price) + 3.00}`;
             if (stock < 5) {
                 stockElement.textContent = 'Out of Stock';
                 stockElement.classList.remove('text-success');

@@ -3,6 +3,9 @@ from django.forms import ModelForm,inlineformset_factory
 from ecomusers.models import User
 from ecomproducts.models import Categories,Product,Product_Varients,ProductImage
 from django.contrib.auth.forms import UserCreationForm
+from django.core.exceptions import ValidationError
+import re
+
 
 # FORM FOR CREATION OF NEW USER
 class Useraddform(UserCreationForm):
@@ -37,6 +40,17 @@ class ProductAddForm(ModelForm):
                 'rows': 4
             }),
         }
+    def __init__(self,*args,**kwargs):
+         super(ProductAddForm,self).__init__(*args,**kwargs)
+         self.fields['category'].empty_label='Select from categories'
+
+    def clean_name(self):
+            name = self.cleaned_data['name']
+            if not re.fullmatch(r'[A-Za-z][A-Za-z0-9\s]*', name):
+                raise ValidationError("Product name should only contain letters,digits and spaces.")
+            return name
+
+
 class VarientAddForm(ModelForm):
     class Meta:
         model = Product_Varients
@@ -48,6 +62,27 @@ class VarientAddForm(ModelForm):
             'size': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter size (optional)'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
+ 
+    # def clean_varient_name(self):
+    #     name = self.cleaned_data['varient_name']
+    #     if not re.fullmatch(r'[A-Za-z\s]+', name):
+    #         raise ValidationError("Variant name should contain only letters and spaces.")
+    #     return name
+
+
+    def clean_price(self):
+            price = self.cleaned_data['price']
+            if price <= 0:
+                raise ValidationError("Price must be a positive number.")
+            return price
+
+    def clean_stock(self):
+        stock = self.cleaned_data['stock']
+        if stock < 0:
+            raise ValidationError("Stock cannot be negative.")
+        return stock
+
+
 class ProductImageForm(ModelForm):
     class Meta:
         model = ProductImage

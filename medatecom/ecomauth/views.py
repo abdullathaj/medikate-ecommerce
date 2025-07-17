@@ -1,11 +1,13 @@
-from django.shortcuts import render,redirect
+from django.shortcuts import render,redirect,get_object_or_404
 from ecomusers.models import User
-from django.contrib.auth import authenticate,login,logout
+from django.contrib.auth import authenticate,login,logout,get_user_model
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from django.core.mail import send_mail
 from django.conf import settings
 import random
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.contrib import messages
 from django.utils import timezone
 from datetime import timedelta
@@ -29,10 +31,12 @@ def registerview(request):
         print(f'name: {name} email: {email} phone: {phone} password: {password}')
         
         if password != confirm_password:
-            return render(request, 'user/register.html', {'error': 'Passwords do not match'})
+            messages.error(request,'Password do not matching.')
+            return render(request, 'user/register.html')
         
-        if User.objects.filter(username=email).exists():
-            return render(request, 'auth/register.html', {'error': 'Email already registered'})
+        if User.objects.filter(email=email).exists():
+            messages.error(request,'Email Already Registered.')
+            return render(request, 'auth/register.html')
         
         # CREATION OF OTP
         otp=''.join([str(random.randint(0,9)) for _ in range(6) ])
@@ -51,9 +55,11 @@ def registerview(request):
         try:
             send_mail(subject,message,from_email,recipient_list,fail_silently=False)
             print(f'Email sent to {email}.')
+           
         except Exception as e:
             print(f'Email send failed. {e}')
-            return render(request,'auth/register.html',{'error':'Failed to send the OTP. Please try again.'})
+            messages.error(request,'Failed to send OTP. Please Try again.')
+            return render(request,'auth/register.html')
         
         # STORING USER CREDENTIALS IN SESSION
         request.session['name']=name
@@ -65,7 +71,9 @@ def registerview(request):
         print(request.session['name'])
     
     # REDIRECTS TO OTP VERIFICATION
-        return redirect('otp_verify') 
+        messages.success(request,'OTP sent to your mail successfully.')
+        return redirect('otp_verify')
+         
     
     return render(request, 'auth/register.html')
 
@@ -92,13 +100,15 @@ def otp_verify_view(request):
         print(f'name: {name}, email: {email}, phone: {phone} password: {password}')
        
         if not name or not stored_otp or not email:
-             return render(request,'auth/otpverify.html',{'error':'Session has expired. Please register again.'})
+             messages.error(request,'Session has expired. Please try again.')
+             return render(request,'auth/otpverify.html')
         if otp_method != 'email':
-            return render(request,'auth/otpverify.html',{'error':'OTP is sending via Email. Please select Email as method.'})
+            messages.error(request,'OTP is sending via Email. Please select Email as method.')
+            return render(request,'auth/otpverify.html')
         # USER DATA STORING.
         if entered_otp == stored_otp:
             user= User.objects.create_user(
-                username=email,
+                username=name,
                 email=email,
                 password=password
             )
@@ -113,10 +123,12 @@ def otp_verify_view(request):
             del request.session['phone']
             del request.session['password']
             request.session.modified =True
+            messages.success(request,'OTP verified and Account created successfully.')
             
             return redirect('login')
         else:
-            return render(request,'auth/otpverify.html',{'error':'Inavalid OTP. Please try again.'})
+            messages.error(request,'Invalid OTP. Please try again.')
+            return render(request,'auth/otpverify.html')
     
     return render(request,'auth/otpverify.html')
 
@@ -131,9 +143,11 @@ def resend_otp_view(request):
         password=request.session.get('password')
 
         if not name or not email:
-            return render(request,'auth/otpverify.html',{'error':'Session has expired. Please register again.'})
+            messages.error(request,'Session has expired. Please try again.')
+            return render(request,'auth/otpverify.html')
         if otp_method !='email':
-            return render(request,'auth/otpverify.html',{'error':'OTP is sending via Email. Please select Email method. '})
+            messages.error(request,'OTP is sending via Email. Please select Email as method.')
+            return render(request,'auth/otpverify.html')
 
         # GENERATION OF NEW OTP
         otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
@@ -151,11 +165,14 @@ def resend_otp_view(request):
         try:
             send_mail(subject,message,from_email,recipient_list)
         except Exception as e:
-            return render(request,'auth/otpverify.html',{'error':'Failed to send Email. Try again.'})
+            messages.error(request,'Failed to send Email. Try again.')
+            return render(request,'auth/otpverify.html')
         # OTP UPDATING IN THE SESSION.
         request.session['otp']=otp
         request.session.modified= True
-        return render(request,'auth/otpverify.html',{'success':f'OTP successfully resent to {email}'})    
+        
+        messages.info(request,f'OTP  has Resent successfully to {email}. Please check your mail.')
+        return render(request,'auth/otpverify.html')    
     
     return render(request,'auth/otpverify.html')
 
@@ -166,13 +183,14 @@ def forgot_password_view(request):
     if request.method=='POST':
         email=request.POST.get('email')
         # CHECKING EMAIL EXISTING
-        if not User.objects.filter(username=email).exists():
-            return render(request,'auth/forgot_password.html',{'error':'A user with this email account does not exist.'})
+        if not User.objects.filter(email=email).exists():
+            messages.error(request,'A user with this email account does not exists.')
+            return redirect('forgot_password')
         # GENERATE OTP
         otp=str(random.randint(100000,999999))
         # OTP TIME
         expiry_time=timezone.now() + timedelta(seconds=120)
-        print(f'Generated otp is {otp}')
+        print(f'Generated otp for Forgot Password is {otp}')
 
         # SESSION UPDATE
         request.session['reset_email']=email
@@ -188,8 +206,10 @@ def forgot_password_view(request):
         try:
             send_mail(subject,message,from_mail,recipient_list)
         except Exception as e:
-            return render(request,'auth/forgot_password.html',{'error':'Failed to send Email. Try again.'})
-        
+            print(f'error is {e}')
+            messages.error(request,f'Failed to send Email. Try again.')
+            return render(request,'auth/forgot_password.html')
+        messages.success(request,f'OTP has sent to {email} successfully. Please check your mail.')
         return redirect('reset_password')    
     
     return render(request,'auth/forgot_password.html')
@@ -207,30 +227,43 @@ def reset_password_view(request):
         expiry_str=request.session.get('expiry_time')
 
         if not email or not stored_otp or not expiry_str:
-            return render(request,'auth/reset_password.html',{'error':'Session has expired.Try again.'})
+            messages.error(request,'Session has expired. Try again.')
+            return redirect('reset_password')
 
         # OTP TIME
         expiry_time=parse_datetime(expiry_str)
         if timezone.now() > expiry_time:
             request.session.pop('reset_otp', None) 
-            return render(request,'auth/reset_password.html',{'error':'OTP has expired.Try again.'})
+            messages.error(request,'OTP has expired. Try again.')
+
+            return redirect('reset_password')
 
         if entered_otp != stored_otp:
-            return render(request,'auth/reset_password.html',{'error':'Invalid OTP. Try again.'})
+            messages.error(request,'Invalid OTP. Try again.')
+
+            return redirect('reset_password')
 
         if new_password != confirm_password:
-            return render(request,'auth/reset_password.html',{'error':'Passwords does not match.Try again.'})
+            messages.error(request,'Password does not match. Try again.')
+
+            return redirect('reset_password')
         
+        
+        user = get_object_or_404(User, email=email)
         try:
-            user=User.objects.get(username=email)
-            user.set_password(new_password)
-            user.save()
-            # SESSION CLEAR
-            for key in ['reset_email','reset_otp','expiry_time']:
-                request.session.pop(key,None)
-            return redirect('login')
-        except User.DoesNotExist:
-             return render(request,'auth/reset_password.html',{'error':'User does not Exist.'})
+            validate_password(new_password,user)
+        except Exception as e:
+            for error in e.messages:
+                messages.error(request,error)
+            return redirect('reset_password')
+        user.set_password(new_password)
+        user.save()
+        # SESSION CLEAR
+        for key in ['reset_email','reset_otp','expiry_time']:
+            request.session.pop(key,None)
+        messages.success(request,'New Password set successfully.')
+        return redirect('login')
+        
 
     return render(request,'auth/reset_password.html')       
 
@@ -240,26 +273,30 @@ def resend_password_otp_view(request):
     if request.method == 'POST':
         email = request.session.get('reset_email')
 
-        if not email or not User.objects.filter(username=email).exists():
+        if not email or not User.objects.filter(email=email).exists():
+            messages.error(request,'User does not exists.')
             return redirect('forgot_password')
 
         otp = str(random.randint(100000, 999999))
         expiry_time = timezone.now() + timedelta(seconds=120)
         # to show otp in the terminal
-        print(f'Resend otp is {otp}')
+        print(f'Resend otp  for Reset Password is {otp}')
 
         request.session['reset_otp'] = otp
         request.session['expiry_time'] = expiry_time.isoformat()
 
-        subject = 'OTP for Password Reset (Resent)'
+        subject = 'Redent OTP for Password Reset'
         message = f'New OTP for password reset is {otp}.'
         from_mail = settings.DEFAULT_FROM_EMAIL
         try:
             send_mail(subject, message, from_mail, [email])
         except Exception as e:
-            return render(request, 'auth/reset_password.html', {'error': 'Failed to resend OTP.'})
-
-        return render(request, 'auth/reset_password.html', {'success': 'OTP resent successfully'})
+            print(f'email send error: {e}')
+            messages.error(request,'Failed to resend OTP. Try again.')
+            return redirect('reset_password')
+        
+        messages.success(request,f'OTP has resent successfully to {email}')
+        return redirect('reset_password')
     return redirect('forgot_password')
 
 
@@ -267,29 +304,29 @@ def resend_password_otp_view(request):
 @never_cache
 def loginview(request):
     if request.method == 'POST':
-        name =request.POST['username']
+        email = request.POST['email']
         password = request.POST['password']
-        print(name)
-        print(password)
 
-        
-        user = authenticate(request,username= name,password=password)
-        print(user)
-        
+        try:
+            user_obj = User.objects.get(email=email)
+        except User.DoesNotExist:
+            messages.error(request, "Invalid email or password.")
+            return redirect('login')
+
+        user = authenticate(request, username=user_obj.username, password=password)
 
         if user is not None:
-            login(request,user)
-
-    # SESSION HANDLING AFTER USER AUTHENTICATION AND LOGIN
-
-            request.session['user_id']=user.id
-            request.session['username']=user.username
-            request.session['email']=user.email
+            login(request, user)
+            request.session['user_id'] = user.id
+            request.session['username'] = user.username
+            request.session['email'] = user.email
             request.session.set_expiry(3600)
 
+            messages.success(request, f"Welcome back, {user.username}!")
             return redirect('login_home')
         else:
-            return render(request,'auth/login.html')
+            messages.error(request, "Invalid email or password.")
+            return render(request, 'auth/login.html')
 
     return render(request, 'auth/login.html')
 
@@ -328,10 +365,11 @@ def admin_login_view(request):
         user=authenticate(request,username=username,password=password)
 
         if user is not None and user.is_superuser:
+            
             login(request,user)
 
             return redirect('admin_dashboard')
-        else: messages.error('Invalid Credentials or Not an admin.')
+        else: messages.error(request,'Invalid Credentials or Not an admin.')
 
     return render(request,'auth/admin_login.html')
 
@@ -341,7 +379,7 @@ def admin_login_view(request):
 @superuser_required
 @never_cache
 def admin_dashboard_view(request):
-
+    
     return render(request,'admin/dashboard.html')
 
 
