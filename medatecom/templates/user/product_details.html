@@ -1,3 +1,4 @@
+
 {% extends 'auth/navbar.html' %}
 {% load static %}
 
@@ -11,9 +12,8 @@
         <div class="col-lg-6">
             <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
                 <!-- Carousel Indicators -->
-                
                 <div class="carousel-indicators">
-                    {% for image in product.product.all|slice:":3" %}
+                    {% for image in product.product_image.all|slice:":3" %}
                     <button type="button" data-bs-target="#productCarousel" data-bs-slide-to="{{ forloop.counter0 }}"
                         {% if forloop.first %}class="active" aria-current="true" {% endif %}
                         aria-label="Slide {{ forloop.counter }}"></button>
@@ -22,7 +22,7 @@
 
                 <!-- Carousel Items -->
                 <div class="carousel-inner">
-                    {% for image in product.product.all|slice:":3" %}
+                    {% for image in product.product_image.all|slice:":3" %}
                     <div class="carousel-item {% if forloop.first %}active{% endif %}">
                         <img src="{{ image.image.url }}" class="d-block w-100 zoom-image" alt="{{ product.name }}" loading="lazy">
                     </div>
@@ -35,7 +35,7 @@
                 </div>
 
                 <!-- Carousel Controls -->
-                {% if product.product.all|length > 1 %}
+                {% if product.product_image.all|length > 1 %}
                 <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel"
                     data-bs-slide="prev">
                     <span class="carousel-control-prev-icon" aria-hidden="true"></span>
@@ -62,15 +62,17 @@
                 <span class="star">★</span>
                 <span class="rating-text">(4.0)</span>
             </div>
-            <p class="product-description mb-4">{{ product.category.description|default:"No description available." }}
-            </p>
+            <p class="product-description mb-4">{{ product.description|default:"No description available." }}</p>
 
             <!-- Variants Selection -->
             <div class="mb-4">
                 <h5>Available Variants</h5>
                 <select class="form-select" id="variantSelect" aria-label="Select Variant">
                     {% for varient in varients %}
-                    <option value="{{ varient.id }}" data-price="{{ varient.price }}" data-stock="{{ varient.stock }}">
+                    <option value="{{ varient.id }}"
+                            data-price="{{ varient.price|floatformat:2 }}"
+                            data-original-price="{{ varient.original_price|floatformat:2 }}"
+                            data-stock="{{ varient.stock }}">
                         {{ varient.varient_name }} {% if varient.size %}({{ varient.size }}){% endif %}
                     </option>
                     {% empty %}
@@ -83,26 +85,26 @@
             <div class="product-price mb-3">
                 {% with variant=varients.first %}
                 {% if variant %}
-                <span class="current-price fs-4 fw-bold">Rs.{{ variant.price }}</span>
-                <small class="original-price text-muted text-decoration-line-through ms-2">Rs.{{ variant.price|add:"3.00"
-                    }}</small>
-                {% if variant.stock < 5 %} <span class="text-danger d-block mt-2 stock-status">Out of Stock</span>
-                    {% else %}
+                <span class="current-price fs-4 fw-bold">₹{{ variant.price|floatformat:2 }}</span>
+                <small class="original-price text-muted text-decoration-line-through ms-2">₹{{ variant.original_price|floatformat:2 }}</small>
+                {% if variant.stock == 0 %}
+                    <span class="text-danger d-block mt-2 stock-status">Out of Stock</span>
+                {% elif variant.stock < 5 %}
+                    <span class="text-warning d-block mt-2 stock-status">Limited Stock ({{ variant.stock }} available)</span>
+                {% else %}
                     <span class="text-success d-block mt-2 stock-status">In Stock ({{ variant.stock }} available)</span>
-                    {% endif %}
-                    {% else %}
-                    <span class="text-muted">Price not available</span>
-                    {% endif %}
-                    {% endwith %}
+                {% endif %}
+                {% else %}
+                <span class="text-muted">Price not available</span>
+                {% endif %}
+                {% endwith %}
             </div>
 
             <!-- Action Buttons -->
             <div class="product-actions">
                 <a href="#" class="btn btn-primary buy-now-btn me-2">Buy Now</a>
-                <a href="#" class="btn btn-outline-secondary" title="Add to Cart"><i class="fas fa-shopping-cart"></i>
-                    Add to Cart</a>
-                <a href="#" class="btn btn-outline-secondary ms-2" title="Add to Wishlist"><i
-                        class="fas fa-heart"></i></a>
+                <a href="#" class="btn btn-outline-secondary" title="Add to Cart"><i class="fas fa-shopping-cart"></i> Add to Cart</a>
+                <a href="#" class="btn btn-outline-secondary ms-2" title="Add to Wishlist"><i class="fas fa-heart"></i></a>
             </div>
         </div>
     </div>
@@ -113,21 +115,6 @@
     .product-details-section {
         padding: 2rem 0;
     }
-
-        
-    
- /* Use fixed height instead of max-height */
-    /* .img-large {
-        width: 100%;
-        height: 400px;
-       
-        object-fit: contain;
-        border-radius: 12px;
-        display: block;
-                } */
-
-        
-    
 
     .carousel {
         max-height: 400px;
@@ -144,8 +131,8 @@
     }
 
     .carousel-item.active:hover img.zoom-image {
-    transform: scale(1.2); 
-        }
+        transform: scale(1.2);
+    }
 
     .product-catagory {
         font-size: 14px;
@@ -181,12 +168,26 @@
         margin-left: 5px;
     }
 
+    .product-price {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
     .product-price .current-price {
         color: #4b6cb7;
     }
 
     .product-price .original-price {
         font-size: 14px;
+    }
+
+    .product-price .stock-status {
+        font-size: 14px;
+    }
+
+    .product-price .text-warning {
+        color: #f59e0b; /* Orange for limited stock */
     }
 
     .btn-primary,
@@ -225,24 +226,6 @@
     }
 
     /* Responsive Adjustments */
-
-       
-/* 
-    @media (max-width: 768px) {
-        .img-large {
-            max-height: 300px;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .img-large {
-            max-height: 250px;
-        }
-    } */
-
-        
-
-
     @media (max-width: 768px) {
         .carousel {
             max-height: 300px;
@@ -296,31 +279,50 @@
 <!-- Include Font Awesome for icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 <!-- JavaScript for dynamic price and stock update -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    
     document.addEventListener('DOMContentLoaded', function () {
         const variantSelect = document.getElementById('variantSelect');
         const priceElement = document.querySelector('.product-price .current-price');
         const originalPriceElement = document.querySelector('.product-price .original-price');
-        const stockElement = document.querySelector('.product-price .text-danger, .product-price .text-success');
+        const stockElement = document.querySelector('.product-price .stock-status');
 
-        variantSelect.addEventListener('change', function () {
+        function updatePriceStock() {
             const selectedOption = variantSelect.options[variantSelect.selectedIndex];
             const price = selectedOption.getAttribute('data-price');
+            const originalPrice = selectedOption.getAttribute('data-original-price');
             const stock = parseInt(selectedOption.getAttribute('data-stock'));
 
-            priceElement.textContent = `Rs.${price}`;
-            originalPriceElement.textContent = `Rs.${parseFloat(price) + 3.00}`;
-            if (stock < 5) {
-                stockElement.textContent = 'Out of Stock';
-                stockElement.classList.remove('text-success');
-                stockElement.classList.add('text-danger');
-            } else {
-                stockElement.textContent = `In Stock (${stock} available)`;
-                stockElement.classList.remove('text-danger');
-                stockElement.classList.add('text-success');
+            if (priceElement) {
+                priceElement.textContent = `₹${price}`;
             }
-        });
+            if (originalPriceElement) {
+                originalPriceElement.textContent = `₹${originalPrice}`;
+            }
+            if (stockElement) {
+                if (stock === 0) {
+                    stockElement.textContent = 'Out of Stock';
+                    stockElement.classList.remove('text-success', 'text-warning');
+                    stockElement.classList.add('text-danger');
+                } else if (stock < 5) {
+                    stockElement.textContent = `Limited Stock (${stock} available)`;
+                    stockElement.classList.remove('text-success', 'text-danger');
+                    stockElement.classList.add('text-warning');
+                } else {
+                    stockElement.textContent = `In Stock (${stock} available)`;
+                    stockElement.classList.remove('text-danger', 'text-warning');
+                    stockElement.classList.add('text-success');
+                }
+            }
+        }
+
+        // Run on first load if variants exist
+        if (variantSelect.options.length > 0) {
+            updatePriceStock();
+        }
+
+        // Run on change
+        variantSelect.addEventListener('change', updatePriceStock);
     });
 </script>
 {% endblock %}

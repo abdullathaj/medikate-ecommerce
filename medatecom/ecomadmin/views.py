@@ -1,6 +1,6 @@
 from django.shortcuts import render,redirect,get_object_or_404
 from ecomusers.models import User
-from ecomproducts.models import Categories,Product,Product_Varients,ProductImage
+from ecomproducts.models import Categories,Product,ProductVarients,ProductImage
 from django.contrib.admin.views.decorators import staff_member_required
 from django.views.decorators.cache import never_cache
 from .forms import Useraddform,CategoryAddForm,ProductAddForm,ProductImageForm,VarientAddForm,VarientFormset,ImageFormset
@@ -177,7 +177,7 @@ def admin_edit_category(request, category_id):
 # @never_cache
 def admin_product_details(request):
     products=Product.objects.all()
-    varients=Product_Varients.objects.select_related('product__category')
+    varients=ProductVarients.objects.select_related('product__category')
 
 
     query = request.GET.get('q')
@@ -322,7 +322,7 @@ def admin_edit_product(request,product_id):
 # @staff_member_required
 # @never_cache
 def admin_hide_product(request, varient_id):
-    varient = get_object_or_404(Product_Varients, id=varient_id)
+    varient = get_object_or_404(ProductVarients, id=varient_id)
 
     if request.method == "POST":
         varient.is_active = not varient.is_active

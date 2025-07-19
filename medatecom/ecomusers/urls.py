@@ -6,5 +6,6 @@ urlpatterns = [
    
     path('login_home/',views.home_after_login,name='login_home'),
     path('product_details/<int:product_id>/',views.product_details,name='product_details'),
+    path('product_listing/',views.user_product_listing,name='product_listing')
 
 ]

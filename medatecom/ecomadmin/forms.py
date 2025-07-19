@@ -1,7 +1,7 @@
 from django import forms
 from django.forms import ModelForm,inlineformset_factory
 from ecomusers.models import User
-from ecomproducts.models import Categories,Product,Product_Varients,ProductImage
+from ecomproducts.models import Categories,Product,ProductVarients,ProductImage
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 import re
@@ -53,7 +53,7 @@ class ProductAddForm(ModelForm):
 
 class VarientAddForm(ModelForm):
     class Meta:
-        model = Product_Varients
+        model = ProductVarients
         fields = ['varient_name', 'price', 'stock', 'size', 'is_active']
         widgets = {
             'varient_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter variant name'}),
@@ -92,7 +92,7 @@ class ProductImageForm(ModelForm):
         }
 
 
-VarientFormset=inlineformset_factory(Product,Product_Varients,form=VarientAddForm,extra=0,can_delete=True,min_num=1,validate_min=True)
+VarientFormset=inlineformset_factory(Product,ProductVarients,form=VarientAddForm,extra=0,can_delete=True,min_num=1,validate_min=True)
 ImageFormset=inlineformset_factory(Product,ProductImage,form=ProductImageForm,
                                     extra=0,can_delete=True,max_num=3,min_num=3,
                                     validate_min=True,validate_max=True)
