@@ -4,6 +4,17 @@
 {% block content %}
 <div class="container-fluid py-4">
     <h1 class="mb-4 text-center">Add New Product</h1>
+    <!-- FORM ERRORS-->
+    {% if form_errors %}
+    <div class="alert alert-danger">
+        <ul class="errorlist">
+            {% for error in form_errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}
+
     <form method="post" enctype="multipart/form-data" id="productForm" class="bg-light p-4 rounded shadow-sm">
         {% csrf_token %}
 
@@ -226,6 +237,17 @@
         
         // Update TOTAL_FORMS
         managementFormTotal.value = formCount + 1;
+    };
+    document.getElementById('productForm').addEventListener('submit', function(event) {
+    const visibleImageInputs = document.querySelectorAll('input[type="file"]:not([style*="display: none"])');
+    const totalImageForms = parseInt(document.getElementById('id_images-TOTAL_FORMS').value);
+    const imageCheckboxes = document.querySelectorAll('input[name$="-DELETE"]:checked');
+    const remainingImages = totalImageForms - imageCheckboxes.length;
+
+    if (remainingImages !== 3) {
+        alert("Exactly 3 images are required. You currently have " + remainingImages);
+        event.preventDefault();
     }
+});
 </script>
 {% endblock %}

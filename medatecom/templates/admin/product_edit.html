@@ -254,6 +254,19 @@
         
         // Update TOTAL_FORMS
         managementFormTotal.value = formCount + 1;
+    };
+
+    document.getElementById('productForm').addEventListener('submit', function(event) {
+    const visibleImageInputs = document.querySelectorAll('input[type="file"]:not([style*="display: none"])');
+    const totalImageForms = parseInt(document.getElementById('id_images-TOTAL_FORMS').value);
+    const imageCheckboxes = document.querySelectorAll('input[name$="-DELETE"]:checked');
+    const remainingImages = totalImageForms - imageCheckboxes.length;
+
+    if (remainingImages !== 3) {
+        alert("Exactly 3 images are required. You currently have " + remainingImages);
+        event.preventDefault();
     }
+});
+
 </script>
 {% endblock %}

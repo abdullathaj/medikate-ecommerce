@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from ecomproducts.models import Product,ProductVarients,ProductImage,Categories
 from django.core.paginator import Paginator
-
+from django.db.models import Min,Q
 
 # Create your views here.
 # home page for User BEFORE LOGIN
@@ -49,24 +49,132 @@ def home_after_login(request):
     return render(request,'auth/home.html',{'products':page_obj})
 
 
-def product_details(request,product_id):
+def product_details(request, product_id):
+    # Fetch the product
     product = get_object_or_404(Product, id=product_id, category__is_active=True)
+
+    # Fetch active variants for the product
     varients = product.product_varient.filter(is_active=True)
 
-    
-    return render(request,'user/product_details.html',{'product':product,'varients':varients})
+    # Fetch related products (same category, excluding current product, up to 4)
+    related_products = Product.objects.filter(
+        category=product.category,
+        product_varient__is_active=True,
+        category__is_active=True
+    ).exclude(id=product.id).distinct()[:4]
 
+    # Context for template
+    context = {
+        'product': product,
+        'varients': varients,
+        'related_products': related_products,
+    }
+
+    return render(request, 'user/product_details.html', context)
 # PRODUCT LISTING VIEW
 
 def user_product_listing(request):
-    products=Product.objects.filter(product_varient__is_active=True,category__is_active=True).distinct()
+    # Base queryset for active products and variants
+    products = Product.objects.filter(
+        product_varient__is_active=True,
+        category__is_active=True
+    ).distinct()
 
-    # PAGINATOR 
-    paginator=Paginator(products,12)
-    page_number=request.GET.get('page')
-    page_obj=paginator.get_page(page_number)
+    # Get all active categories for filter options
+    categories = Categories.objects.filter(is_active=True)
 
+    # Get distinct brands for filter options
+    brands = Product.objects.filter(
+        product_varient__is_active=True,
+        category__is_active=True
+    ).exclude(brand__isnull=True).values_list('brand', flat=True).distinct()
 
-    
+    # Filtering
+    selected_categories = request.GET.getlist('category')
+    selected_brands = request.GET.getlist('brand')
+    price_min = request.GET.get('price_min')
+    price_max = request.GET.get('price_max')
 
-    return render(request,'user/product_listing.html',{'products':page_obj})
+    # Apply category filter
+    if selected_categories:
+        products = products.filter(category__id__in=selected_categories)
+
+    # Apply brand filter
+    if selected_brands:
+        products = products.filter(brand__in=selected_brands)
+
+    # Apply price range filter
+    if price_min:
+        try:
+            price_min = float(price_min)
+            products = products.filter(product_varient__price__gte=price_min)
+        except ValueError:
+            pass  # Ignore invalid price_min
+    if price_max:
+        try:
+            price_max = float(price_max)
+            products = products.filter(product_varient__price__lte=price_max)
+        except ValueError:
+            pass  # Ignore invalid price_max
+
+    # Sorting
+    sort = request.GET.get('sort')
+    if sort == 'price_low':
+        products = products.annotate(min_price=Min('product_varient__price')).order_by('min_price')
+    elif sort == 'price_high':
+        products = products.annotate(min_price=Min('product_varient__price')).order_by('-min_price')
+    elif sort == 'name_asc':
+        products = products.order_by('name')
+    elif sort == 'name_desc':
+        products = products.order_by('-name')
+
+    # Pagination
+    paginator = Paginator(products, 9)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Build query string for pagination (excluding page parameter)
+    query_params = request.GET.copy()
+    if 'page' in query_params:
+        del query_params['page']
+    query_string = query_params.urlencode()
+
+    # Context for template
+    context = {
+        'products': page_obj,
+        'categories': categories,
+        'brands': brands,
+        'selected_categories': selected_categories,
+        'selected_brands': selected_brands,
+        'price_min': price_min,
+        'price_max': price_max,
+        'sort': sort,
+        'query_string': query_string,
+    }
+
+    return render(request, 'user/product_listing.html', context)
+
+# CART MANAGEMENT
+def users_cart_page(request):
+
+    return render(request,'user/cart_page.html')
+
+# USER PROFILE MANAGEMENT
+def users_profile_page(request):
+
+    return render(request,'user/profile_page.html')
+
+# USER ORDERS PAGE
+def users_orders_page(request):
+
+    return render(request,'user/orders_page.html')
+
+# USER WISHLIST PAGE
+def users_wishlist_page(request):
+
+    return render(request,'user/user_wishlist.html')
+
+# USER WALLET PAGE
+def users_wallet_page(request):
+
+    return render(request,'user/wallet_page.html')

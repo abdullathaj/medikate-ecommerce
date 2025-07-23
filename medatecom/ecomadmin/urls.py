@@ -5,7 +5,6 @@ urlpatterns = [
     path('',views.admin_dashboard,name='admin_dashboard'),
     path('customer_details/',views.admin_customer_details,name='customer_details'),
     path('add_user/',views.admin_add_user,name='add_user'),
-    path('edit_user/<int:user_id>/',views.admin_edit_user,name='edit_user'),
     path('block_user/<int:user_id>/',views.admin_block_user,name='block_user'),
     # ADMIN CATEGORY MANAGEMENT
     path('admin_categories/',views.admin_category_list,name='admin_categories'),

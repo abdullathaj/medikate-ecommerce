@@ -1,0 +1,51 @@
+{% extends 'auth/navbar.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">User Profile</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Profile Image -->
+                    {% if user.profile_image %}
+                        <img src="{{ user.profile_image.url }}" alt="Profile Picture" class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                        <img src="{% static 'images/default_profile.png' %}" alt="Default Profile Picture" class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% endif %}
+
+                    <!-- User Details -->
+                    <div class="mb-4">
+                        <h4>Personal Information</h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Username:</strong> {{ user.username }}</p>
+                                <p><strong>Email:</strong> {{ user.email }}</p>
+                                <p><strong>First Name:</strong> {{ user.first_name|default:"Not set" }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Last Name:</strong> {{ user.last_name|default:"Not set" }}</p>
+                                <p><strong>Phone:</strong> {{ user.phone|default:"Not set" }}</p>
+                                <p><strong>Address:</strong> {{ user.address|default:"Not set" }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Check if user is newly created (basic heuristic) -->
+                    {% if not user.phone or not user.first_name or not user.last_name or not user.address %}
+                        <div class="alert alert-info">
+                            <p>It looks like your profile is incomplete. Please update your profile to add more details.</p>
+                            <a href="" class="btn btn-primary">Update Your Profile</a>
+                        </div>
+                    {% else %}
+                        <a href="" class="btn btn-outline-primary">Edit Profile</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

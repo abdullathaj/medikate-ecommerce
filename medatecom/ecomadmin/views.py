@@ -7,6 +7,7 @@ from .forms import Useraddform,CategoryAddForm,ProductAddForm,ProductImageForm,V
 from django.db.models import Q
 from django.contrib import messages
 from django.forms import inlineformset_factory
+from django.db import IntegrityError
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 
@@ -64,21 +65,6 @@ def admin_add_user(request):
    return render(request, 'admin/add_user.html', {'form': form}) 
 
 
-# ADMIN EDIT USER 
-# @staff_member_required
-# @never_cache
-def admin_edit_user(request,user_id):
-    user=get_object_or_404(User,id=user_id)
-    if request.method=='POST':
-        user.username=request.POST.get('username')
-        user.email=request.POST.get('email')
-        user.first_name=request.POST.get('first_name')
-        user.save()
-        messages.success(request,f'User {user.username} has updated successfully...')
-        return redirect(admin_customer_details)
-
-    return render(request,'admin/edit_user.html',{'user':user})
-
 
 # ADMIN BLOCK AND UNBLOCK USER
 
@@ -109,7 +95,7 @@ def admin_category_list(request):
             Q(description__icontains=query)
         )
 
-    paginator=Paginator(categories,5)
+    paginator=Paginator(categories,10)
     page_number=request.GET.get('page')
     page_obj=paginator.get_page(page_number)
 
@@ -176,8 +162,8 @@ def admin_edit_category(request, category_id):
 # @staff_member_required
 # @never_cache
 def admin_product_details(request):
-    products=Product.objects.all()
-    varients=ProductVarients.objects.select_related('product__category')
+    products=Product.objects.all().order_by('id')
+    varients=ProductVarients.objects.select_related('product__category').order_by('product__id')
 
 
     query = request.GET.get('q')
@@ -198,52 +184,66 @@ def admin_product_details(request):
 # @staff_member_required
 # @never_cache
 def admin_add_product(request):
-    varient_formset=VarientFormset
-    image_formset=ImageFormset
-       
-    if request.method=='POST':
-        product_form=ProductAddForm(request.POST)
-        varient_form=varient_formset(request.POST,prefix='varients')
-        image_form=image_formset(request.POST,request.FILES,prefix='images')
+    varient_formset = VarientFormset
+    image_formset = ImageFormset
+
+    form_errors = []  
+
+    if request.method == 'POST':
+        product_form = ProductAddForm(request.POST)
+        varient_form = varient_formset(request.POST, prefix='varients')
+        image_form = image_formset(request.POST, request.FILES, prefix='images')
+
         if product_form.is_valid() and varient_form.is_valid() and image_form.is_valid():
             try:
-                product=product_form.save()
-                varients=varient_form.save(commit=False)
+                product = product_form.save()
+                varients = varient_form.save(commit=False)
                 if not varients:
-                    raise ValidationError('Atleast one Varient is required..')
+                    raise ValidationError('At least one Varient is required.')
                 for varient in varients:
                     varient.product = product
                     varient.save()
                 images = image_form.save(commit=False)
                 if len([img for img in images if img.image]) != 3:
-                    raise ValidationError("exactly 3 images needed")
+                    raise ValidationError("Exactly 3 images needed.")
                 for image in images:
-                    if image.image:  # Only save images with uploads
+                    if image.image:
                         image.product = product
                         image.save()
-
+                messages.success(request, 'Product, Varient are created and uploaded 3 Images.')
                 return redirect('admin_product_list')
             except ValidationError as e:
                 form_errors = e.messages
-                print("Validation Errors:", form_errors)
+                for err in form_errors:
+                    messages.error(request, err)
         else:
-            form_errors = (
-                product_form.errors.as_data() +
-                varient_form.non_form_errors() +
-                image_form.non_form_errors() +
-                [form.errors for form in varient_form] +
-                [form.errors for form in image_form]
-            )
-            print("Form Errors:", form_errors)
+            form_errors.extend(product_form.non_field_errors())
+            form_errors.extend(varient_form.non_form_errors())
+            form_errors.extend(image_form.non_form_errors())
+
+            for form in varient_form:
+                form_errors.extend(form.non_field_errors())
+                for field, errors in form.errors.items():
+                    form_errors.extend(errors)
+
+            for form in image_form:
+                form_errors.extend(form.non_field_errors())
+                for field, errors in form.errors.items():
+                    form_errors.extend(errors)
+
+            for err in form_errors:
+                messages.error(request, err)
     else:
-        product_form=ProductAddForm()
-        varient_form=varient_formset(prefix='varients')
-        image_form=image_formset(prefix='images')
+        product_form = ProductAddForm()
+        varient_form = varient_formset(prefix='varients')
+        image_form = image_formset(prefix='images')
 
-        
-
-    return render(request,'admin/product_add.html',{ 'product_form':product_form,'varient_form':varient_form,'image_form':image_form})
-
+    return render(request, 'admin/product_add.html', {
+        'product_form': product_form,
+        'varient_form': varient_form,
+        'image_form': image_form,
+        'form_errors': form_errors  
+    })
 
 # ADMIN EDITING THE PRODUCT,VARIENT AND IMAGES
 # @staff_member_required
@@ -272,9 +272,9 @@ def admin_edit_product(request,product_id):
                     # HANDLING IMAGES
                 images = image_form.save(commit=False)
                
-                existing_images = ProductImage.objects.filter(product=product).exclude(
-                    id__in=[img.id for img in image_form.deleted_objects if img.id]
-                )
+                deleted_ids = [img.id for img in image_form.deleted_objects if img and img.id]
+                existing_images = ProductImage.objects.filter(product=product).exclude(id__in=deleted_ids)
+                
                 new_images = [img for img in images if img.image]  # Only images with new uploads
                 total_images = len(existing_images) + len(new_images)
                 # Delete images marked for deletion
@@ -293,16 +293,26 @@ def admin_edit_product(request,product_id):
                 messages.success(request, f"Product '{product.name}' updated successfully.")
                 return redirect('admin_product_list')
             else:
-                form_errors = (
-                    product_form.errors.as_data() +
-                    varient_form.non_form_errors() +
-                    image_form.non_form_errors() +
-                    [form.errors for form in varient_form] +
-                    [form.errors for form in image_form]
-                )
+                form_errors = []
+                form_errors.extend(product_form.non_field_errors())
+                form_errors.extend(varient_form.non_form_errors())
+                form_errors.extend(image_form.non_form_errors())
+
+                for form in varient_form:
+                    form_errors.extend(form.non_field_errors())
+                    for field, errors in form.errors.items():
+                        form_errors.extend(errors)
+
+                for form in image_form:
+                    form_errors.extend(form.non_field_errors())
+                    for field, errors in form.errors.items():
+                        form_errors.extend(errors)
+
                 print('Form Errors:',form_errors)
         except ValidationError as e:
             form_errors = e.messages
+            for msg in form_errors:
+                messages.error(request,msg)
             print('Validation Errors:',form_errors)
     else:
         product_form = ProductAddForm(instance=product)

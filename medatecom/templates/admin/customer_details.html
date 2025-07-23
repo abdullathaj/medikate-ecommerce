@@ -63,9 +63,9 @@
         <span class="text-muted">N/A</span>
     {% endif %}
     
-    <!-- Edit Button -->
+    {% comment %} <!-- Edit Button -->
     <a href="{% url 'edit_user' user.id %}" class="btn btn-info btn-sm text-white">Edit</a>
-</td>
+</td> {% endcomment %}
 
                 </tr>
                 {% empty %}
