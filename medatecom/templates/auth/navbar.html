@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -52,6 +53,7 @@
         .logo img {
             height: 50px;
             width: auto;
+            
         }
 
         .nav-links {
@@ -270,7 +272,7 @@
         <div class="nav-container">
             <!-- Logo Section -->
             <div class="logo">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='50' viewBox='0 0 100 50'%3E%3Ccircle cx='25' cy='25' r='20' fill='%23fff' stroke='%23333' stroke-width='2'/%3E%3Ctext x='25' y='30' text-anchor='middle' fill='%23333' font-family='Arial' font-size='12' font-weight='bold'%3EMedAT%3C/text%3E%3C/svg%3E" alt="MedAT Logo">
+                <img src="{% static 'home/images/medikate_logo1-removebg-preview.png' %}" alt="MediKate Logo" width="100" height="50">
             </div>
 
             <!-- Navigation Links (Home, Product) -->

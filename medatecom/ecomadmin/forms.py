@@ -1,7 +1,7 @@
 from django import forms
 from django.forms import ModelForm,inlineformset_factory,BaseInlineFormSet
 from ecomusers.models import User
-from ecomproducts.models import Categories,Product,ProductVarients,ProductImage
+from ecomproducts.models import Categories,Product,ProductVariant,ProductImage
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 import re
@@ -59,20 +59,20 @@ class ProductAddForm(ModelForm):
             return name
 
 
-class VarientAddForm(ModelForm):
+class VariantAddForm(ModelForm):
     class Meta:
-        model = ProductVarients
-        fields = ['varient_name', 'price', 'stock', 'size', 'is_active']
+        model = ProductVariant
+        fields = ['variant_name', 'price', 'stock', 'size', 'is_active']
         widgets = {
-            'varient_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter variant name'}),
+            'variant_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter variant name'}),
             'price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': 'Enter price'}),
             'stock': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter stock quantity'}),
             'size': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter size (optional)'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
  
-    def clean_varient_name(self):
-        name = self.cleaned_data['varient_name']
+    def clean_variant_name(self):
+        name = self.cleaned_data['variant_name']
         if not re.fullmatch(r'[A-Za-z0-9\s]+', name):
             raise ValidationError("Variant name should contain only letters, digits and spaces.")
         return name
@@ -100,19 +100,19 @@ class ProductImageForm(ModelForm):
         }
 
 
-class BaseVarientFormset(BaseInlineFormSet):
+class BaseVariantFormset(BaseInlineFormSet):
     def clean(self):
         super().clean()
         seen = set()
         for form in self.forms:
             if form.cleaned_data.get('DELETE', False):
                 continue
-            name = form.cleaned_data.get('varient_name')
+            name = form.cleaned_data.get('variant_name')
             if name in seen:
                 raise ValidationError(f"Duplicate variant name: '{name}'")
             seen.add(name)
 
-VarientFormset=inlineformset_factory(Product,ProductVarients,form=VarientAddForm,formset=BaseVarientFormset,
+VariantFormset=inlineformset_factory(Product,ProductVariant,form=VariantAddForm,formset=BaseVariantFormset,
                                      extra=0,can_delete=True,min_num=1,validate_min=True)
 ImageFormset=inlineformset_factory(Product,ProductImage,form=ProductImageForm,
                                     extra=0,can_delete=True,max_num=3,min_num=3,

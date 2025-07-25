@@ -7,6 +7,11 @@ urlpatterns = [
     path('login_home/',views.home_after_login,name='login_home'),
     path('product_details/<int:product_id>/',views.product_details,name='product_details'),
     path('product_listing/',views.user_product_listing,name='product_listing'),
+    # PRODUCT CARD BUTTONS
+    path('add_to_cart/<int:variant_id>/', views.add_to_cart, name='add_to_cart'),
+    path('buy_now/<int:variant_id>/', views.buy_now, name='buy_now'),
+    path('wishlist/add/<int:variant_id>/', views.add_to_wishlist, name='add_to_wishlist'),
+    # NAVBAR BUTTONS
     path('user_cart/',views.users_cart_page,name='user_cart_page'),
     path('user_profile/',views.users_profile_page,name='user_profile_page'),
     path('user_orders/',views.users_orders_page,name='user_orders_page'),

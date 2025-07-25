@@ -78,7 +78,7 @@
                                 <span class="rating-text">(4.0)</span>
                             </div>
                             <div class="product-bottom-details">
-                                {% with variant=product.product_varient.first %}
+                                {% with variant=product.product_variant.first %}
                                     {% if variant %}
                                         <div class="product-price">
                                             <small class="original-price">₹{{ variant.original_price|floatformat:2 }}</small>

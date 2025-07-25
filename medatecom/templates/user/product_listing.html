@@ -74,26 +74,29 @@
                 <section id="product-listing" class="product-listing-section">
                     <h2 class="text-center mb-4">Latest Products</h2>
                     <div class="row row-cols-1 row-cols-md-3 g-4">
-                        {% for product in products %}
-                            <!-- Product Card -->
+                        {% for variant in variants %}
+                            <!-- Variant Card -->
                             <div class="col">
                                 <div class="product-card">
                                     <div class="product-thumb">
-                                        {% with product_image=product.product_image.first %}
+                                        {% with product_image=variant.product.product_image.first %}
                                             {% if product_image %}
-                                                <img src="{{ product_image.image.url }}" alt="{{ product.name }}">
+                                                <img src="{{ product_image.image.url }}" alt="{{ variant.product.name }} - {{ variant.variant_name }}">
                                             {% else %}
-                                                <img src="https://via.placeholder.com/150?text={{ product.name|urlencode }}" alt="{{ product.name }}">
+                                                <img src="https://via.placeholder.com/150?text={{ variant.product.name|urlencode }}%20-%20{{ variant.variant_name|urlencode }}" alt="{{ variant.product.name }} - {{ variant.variant_name }}">
                                             {% endif %}
                                         {% endwith %}
                                     </div>
                                     <div class="product-details">
                                         <div class="product-catagory-line">
-                                            <span class="product-catagory">{{ product.category.name }}</span>
-                                            <a href="" title="Add to Wishlist" class="wishlist-link"><i class="fas fa-heart"></i></a>
+                                            <span class="product-catagory">{{ variant.product.category.name }}</span>
+                                            <a href="{% url 'add_to_wishlist' variant.id %}" title="Add to Wishlist" class="wishlist-link"><i class="fas fa-heart"></i></a>
                                         </div>
-                                        <h4><a href="{% url 'product_details' product.id %}">{{ product.name|truncatechars:30 }}</a></h4>
-                                        <p>{{ product.description|truncatewords:10 }}</p>
+                                        <h4><a href="{% url 'product_details' variant.product.id %}">{{ variant.product.name|truncatechars:20 }} - {{ variant.variant_name|truncatechars:10 }}</a></h4>
+                                        <p>{{ variant.product.description|truncatewords:10 }}</p>
+                                        {% if variant.size %}
+                                            <p class="variant-size">Size: {{ variant.size }}</p>
+                                        {% endif %}
                                         <div class="product-rating">
                                             <span class="star filled">★</span>
                                             <span class="star filled">★</span>
@@ -103,24 +106,14 @@
                                             <span class="rating-text">(4.0)</span>
                                         </div>
                                         <div class="product-bottom-details">
-                                            {% with variant=product.product_varient.first %}
-                                                {% if variant %}
-                                                    <div class="product-price">
-                                                        <small class="original-price">₹{{ variant.original_price|floatformat:2 }}</small>
-                                                        <span class="current-price">₹{{ variant.price|floatformat:2 }}</span>
-                                                    </div>
-                                                    <div class="product-links">
-                                                        <a href="" title="Add to Cart" class="cart-btn"><i class="fas fa-shopping-cart"></i></a>
-                                                        <a href="" class="buy-now-btn">Buy Now</a>
-                                                    </div>
-                                                {% else %}
-                                                    <div class="product-price">N/A</div>
-                                                    <div class="product-links">
-                                                        <a href="#" title="Add to Cart" class="cart-btn"><i class="fas fa-shopping-cart"></i></a>
-                                                        <a href="#" class="buy-now-btn">Buy Now</a>
-                                                    </div>
-                                                {% endif %}
-                                            {% endwith %}
+                                            <div class="product-price">
+                                                <small class="original-price">₹{{ variant.original_price|floatformat:2 }}</small>
+                                                <span class="current-price">₹{{ variant.price|floatformat:2 }}</span>
+                                            </div>
+                                            <div class="product-links">
+                                                <a href="{% url 'add_to_cart' variant.id %}" title="Add to Cart" class="cart-btn"><i class="fas fa-shopping-cart"></i></a>
+                                                <a href="{% url 'buy_now' variant.id %}" class="buy-now-btn">Buy Now</a>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -133,12 +126,12 @@
                     </div>
 
                     <!-- Pagination -->
-                    {% if products.has_other_pages %}
+                    {% if variants.has_other_pages %}
                         <nav aria-label="Page navigation" class="mt-5">
                             <ul class="pagination justify-content-center">
-                                {% if products.has_previous %}
+                                {% if variants.has_previous %}
                                     <li class="page-item">
-                                        <a class="page-link" href="?page={{ products.previous_page_number }}{% if query_string %}&{{ query_string }}{% endif %}" aria-label="Previous">
+                                        <a class="page-link" href="?page={{ variants.previous_page_number }}{% if query_string %}&{{ query_string }}{% endif %}" aria-label="Previous">
                                             <span aria-hidden="true">«</span>
                                         </a>
                                     </li>
@@ -150,21 +143,21 @@
                                     </li>
                                 {% endif %}
 
-                                {% for num in products.paginator.page_range %}
-                                    {% if products.number == num %}
+                                {% for num in variants.paginator.page_range %}
+                                    {% if variants.number == num %}
                                         <li class="page-item active" aria-current="page">
                                             <a class="page-link" href="#">{{ num }}</a>
                                         </li>
-                                    {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
+                                    {% elif num > variants.number|add:'-3' and num < variants.number|add:'3' %}
                                         <li class="page-item">
                                             <a class="page-link" href="?page={{ num }}{% if query_string %}&{{ query_string }}{% endif %}">{{ num }}</a>
                                         </li>
                                     {% endif %}
                                 {% endfor %}
 
-                                {% if products.has_next %}
+                                {% if variants.has_next %}
                                     <li class="page-item">
-                                        <a class="page-link" href="?page={{ products.next_page_number }}{% if query_string %}&{{ query_string }}{% endif %}" aria-label="Next">
+                                        <a class="page-link" href="?page={{ variants.next_page_number }}{% if query_string %}&{{ query_string }}{% endif %}" aria-label="Next">
                                             <span aria-hidden="true">»</span>
                                         </a>
                                     </li>
@@ -237,7 +230,9 @@
 
         .product-card {
             width: 100%;
-            height: 420px;
+            min-height: 500px;
+            margin: 0;
+            
             background: #ffffff;
             border-radius: 12px;
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
@@ -273,7 +268,7 @@
         }
 
         .product-details {
-            padding: 15px;
+            padding: 12px;
             flex-grow: 1;
             display: flex;
             flex-direction: column;
@@ -284,7 +279,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .product-catagory {
@@ -312,7 +307,7 @@
 
         .product-details h4 a {
             font-weight: 700;
-            font-size: 16px;
+            font-size: 15px;
             color: #182848;
             transition: color 0.3s ease;
             display: -webkit-box;
@@ -320,7 +315,7 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
             text-overflow: ellipsis;
-            height: 40px;
+            height: 36px;
         }
 
         .product-details h4 a:hover {
@@ -328,16 +323,22 @@
         }
 
         .product-details p {
-            font-size: 12px;
-            line-height: 16px;
-            margin-bottom: 10px;
+            font-size: 11px;
+            line-height: 14px;
+            margin-bottom: 8px;
             color: #5f6c85;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
             text-overflow: ellipsis;
-            height: 32px;
+            height: 28px;
+        }
+
+        .variant-size {
+            font-size: 12px;
+            color: #5f6c85;
+            margin-bottom: 10px;
         }
 
         .product-rating {
@@ -367,26 +368,27 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-top: 15px;
+            padding-top: 8px;
             padding-bottom: 10px;
             gap: 15px;
+            flex-shrink: 0;
         }
 
         .product-price {
-            font-size: 16px;
+            font-size: 15px;
             color: #4b6cb7;
             font-weight: 700;
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 3px;
             align-items: flex-start;
-            max-width: 100px;
+            max-width: 90px;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
         .original-price {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 400;
             text-decoration: line-through;
             color: #5f6c85;
@@ -401,8 +403,8 @@
         .product-links {
             display: flex;
             align-items: center;
-            gap: 10px;
-            max-width: 180px;
+            gap: 8px;
+            max-width: 140px;
             justify-content: flex-end;
         }
 
@@ -417,8 +419,8 @@
         }
 
         .cart-btn {
-            width: 32px;
-            height: 32px;
+            width: 30px;
+            height: 30px;
             color: #6b7280;
             border: 1px solid #6b7280;
             border-radius: 50%;
@@ -430,8 +432,8 @@
         }
 
         .buy-now-btn {
-            width: 90px;
-            height: 32px;
+            width: 80px;
+            height: 30px;
             background: rgb(17, 16, 8);
             color: white;
             border-radius: 15px;
@@ -464,19 +466,19 @@
         /* Responsive Adjustments for Large Screens */
         @media (min-width: 1200px) {
             .product-card {
-                height: 440px;
+                min-height: 520px;
             }
 
             .product-bottom-details {
-                gap: 20px;
-                padding-top: 18px;
-                padding-bottom: 12px;
+                gap: 12px;
+                padding-top: 10px;
+                padding-bottom: 10px;
             }
 
             .product-price {
                 gap: 6px;
                 font-size: 18px;
-                max-width: 120px;
+                max-width: 100px;
             }
 
             .original-price {
@@ -488,8 +490,8 @@
             }
 
             .product-links {
-                gap: 12px;
-                max-width: 200px;
+                gap: 10px;
+                max-width: 160px;
             }
 
             .cart-btn {
@@ -514,7 +516,7 @@
         /* Responsive Adjustments */
         @media (max-width: 992px) {
             .product-card {
-                height: 400px;
+                min-height: 460px;
             }
 
             .product-thumb {
@@ -528,7 +530,7 @@
 
         @media (max-width: 768px) {
             .product-card {
-                height: 380px;
+                min-height: 440px;
             }
 
             .product-thumb {
@@ -552,19 +554,19 @@
             .cart-btn {
                 width: 28px;
                 height: 28px;
-                font-size: 11px;
+                font-size: 10px;
             }
 
             .buy-now-btn {
-                width: 80px;
+                width: 70px;
                 height: 28px;
-                font-size: 11px;
+                font-size: 10px;
             }
 
             .wishlist-link {
                 width: 26px;
                 height: 26px;
-                font-size: 13px;
+                font-size: 12px;
             }
 
             .product-price {
@@ -572,7 +574,7 @@
             }
 
             .product-links {
-                max-width: 160px;
+                max-width: 120px;
             }
         }
     </style>

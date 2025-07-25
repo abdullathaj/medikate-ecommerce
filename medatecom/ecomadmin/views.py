@@ -1,9 +1,9 @@
 from django.shortcuts import render,redirect,get_object_or_404
 from ecomusers.models import User
-from ecomproducts.models import Categories,Product,ProductVarients,ProductImage
+from ecomproducts.models import Categories,Product,ProductVariant,ProductImage
 from django.contrib.admin.views.decorators import staff_member_required
 from django.views.decorators.cache import never_cache
-from .forms import Useraddform,CategoryAddForm,ProductAddForm,ProductImageForm,VarientAddForm,VarientFormset,ImageFormset
+from .forms import Useraddform,CategoryAddForm,ProductAddForm,ProductImageForm,VariantAddForm,VariantFormset,ImageFormset
 from django.db.models import Q
 from django.contrib import messages
 from django.forms import inlineformset_factory
@@ -163,46 +163,46 @@ def admin_edit_category(request, category_id):
 # @never_cache
 def admin_product_details(request):
     products=Product.objects.all().order_by('id')
-    varients=ProductVarients.objects.select_related('product__category').order_by('product__id')
+    variants=ProductVariant.objects.select_related('product__category').order_by('product__id')
 
 
     query = request.GET.get('q')
     if query:
-        varients = varients.filter(
+        variants = variants.filter(
             Q(product__name__icontains=query) |
-            Q(varient_name__icontains=query) |
+            Q(variant_name__icontains=query) |
             Q(product__category__name__icontains=query)
         )
-    paginator=Paginator(varients,10)
+    paginator=Paginator(variants,10)
     page_number=request.GET.get('page')
     page_obj=paginator.get_page(page_number)
 
-    return render(request,'admin/product_list.html',{'products':products,'varients':page_obj,'page_obj':page_obj,'query':query})
+    return render(request,'admin/product_list.html',{'products':products,'variants':page_obj,'page_obj':page_obj,'query':query})
 
 
 # ADMIN ADDING NEW PRODUCT,VATIENT AND IMAGES
 # @staff_member_required
 # @never_cache
 def admin_add_product(request):
-    varient_formset = VarientFormset
+    variant_formset = VariantFormset
     image_formset = ImageFormset
 
     form_errors = []  
 
     if request.method == 'POST':
         product_form = ProductAddForm(request.POST)
-        varient_form = varient_formset(request.POST, prefix='varients')
+        variant_form = variant_formset(request.POST, prefix='variants')
         image_form = image_formset(request.POST, request.FILES, prefix='images')
 
-        if product_form.is_valid() and varient_form.is_valid() and image_form.is_valid():
+        if product_form.is_valid() and variant_form.is_valid() and image_form.is_valid():
             try:
                 product = product_form.save()
-                varients = varient_form.save(commit=False)
-                if not varients:
-                    raise ValidationError('At least one Varient is required.')
-                for varient in varients:
-                    varient.product = product
-                    varient.save()
+                variants = variant_form.save(commit=False)
+                if not variants:
+                    raise ValidationError('At least one Variant is required.')
+                for variant in variants:
+                    variant.product = product
+                    variant.save()
                 images = image_form.save(commit=False)
                 if len([img for img in images if img.image]) != 3:
                     raise ValidationError("Exactly 3 images needed.")
@@ -210,7 +210,7 @@ def admin_add_product(request):
                     if image.image:
                         image.product = product
                         image.save()
-                messages.success(request, 'Product, Varient are created and uploaded 3 Images.')
+                messages.success(request, 'Product, Variant are created and uploaded 3 Images.')
                 return redirect('admin_product_list')
             except ValidationError as e:
                 form_errors = e.messages
@@ -218,10 +218,10 @@ def admin_add_product(request):
                     messages.error(request, err)
         else:
             form_errors.extend(product_form.non_field_errors())
-            form_errors.extend(varient_form.non_form_errors())
+            form_errors.extend(variant_form.non_form_errors())
             form_errors.extend(image_form.non_form_errors())
 
-            for form in varient_form:
+            for form in variant_form:
                 form_errors.extend(form.non_field_errors())
                 for field, errors in form.errors.items():
                     form_errors.extend(errors)
@@ -235,39 +235,39 @@ def admin_add_product(request):
                 messages.error(request, err)
     else:
         product_form = ProductAddForm()
-        varient_form = varient_formset(prefix='varients')
+        variant_form = variant_formset(prefix='variants')
         image_form = image_formset(prefix='images')
 
     return render(request, 'admin/product_add.html', {
         'product_form': product_form,
-        'varient_form': varient_form,
+        'variant_form': variant_form,
         'image_form': image_form,
         'form_errors': form_errors  
     })
 
-# ADMIN EDITING THE PRODUCT,VARIENT AND IMAGES
+# ADMIN EDITING THE PRODUCT,Variant AND IMAGES
 # @staff_member_required
 # @never_cache
 def admin_edit_product(request,product_id):
     
     product = get_object_or_404(Product, id=product_id)
-    varient_formset = VarientFormset
+    variant_formset = VariantFormset
     image_formset = ImageFormset
     form_errors = []
     if request.method == 'POST':
         product_form = ProductAddForm(request.POST, instance=product)
-        varient_form = varient_formset(request.POST, instance=product, prefix='varients')
+        variant_form = variant_formset(request.POST, instance=product, prefix='variants')
         image_form = image_formset(request.POST, request.FILES, instance=product, prefix='images')
         try:
-            if product_form.is_valid() and varient_form.is_valid() and image_form.is_valid():
+            if product_form.is_valid() and variant_form.is_valid() and image_form.is_valid():
                 product = product_form.save()
-                varients = varient_form.save(commit=False)
-                if not varients and not varient_form.deleted_objects:
+                variants = variant_form.save(commit=False)
+                if not variants and not variant_form.deleted_objects:
                     raise ValidationError('At least one variant is required.')
-                for varient in varients:
-                    varient.product = product
-                    varient.save()
-                for obj in varient_form.deleted_objects:
+                for variant in variants:
+                    variant.product = product
+                    variant.save()
+                for obj in variant_form.deleted_objects:
                     obj.delete()
                     # HANDLING IMAGES
                 images = image_form.save(commit=False)
@@ -295,10 +295,10 @@ def admin_edit_product(request,product_id):
             else:
                 form_errors = []
                 form_errors.extend(product_form.non_field_errors())
-                form_errors.extend(varient_form.non_form_errors())
+                form_errors.extend(variant_form.non_form_errors())
                 form_errors.extend(image_form.non_form_errors())
 
-                for form in varient_form:
+                for form in variant_form:
                     form_errors.extend(form.non_field_errors())
                     for field, errors in form.errors.items():
                         form_errors.extend(errors)
@@ -316,12 +316,12 @@ def admin_edit_product(request,product_id):
             print('Validation Errors:',form_errors)
     else:
         product_form = ProductAddForm(instance=product)
-        varient_form = varient_formset(instance=product, prefix='varients')
+        variant_form = variant_formset(instance=product, prefix='variants')
         image_form = image_formset(instance=product, prefix='images')
 
     return render(request, 'admin/product_edit.html', {
         'product_form': product_form,
-        'varient_form': varient_form,
+        'variant_form': variant_form,
         'image_form': image_form,
         'form_errors': form_errors,
         'product': product,
@@ -331,13 +331,13 @@ def admin_edit_product(request,product_id):
 # ADMIN HIDING AND SHOWING EXISTING PRODUCTS
 # @staff_member_required
 # @never_cache
-def admin_hide_product(request, varient_id):
-    varient = get_object_or_404(ProductVarients, id=varient_id)
+def admin_hide_product(request, variant_id):
+    variant = get_object_or_404(ProductVariant, id=variant_id)
 
     if request.method == "POST":
-        varient.is_active = not varient.is_active
-        varient.save()
-        messages.success(request, f"Product '{varient.product.name}' is now {'visible' if varient.is_active else 'hidden'}.")
+        variant.is_active = not variant.is_active
+        variant.save()
+        messages.success(request, f"Product '{variant.product.name}' is now {'visible' if variant.is_active else 'hidden'}.")
 
     return redirect('admin_product_list')
 

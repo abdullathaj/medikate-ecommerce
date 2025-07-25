@@ -57,11 +57,11 @@
                 <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addVariantForm()">Add Variant</button>
             </div>
             <div class="card-body">
-                {{ varient_form.management_form }}
-                {% if varient_form.non_form_errors %}
+                {{ variant_form.management_form }}
+                {% if variant_form.non_form_errors %}
                     <div class="alert alert-danger">
                         <ul class="errorlist">
-                            {% for error in varient_form.non_form_errors %}
+                            {% for error in variant_form.non_form_errors %}
                                 <li>{{ error }}</li>
                             {% endfor %}
                         </ul>
@@ -76,34 +76,34 @@
                                 <div class="row">
                                     <div class="col-md-3 mb-3">
                                         <label class="form-label">Variant Name</label>
-                                        <input type="text" class="form-control" name="varients-TEMPLATE-varient_name" placeholder="Enter variant name">
+                                        <input type="text" class="form-control" name="variants-TEMPLATE-variant_name" placeholder="Enter variant name">
                                     </div>
                                     <div class="col-md-3 mb-3">
                                         <label class="form-label">Price</label>
-                                        <input type="number" step="0.01" class="form-control" name="varients-TEMPLATE-price" placeholder="Enter price">
+                                        <input type="number" step="0.01" class="form-control" name="variants-TEMPLATE-price" placeholder="Enter price">
                                     </div>
                                     <div class="col-md-3 mb-3">
                                         <label class="form-label">Stock</label>
-                                        <input type="number" class="form-control" name="varients-TEMPLATE-stock" placeholder="Enter stock quantity">
+                                        <input type="number" class="form-control" name="variants-TEMPLATE-stock" placeholder="Enter stock quantity">
                                     </div>
                                     <div class="col-md-3 mb-3">
                                         <label class="form-label">Size (Optional)</label>
-                                        <input type="text" class="form-control" name="varients-TEMPLATE-size" placeholder="Enter size (optional)">
+                                        <input type="text" class="form-control" name="variants-TEMPLATE-size" placeholder="Enter size (optional)">
                                     </div>
                                 </div>
                                 <div class="form-check mb-3">
-                                    <input type="checkbox" class="form-check-input" name="varients-TEMPLATE-is_active" checked>
+                                    <input type="checkbox" class="form-check-input" name="variants-TEMPLATE-is_active" checked>
                                     <label class="form-check-label">Active</label>
                                 </div>
                                 <div class="form-check mb-3">
-                                    <input type="checkbox" class="form-check-input" name="varients-TEMPLATE-DELETE">
+                                    <input type="checkbox" class="form-check-input" name="variants-TEMPLATE-DELETE">
                                     <label class="form-check-label text-danger">Delete this variant</label>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <!-- Render existing variant forms -->
-                    {% for form in varient_form %}
+                    {% for form in variant_form %}
                         <div class="variant-form active mb-3">
                             {{ form.id }}
                             <div class="card">
@@ -122,8 +122,8 @@
                                     {% endif %}
                                     <div class="row">
                                         <div class="col-md-3 mb-3">
-                                            <label for="{{ form.varient_name.id_for_label }}" class="form-label">Variant Name</label>
-                                            {{ form.varient_name }}
+                                            <label for="{{ form.variant_name.id_for_label }}" class="form-label">Variant Name</label>
+                                            {{ form.variant_name }}
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label for="{{ form.price.id_for_label }}" class="form-label">Price</label>
@@ -224,7 +224,7 @@
     function addVariantForm() {
         const variantFormsContainer = document.getElementById('variantForms');
         const templateForm = variantFormsContainer.querySelector('.variant-form.template');
-        const managementFormTotal = document.querySelector('#id_varients-TOTAL_FORMS');
+        const managementFormTotal = document.querySelector('#id_variants-TOTAL_FORMS');
         
         // Get current form count
         let formCount = parseInt(managementFormTotal.value);

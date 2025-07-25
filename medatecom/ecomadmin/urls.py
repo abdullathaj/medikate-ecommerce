@@ -15,7 +15,7 @@ urlpatterns = [
     path('admin_product_list/',views.admin_product_details,name='admin_product_list'),
     path('admin_add_product/',views.admin_add_product,name='admin_add_product'),
     path('admin_edit_product/<int:product_id>',views.admin_edit_product,name='admin_edit_product'),
-    path('admin_hide_product/<int:varient_id>/',views.admin_hide_product,name='admin_hide_product'),
+    path('admin_hide_product/<int:variant_id>/',views.admin_hide_product,name='admin_hide_product'),
    
 
 ]

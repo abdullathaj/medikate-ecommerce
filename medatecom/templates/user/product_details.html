@@ -65,12 +65,12 @@
                 <div class="mb-4">
                     <h5>Available Variants</h5>
                     <select class="form-select" id="variantSelect" aria-label="Select Variant">
-                        {% for varient in varients %}
-                        <option value="{{ varient.id }}"
-                                data-price="{{ varient.price|floatformat:2 }}"
-                                data-original-price="{{ varient.original_price|floatformat:2 }}"
-                                data-stock="{{ varient.stock }}">
-                            {{ varient.varient_name }} {% if varient.size %}({{ varient.size }}){% endif %}
+                        {% for variant in variants %}
+                        <option value="{{ variant.id }}"
+                                data-price="{{ variant.price|floatformat:2 }}"
+                                data-original-price="{{ variant.original_price|floatformat:2 }}"
+                                data-stock="{{ variant.stock }}">
+                            {{ variant.variant_name }} {% if variant.size %}({{ variant.size }}){% endif %}
                         </option>
                         {% empty %}
                         <option disabled>No variants available</option>
@@ -80,7 +80,7 @@
 
                 <!-- Price and Stock -->
                 <div class="product-price mb-3">
-                    {% with variant=varients.first %}
+                    {% with variant=variants.first %}
                     {% if variant %}
                     <span class="current-price fs-4 fw-bold">₹{{ variant.price|floatformat:2 }}</span>
                     <small class="original-price text-muted text-decoration-line-through ms-2">₹{{ variant.original_price|floatformat:2 }}</small>
@@ -140,7 +140,7 @@
                                 <span class="rating-text">(4.0)</span>
                             </div>
                             <div class="product-bottom-details">
-                                {% with variant=related_product.product_varient.first %}
+                                {% with variant=related_product.product_variant.first %}
                                     {% if variant %}
                                         <div class="product-price">
                                             <small class="original-price">₹{{ variant.original_price|floatformat:2 }}</small>

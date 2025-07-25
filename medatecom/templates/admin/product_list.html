@@ -34,20 +34,20 @@
                 </tr>
             </thead>
             <tbody>
-                {% for varient in page_obj %}
+                {% for variant in page_obj %}
                 <tr>
-                    <td>{{ varient.product.id }}</td>
-                    <td>{{ varient.product.name }}</td>
-                    <td>{{ varient.varient_name }}</td>
-                    <td>{{ varient.product.category.name }}</td>
-                    <td>{{ varient.price }}</td>
-                    <td>{{ varient.stock }}</td>
-                    <td>{{ varient.size|default:"N/A" }}</td>
+                    <td>{{ variant.product.id }}</td>
+                    <td>{{ variant.product.name }}</td>
+                    <td>{{ variant.variant_name }}</td>
+                    <td>{{ variant.product.category.name }}</td>
+                    <td>{{ variant.price }}</td>
+                    <td>{{ variant.stock }}</td>
+                    <td>{{ variant.size|default:"N/A" }}</td>
                    <td class="text-center" style="width: 60px; height: 60px;">
-                        {% with image=varient.product.product_image.first %}
+                        {% with image=variant.product.product_image.first %}
                             {% if image %}
                                 <img src="{{ image.image.url }}"
-                                    alt="{{ varient.product.name }}"
+                                    alt="{{ variant.product.name }}"
                                     class="img-fluid rounded"
                                     style="max-width: 50px; max-height: 50px; object-fit: contain;">
                             {% else %}
@@ -57,7 +57,7 @@
                     </td>
 
                     <td class="text-center">
-                        {% if varient.is_active %}
+                        {% if variant.is_active %}
                             <span class="badge bg-success">Visible</span>
                         {% else %}
                             <span class="badge bg-secondary">Hidden</span>
@@ -66,12 +66,12 @@
 
                     <td class="text-center">
                         <div class="btn-group" role="group">
-                            <a href="{% url 'admin_edit_product' varient.product.id %}" class="btn btn-outline-primary btn-sm">
+                            <a href="{% url 'admin_edit_product' variant.product.id %}" class="btn btn-outline-primary btn-sm">
                                 <i class="fas fa-edit me-1"></i> Edit
                             </a>
-                            <form method="POST" action="{% url 'admin_hide_product' varient.id %}" class="d-inline">
+                            <form method="POST" action="{% url 'admin_hide_product' variant.id %}" class="d-inline">
                                 {% csrf_token %}
-                                {% if varient.is_active %}
+                                {% if variant.is_active %}
                                     <button type="submit" class="btn btn-outline-warning btn-sm">
                                         <i class="fas fa-eye-slash me-1"></i> Hide
                                     </button>
