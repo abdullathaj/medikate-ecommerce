@@ -103,8 +103,8 @@ def admin_category_list(request):
 
 
 # ADMIN ADDING NEW CATEGORY
-# @staff_member_required
-# @never_cache
+@staff_member_required
+@never_cache
 def admin_add_category(request):
 
     if request.method == 'POST':

@@ -1,9 +1,15 @@
 from django.shortcuts import render,redirect,get_object_or_404
+from django.http import Http404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
+from .models import UserAddress,User,WishlistProducts,CartProducts
 from ecomproducts.models import Product,ProductVariant,ProductImage,Categories
 from django.core.paginator import Paginator
-from django.db.models import Min,Q
+from django.db.models import Min,Q,F,Sum,FloatField
+from .forms import UserProfileForm,UserAddressForm
+from django.contrib import messages
+from datetime import timedelta,datetime
+from decimal import Decimal
 
 # Create your views here.
 # home page for User BEFORE LOGIN
@@ -26,10 +32,9 @@ def userhomeview(request):
     
     return render(request, 'auth/home.html',{'products': page_obj})
 
-# HOME PAGE AFTER LOGIN
 
-@login_required(login_url='login') # REDIRECT TO LOGIN PAGE FOR UNAUTHENTICATED USERS.
-@never_cache
+# @login_required(login_url='login') # REDIRECT TO LOGIN PAGE FOR UNAUTHENTICATED USERS.
+# @never_cache
 def home_after_login(request):
 
     products = Product.objects.filter(
@@ -154,38 +159,241 @@ def user_product_listing(request):
     }
 
     return render(request, 'user/product_listing.html', context)
-# USER CART MANAGEMENT
 
-# ADD TO CART
-def add_to_cart(request,variant_id):
-    pass
 
-# BUY NOW THE PRODUCT
-def buy_now(request,variant_id):
-    pass
 
-# ADD TO WISHLIST
-def add_to_wishlist(request,variant_id):
-    pass
+# USER PROFILE DETAILS, ADDRESS MANAGEMENT ADD EDIT AND DELETE
+
+# @login_required(login_url='login') 
+def users_profile_page(request):
+    if not request.user.is_active:
+        return redirect('login')
+   
+    return render(request,'user/profile_page.html')
+
+# @login_required(login_url='login') 
+def user_delete_address(request, address_id):
+    address = get_object_or_404(UserAddress, id=address_id, user=request.user)
+    address.delete()
+    messages.success(request, "Address deleted successfully.")
+    return redirect('user_profile_page')
+
+# @login_required(login_url='login') 
+def users_profile_update_page(request):
+    user = request.user
+    user_form = UserProfileForm(instance=user)
+    address_form = UserAddressForm(initial={'user': user})
+
+    if request.method == 'POST':
+        if 'update_profile' in request.POST:
+            user_form = UserProfileForm(request.POST, instance=user)
+            if user_form.is_valid():
+                user_form.save()
+                messages.success(request, "Profile updated.")
+                return redirect('user_profile_update')
+
+        elif 'update_address' in request.POST:
+            address_form = UserAddressForm(request.POST)
+            address_form.initial['user'] = user  # for form clean()
+            address_form.instance.user = user    # for save()
+
+            if address_form.is_valid():
+                address_form.save()
+                messages.success(request, "Address saved.")
+                return redirect('user_profile_update')
+            else:
+                # Show all errors as toast messages
+                for field, error_list in address_form.errors.items():
+                    for error in error_list:
+                        messages.error(request, error)
+
+    return render(request, 'user/profile_edit.html', {
+        'user_form': user_form,
+        'address_form': address_form,
+    })
+
+
+
+# WISHLIST MANAGEMENT FOR AUTHENTICATED USER ADDING AND REMOVING PRODUCTS, ADDING TO CART
+
+# @login_required(login_url='login') 
+def add_to_wishlist(request, variant_id):
+    
+    variant = get_object_or_404(ProductVariant, id=variant_id,is_active=True)
+
+    # Check if variant is already in user's wishlist
+    existing = WishlistProducts.objects.filter(user=request.user, variant=variant).exists()
+    if existing:
+        print(f'{variant} is ALREADY in wishlist.')
+        messages.warning(request, "This item is already in your wishlist.")
+    else:
+        WishlistProducts.objects.create(user=request.user, variant=variant)
+        print(f'{variant} ADDED to wishlist.')
+        messages.success(request, f"{variant} added to your wishlist.")
+
+    return redirect(request.META.get('HTTP_REFERER', 'user_wishlist_page'))
+
+# @login_required(login_url='login') 
+def users_wishlist_page(request):
+    """FOR SHOWING THE PRODUCTS IN WISHLIST ADDED BY AUTHENTICATED USER
+    """
+    if not request.user.is_active:
+        return redirect('login')
+    
+    wishlist_items = WishlistProducts.objects.filter(
+        user=request.user,
+        variant__is_active=True
+    ).select_related('variant__product')    
+    
+    print('wishlist:',wishlist_items)
+    return render(request, 'user/wishlist_page.html', {'wishlist_items': wishlist_items})
+
+
+
+# USER CART MANAGEMENT , ADDING PRODUCTS FOR AUTHENTICATED USERS
+
+#@login_required(login_url='login')
+def add_to_cart(request, variant_id):
+    """Add a product variant to the user's cart or update quantity if it already exists."""
+    variant = get_object_or_404(ProductVariant, id=variant_id, is_active=True)
+
+    if variant.stock < 1:
+        messages.error(request, f"{variant} is out of stock.")
+        return redirect(request.META.get('HTTP_REFERER', 'user_cart_page'))
+
+    # Fetch the cart item if it exists
+    cart_item = CartProducts.objects.filter(user=request.user, variant=variant).first()
+
+    if cart_item:
+        if cart_item.variant.stock < 1:
+            messages.error(request, 'Stock limit reached.')
+        else:
+            cart_item.quantity += 1
+            cart_item.variant.stock -= 1
+            cart_item.variant.save()
+            cart_item.save()
+            messages.success(request, f"Updated quantity for {variant} in your cart is {cart_item.quantity}.")
+    else:
+        CartProducts.objects.create(user=request.user, variant=variant, quantity=1)
+        variant.stock -= 1
+        variant.save()
+        messages.success(request, f"{variant} has been added to your cart.")
+
+    return redirect(request.META.get('HTTP_REFERER', 'user_cart_page'))
 
 def users_cart_page(request):
+    if not request.user.is_active:
+        return redirect('login')
+    
+    cart_items=CartProducts.objects.filter(
+        user=request.user,
+        variant__is_active=True,
+        
+    ).select_related('variant__product')
+    print('Cart items: ',cart_items)
+# PRICE CALCULATION INCLUDING SELLING PRICE, ORIGINAL PRICE,DISCOUNT PRICE, TAXES
 
-    return render(request,'user/cart_page.html')
+    original_total_price=Decimal('0')
+    selling_total_price=Decimal('0')
+    discount_total=Decimal('0')
 
-# USER PROFILE MANAGEMENT
-def users_profile_page(request):
+    for item in cart_items:
+        original_item_price= item.quantity* item.variant.original_price
+        original_total_price += original_item_price
+        selling_item_price= item.variant.price * item.quantity
+        selling_total_price += selling_item_price
+        discount_total += original_item_price - selling_item_price
+    taxes= selling_total_price * Decimal('0.05')
+    amount_payable= selling_total_price + taxes
 
-    return render(request,'user/profile_page.html')
+# TAKING USER ADDRESSES FOR DELIVERY
+    addresses=UserAddress.objects.filter(user=request.user)
+    
+# DELIVERY TIME
+    estimated_delivery_date=(datetime.now() + timedelta(days=7)).strftime('%B %d, %Y')
+
+    context = {
+        'cart_items': cart_items,
+        'payable_amount': amount_payable,
+        'original_total_price': original_total_price,
+        'discount_total': discount_total,
+        'selling_total_price': selling_total_price,
+        'taxes': taxes,
+        'addresses': addresses,
+        'estimated_delivery_date': estimated_delivery_date,
+    }
+
+    return render(request,'user/cart_page.html',context)
+
+@login_required(login_url='login')
+def update_cart_quantity(request, cart_item_id):
+    """Increase or decrease cart item quantity and adjust variant stock."""
+    cart_item = get_object_or_404(CartProducts, user=request.user, id=cart_item_id)
+
+    action = request.POST.get('action')
+    if action == 'increase':
+        if cart_item.variant.stock < 1:
+            messages.error(request, 'Stock limit reached.')
+        else:
+            cart_item.quantity += 1
+            cart_item.variant.stock -= 1
+            cart_item.variant.save()
+            cart_item.save()
+            messages.success(request, f"Quantity updated for {cart_item.variant}.")
+    elif action == 'decrease' and cart_item.quantity > 1:
+        cart_item.quantity -= 1
+        cart_item.variant.stock += 1
+        cart_item.variant.save()
+        cart_item.save()
+        messages.success(request, f"Quantity updated for {cart_item.variant}.")
+    
+    return redirect('user_cart_page')
+
+
+def remove_cart_item(request,cart_item_id):
+    """ REMOVING AN ITEM FROM THE CART """
+
+    cart_item=get_object_or_404(CartProducts,user=request.user,id=cart_item_id)
+    cart_item.delete()
+    cart_item.variant.stock += cart_item.quantity
+
+    messages.success(request, f"{cart_item.variant} removed from your cart.")
+
+    return redirect('user_cart_page')
+
+def save_for_later(request,cart_item_id):
+
+    cart_item=get_object_or_404(CartProducts,user=request.user, id=cart_item_id)
+    variant=cart_item.variant
+
+    if WishlistProducts.objects.filter(user=request.user,variant=variant).exists():
+        messages.error(request,f'{variant} is already in the wishlist')
+    else:
+        WishlistProducts.objects.create(user=request.user,variant=variant)
+        messages.success(request,f'{variant} is added to the wishlist.')
+    variant.stock += cart_item.quantity
+    variant.save()
+    cart_item.delete()
+    
+    return redirect('user_cart_page')
+
+
+
+
+
+
+
+
+
+# @login_required(login_url='login') 
+def buy_now(request,variant_id):
+    pass
 
 # USER ORDERS PAGE
 def users_orders_page(request):
 
     return render(request,'user/orders_page.html')
 
-# USER WISHLIST PAGE
-def users_wishlist_page(request):
-
-    return render(request,'user/user_wishlist.html')
 
 # USER WALLET PAGE
 def users_wallet_page(request):

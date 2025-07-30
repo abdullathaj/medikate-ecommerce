@@ -104,7 +104,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # CUSTOM MIDDLEWARES
     'allauth.account.middleware.AccountMiddleware', # google authentication
+    'ecomauth.middlwares.BlockedUserLogoutMiddleware',
 
 ]
 # SESSION HANDLING AND COOKIE MANAGEMENT

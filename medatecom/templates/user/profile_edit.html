@@ -1,0 +1,85 @@
+{% extends 'auth/navbar.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Toast Container -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1055;">
+    {% if messages %}
+        {% for message in messages %}
+        <div class="toast align-items-center text-white 
+            {% if message.tags == 'success' %}bg-success
+            {% elif message.tags == 'error' or message.tags == 'danger' %}bg-danger
+            {% elif message.tags == 'warning' %}bg-warning text-dark
+            {% else %}bg-info
+            {% endif %} border-0 show" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    {{ message }}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+<div class="container mt-5">
+    <div class="row">
+        <!-- Personal Info Form -->
+        <div class="col-lg-6 col-md-12 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5>Update Personal Info</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        {% for field in user_form %}
+                            <div class="mb-3">
+                                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.errors %}
+                                    <div class="text-danger small">{{ field.errors|striptags }}</div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                        <button type="submit" name="update_profile" class="btn btn-info text-white">Update Info</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Address Form -->
+        <div class="col-lg-6 col-md-12 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-secondary text-white">
+                    <h5>Add / Update Address</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        {% for field in address_form %}
+                            <div class="mb-3">
+                                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.errors %}
+                                    <div class="text-danger small">{{ field.errors|striptags }}</div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                        <button type="submit" name="update_address" class="btn btn-secondary">Save Address</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap Toast JS -->
+<script>
+    document.querySelectorAll('.toast').forEach(toastEl => {
+        const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+        toast.show();
+    });
+</script>
+{% endblock %}

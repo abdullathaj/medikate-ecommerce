@@ -61,48 +61,55 @@
                 </div>
                 <p class="product-description mb-4">{{ product.description|default:"No description available." }}</p>
 
-                <!-- Variants Selection -->
-                <div class="mb-4">
-                    <h5>Available Variants</h5>
-                    <select class="form-select" id="variantSelect" aria-label="Select Variant">
-                        {% for variant in variants %}
-                        <option value="{{ variant.id }}"
-                                data-price="{{ variant.price|floatformat:2 }}"
-                                data-original-price="{{ variant.original_price|floatformat:2 }}"
-                                data-stock="{{ variant.stock }}">
-                            {{ variant.variant_name }} {% if variant.size %}({{ variant.size }}){% endif %}
-                        </option>
-                        {% empty %}
-                        <option disabled>No variants available</option>
-                        {% endfor %}
-                    </select>
-                </div>
+                <!-- Variant Selection -->
+                        <div class="mb-4">
+                            <h5>Available Variants</h5>
+                            <select class="form-select" id="variantSelect" aria-label="Select Variant">
+                                {% for variant in variants %}
+                                <option value="{{ variant.id }}"
+                                        data-price="{{ variant.price|floatformat:2 }}"
+                                        data-original-price="{{ variant.original_price|floatformat:2 }}"
+                                        data-stock="{{ variant.stock }}">
+                                    {{ variant.variant_name }} {% if variant.size %}({{ variant.size }}){% endif %}
+                                </option>
+                                {% empty %}
+                                <option disabled>No variants available</option>
+                                {% endfor %}
+                            </select>
+                        </div>
 
-                <!-- Price and Stock -->
-                <div class="product-price mb-3">
-                    {% with variant=variants.first %}
-                    {% if variant %}
-                    <span class="current-price fs-4 fw-bold">₹{{ variant.price|floatformat:2 }}</span>
-                    <small class="original-price text-muted text-decoration-line-through ms-2">₹{{ variant.original_price|floatformat:2 }}</small>
-                    {% if variant.stock == 0 %}
-                        <span class="text-danger d-block mt-2 stock-status">Out of Stock</span>
-                    {% elif variant.stock < 5 %}
-                        <span class="text-warning d-block mt-2 stock-status">Limited Stock ({{ variant.stock }} available)</span>
-                    {% else %}
-                        <span class="text-success d-block mt-2 stock-status">In Stock ({{ variant.stock }} available)</span>
-                    {% endif %}
-                    {% else %}
-                    <span class="text-muted">Price not available</span>
-                    {% endif %}
-                    {% endwith %}
-                </div>
+                        <!-- Price and Stock Display -->
+                        <div class="product-price mb-3">
+                            <span class="current-price fs-4 fw-bold" id="currentPrice">
+                                ₹{{ variants.0.price|floatformat:2 }}
+                            </span>
+                            <small class="original-price text-muted text-decoration-line-through ms-2" id="originalPrice">
+                                ₹{{ variants.0.original_price|floatformat:2 }}
+                            </small>
+                            <span class="d-block mt-2" id="stockStatus">
+                                {% if variants.0.stock == 0 %}
+                                <span class="text-danger">Out of Stock</span>
+                                {% elif variants.0.stock < 5 %}
+                                <span class="text-warning">Limited Stock ({{ variants.0.stock }} available)</span>
+                                {% else %}
+                                <span class="text-success">In Stock ({{ variants.0.stock }} available)</span>
+                                {% endif %}
+                            </span>
+                        </div>
 
-                <!-- Action Buttons -->
-                <div class="product-actions">
-                    <a href="#" class="btn btn-primary buy-now-btn me-2">Buy Now</a>
-                    <a href="#" class="btn btn-outline-secondary" title="Add to Cart"><i class="fas fa-shopping-cart"></i> Add to Cart</a>
-                    <a href="#" class="btn btn-outline-secondary ms-2" title="Add to Wishlist"><i class="fas fa-heart"></i></a>
-                </div>
+                        <!-- Action Buttons -->
+                        <div class="product-actions">
+                            <a href="#" class="btn btn-primary buy-now-btn me-2">Buy Now</a>
+                            <a href="{% url 'add_to_cart' 0 %}" id="addToCartBtn" class="btn btn-outline-secondary" title="Add to Cart">
+                                <i class="fas fa-shopping-cart"></i> Add to Cart
+                            </a>
+                            <a href="{% url 'add_to_wishlist' 0 %}" id="addToWishlistBtn" class="btn btn-outline-secondary ms-2" title="Add to Wishlist">
+                                <i class="fas fa-heart"></i>
+                            </a>
+                        </div>
+
+
+
             </div>
         </div>
     </section>
@@ -646,49 +653,42 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <!-- JavaScript for dynamic price and stock update -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const variantSelect = document.getElementById('variantSelect');
-            const priceElement = document.querySelector('.product-price .current-price');
-            const originalPriceElement = document.querySelector('.product-price .original-price');
-            const stockElement = document.querySelector('.product-price .stock-status');
+   
+{% endblock %}
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const variantSelect = document.getElementById('variantSelect');
+    const priceSpan = document.getElementById('currentPrice');
+    const originalPriceSpan = document.getElementById('originalPrice');
+    const stockStatus = document.getElementById('stockStatus');
+    const cartBtn = document.getElementById('addToCartBtn');
+    const wishlistBtn = document.getElementById('addToWishlistBtn');
 
-            function updatePriceStock() {
-                const selectedOption = variantSelect.options[variantSelect.selectedIndex];
-                const price = selectedOption.getAttribute('data-price');
-                const originalPrice = selectedOption.getAttribute('data-original-price');
-                const stock = parseInt(selectedOption.getAttribute('data-stock'));
+    function updateInfo() {
+        const selectedOption = variantSelect.selectedOptions[0];
+        const variantId = selectedOption.value;
+        const price = selectedOption.dataset.price;
+        const originalPrice = selectedOption.dataset.originalPrice;
+        const stock = parseInt(selectedOption.dataset.stock);
 
-                if (priceElement) {
-                    priceElement.textContent = `₹${price}`;
-                }
-                if (originalPriceElement) {
-                    originalPriceElement.textContent = `₹${originalPrice}`;
-                }
-                if (stockElement) {
-                    if (stock === 0) {
-                        stockElement.textContent = 'Out of Stock';
-                        stockElement.classList.remove('text-success', 'text-warning');
-                        stockElement.classList.add('text-danger');
-                    } else if (stock < 5) {
-                        stockElement.textContent = `Limited Stock (${stock} available)`;
-                        stockElement.classList.remove('text-success', 'text-danger');
-                        stockElement.classList.add('text-warning');
-                    } else {
-                        stockElement.textContent = `In Stock (${stock} available)`;
-                        stockElement.classList.remove('text-danger', 'text-warning');
-                        stockElement.classList.add('text-success');
-                    }
-                }
-            }
+        priceSpan.textContent = '₹' + price;
+        originalPriceSpan.textContent = '₹' + originalPrice;
 
-            // Run on first load if variants exist
-            if (variantSelect.options.length > 0) {
-                updatePriceStock();
-            }
+        if (stock === 0) {
+            stockStatus.innerHTML = '<span class="text-danger">Out of Stock</span>';
+        } else if (stock < 5) {
+            stockStatus.innerHTML = `<span class="text-warning">Limited Stock (${stock} available)</span>`;
+        } else {
+            stockStatus.innerHTML = `<span class="text-success">In Stock (${stock} available)</span>`;
+        }
 
-            // Run on change
-            variantSelect.addEventListener('change', updatePriceStock);
-        });
-    </script>
+        cartBtn.href = `/add_to_cart/${variantId}/`;
+        wishlistBtn.href = `/add_to_wishlist/${variantId}/`;
+    }
+
+    variantSelect.addEventListener('change', updateInfo);
+    updateInfo();
+});
+</script>
 {% endblock %}

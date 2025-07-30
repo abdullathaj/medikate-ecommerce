@@ -1,3 +1,4 @@
 .env
 ecomvenv
-medatecom/media
+media
+.pyc

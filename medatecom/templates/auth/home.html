@@ -2,6 +2,7 @@
 {% load static %}
 
 {% block content %}
+<div class="main-content">
     <!-- Hero Section: Carousel -->
     <section class="hero-section">
         <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
@@ -63,10 +64,17 @@
                             {% endwith %}
                         </div>
                         <div class="product-details">
-                            <div class="product-catagory-line">
+                           <div class="product-catagory-line d-flex justify-content-between align-items-center">
                                 <span class="product-catagory">{{ product.category.name }}</span>
-                                <a href="" title="Add to Wishlist" class="wishlist-link"><i class="fas fa-heart"></i></a>
+                                {% with variant=product.product_variant.first %}
+                                    {% if variant %}
+                                        <a href="{% url 'add_to_wishlist' variant.id %}" title="Add to Wishlist" class="wishlist-link">
+                                            <i class="fas fa-heart"></i>
+                                        </a>
+                                    {% endif %}
+                                {% endwith %}
                             </div>
+
                             <h4><a href="{% url 'product_details' product.id %}">{{ product.name|truncatechars:30 }}</a></h4>
                             <p>{{ product.description|truncatewords:10 }}</p>
                             <div class="product-rating">
@@ -85,7 +93,7 @@
                                             <span class="current-price">₹{{ variant.price|floatformat:2 }}</span>
                                         </div>
                                         <div class="product-links">
-                                            <a href="" title="Add to Cart" class="cart-btn"><i class="fas fa-shopping-cart"></i></a>
+                                            <a href="{% url 'add_to_cart' variant.id  %}" title="Add to Cart" class="cart-btn"><i class="fas fa-shopping-cart"></i></a>
                                             <a href="" class="buy-now-btn">Buy Now</a>
                                         </div>
                                     {% else %}
@@ -153,422 +161,574 @@
         {% endif %}
     </section>
 
-    <style>
-        /* Hero Section Styles */
-        .hero-section {
-            margin-bottom: 2rem;
-            margin-left: 1rem;
-            margin-right: 1rem;
-            position: relative;
+    <!-- Single Banner Section -->
+    <section class="single-banner-section container my-5">
+        <div class="single-banner">
+            <div class="banner-overlay"></div>
+            <img src="{% static 'home/images/healthbanner.png' %}" class="d-block w-100" alt="Promotional Banner">
+        </div>
+    </section>
+
+    <!-- Brands Section -->
+    <section class="brands-section container my-5">
+        <h2 class="text-center mb-4">Our Brands</h2>
+        <div class="brands-container d-flex justify-content-center align-items-center flex-wrap gap-4">
+            <div class="brand-logo">
+                <img src="{% static 'home/images/colgate-logo.png' %}" alt="Brand 1 Logo" class="brand-img">
+            </div>
+            <div class="brand-logo">
+                <img src="{% static 'home/images/mamaearth-logo.png' %}" alt="Brand 2 Logo" class="brand-img">
+            </div>
+            <div class="brand-logo">
+                <img src="{% static 'home/images/vaseline-logo.png' %}" alt="Brand 3 Logo" class="brand-img">
+            </div>
+            <div class="brand-logo">
+                <img src="{% static 'home/images/MuscleBlaze-logo.png' %}" alt="Brand 4 Logo" class="brand-img">
+            </div>
+            <div class="brand-logo">
+                <img src="{% static 'home/images/oral-b-logo.png' %}" alt="Brand 5 Logo" class="brand-img">
+            </div>
+            <div class="brand-logo">
+                <img src="{% static 'home/images/cetaphil-logo.png' %}" alt="Brand 6 Logo" class="brand-img">
+            </div>
+            <div class="brand-logo">
+                <img src="{% static 'home/images/dr-trust-logo.webp' %}" alt="Brand 7 Logo" class="brand-img">
+            </div>
+            <div class="brand-logo">
+                <img src="{% static 'home/images/garnier-logo.png' %}" alt="Brand 8 Logo" class="brand-img">
+            </div>
+        </div>
+    </section>
+</div>
+
+<style>
+    /* Ensure the main content fills the available space */
+    .main-content {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    body {
+        background-color: #f0eeeebe; /* Light grey background */
+    }
+
+    /* Hero Section Styles */
+    .hero-section {
+        margin-bottom: 2rem;
+        margin-left: 1rem;
+        margin-right: 1rem;
+        position: relative;
+    }
+
+    .carousel {
+        max-height: 400px;
+        min-height: 200px;
+        overflow: hidden;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .carousel-item {
+        position: relative;
+        transition: transform 0.5s ease-in-out;
+    }
+
+    .carousel-item img {
+        object-fit: cover;
+        max-height: 400px;
+        width: 100%;
+        display: block;
+        margin: 0 auto;
+    }
+
+    .carousel-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.3));
+        z-index: 1;
+    }
+
+    .carousel-control-prev,
+    .carousel-control-next {
+        width: 5%;
+        background: rgba(0, 0, 0, 0.3);
+        transition: background 0.3s ease;
+    }
+
+    .carousel-control-prev:hover,
+    .carousel-control-next:hover {
+        background: rgba(0, 0, 0, 0.5);
+    }
+
+    .carousel-indicators [data-bs-target] {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #fff;
+        opacity: 0.5;
+        transition: opacity 0.3s ease;
+    }
+
+    .carousel-indicators .active {
+        opacity: 1;
+        background-color: #26A69A;
+    }
+
+    /* Brands Section Styles */
+    .brands-section {
+        padding: 2rem 0;
+    }
+
+    .brands-container {
+        overflow-x: auto;
+        white-space: nowrap;
+        padding: 1rem 0;
+        scrollbar-width: thin;
+        scrollbar-color: #4b6cb7 #f6faff;
+    }
+
+    .brands-container::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .brands-container::-webkit-scrollbar-track {
+        background: #f6faff;
+    }
+
+    .brands-container::-webkit-scrollbar-thumb {
+        background: #4b6cb7;
+        border-radius: 4px;
+    }
+
+    .brand-logo {
+        display: inline-block;
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        overflow: hidden;
+        background: #ffffff;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        transition: transform 0.3s ease;
+    }
+
+    .brand-logo:hover {
+        transform: scale(1.1);
+    }
+
+    .brand-img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        padding: 10px;
+    }
+
+    /* Single Banner Section Styles */
+    .single-banner-section {
+        padding: 2rem 0;
+    }
+
+    .single-banner {
+        position: relative;
+        max-height: 250px;
+        min-height: 150px;
+        overflow: hidden;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .single-banner img {
+        object-fit: cover;
+        max-height: 250px;
+        width: 100%;
+        display: block;
+        margin: 0 auto;
+    }
+
+    .banner-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.2));
+        z-index: 1;
+    }
+
+    /* Product Card Styles */
+    .product-listing-section {
+        padding: 2rem 0;
+    }
+
+    .product-card {
+        width: 100%;
+        height: 420px;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .product-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .product-thumb {
+        height: 180px;
+        background: #f6faff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px;
+    }
+
+    .product-thumb img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        transition: transform 0.3s ease;
+    }
+
+    .product-card:hover .product-thumb img {
+        transform: scale(1.08);
+    }
+
+    .product-details {
+        padding: 15px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .product-catagory-line {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+
+    .product-catagory {
+        font-size: 12px;
+        font-weight: 500;
+        text-transform: uppercase;
+        color: #4b6cb7;
+    }
+
+    .wishlist-link {
+        color: #6b7280;
+        font-size: 14px;
+        transition: color 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+    }
+
+    .wishlist-link:hover {
+        color: #4b6cb7;
+    }
+
+    .product-details h4 a {
+        font-weight: 700;
+        font-size: 16px;
+        color: #182848;
+        transition: color 0.3s ease;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        height: 40px;
+    }
+
+    .product-details h4 a:hover {
+        color: #4b6cb7;
+    }
+
+    .product-details p {
+        font-size: 12px;
+        line-height: 16px;
+        margin-bottom: 10px;
+        color: #5f6c85;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        height: 32px;
+    }
+
+    .product-rating {
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .star {
+        font-size: 12px;
+        color: #d1d9e6;
+        margin-right: 3px;
+    }
+
+    .star.filled {
+        color: #3b82f6;
+    }
+
+    .rating-text {
+        font-size: 12px;
+        color: #5f6c85;
+    }
+
+    .product-bottom-details {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 15px;
+        padding-bottom: 10px;
+        gap: 15px;
+    }
+
+    .product-price {
+        font-size: 16px;
+        color: #4b6cb7;
+        font-weight: 700;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        align-items: flex-start;
+        max-width: 100px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .original-price {
+        font-size: 12px;
+        font-weight: 400;
+        text-decoration: line-through;
+        color: #5f6c85;
+    }
+
+    .current-price {
+        font-size: 16px;
+        color: #4b6cb7;
+        font-weight: 700;
+    }
+
+    .product-links {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        max-width: 130px;
+        justify-content: flex-end;
+    }
+
+    .cart-btn {
+        color: #6b7280;
+        font-size: 14px;
+        transition: color 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        border: 1px solid #6b7280;
+        border-radius: 50%;
+    }
+
+    .cart-btn:hover {
+        color: #4b6cb7;
+        border-color: #4b6cb7;
+    }
+
+    .buy-now-btn {
+        background: rgb(17, 16, 8);
+        color: white;
+        font-size: 12px;
+        font-weight: 500;
+        padding: 6px 12px;
+        border-radius: 15px;
+        transition: background 0.3s ease, transform 0.2s ease;
+        text-decoration: none;
+        width: 90px;
+        text-align: center;
+    }
+
+    .buy-now-btn:hover {
+        background: rgb(244, 221, 15);
+        transform: translateY(-1px);
+        color: #fff;
+    }
+
+    /* Pagination Styles */
+    .pagination .page-link {
+        color: #4b6cb7;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #4b6cb7;
+        border-color: #4b6cb7;
+        color: #fff;
+    }
+
+    .pagination .page-link:hover {
+        background-color: #3b82f6;
+        border-color: #3b82f6;
+        color: #fff;
+    }
+
+    /* Responsive adjustments */
+    @media (min-width: 1200px) {
+        .carousel,
+        .single-banner {
+            max-height: 500px;
+            min-height: 250px;
         }
 
-        .carousel {
-            max-height: 400px; /* Increased from 300px to accommodate full image height */
-            min-height: 200px; /* Ensure carousel doesn't collapse for smaller images */
-            overflow: hidden;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .carousel-item {
-            position: relative;
-            transition: transform 0.5s ease-in-out;
-        }
-
-        .carousel-item img {
-            object-fit: cover; /* Changed from cover to show full image */
-            max-height: 400px; /* Match carousel max-height */
-            width: 100%;
-            display: block;
-            margin: 0 auto; /* Center image if it doesn't fill width */
-        }
-
-        .carousel-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.3)); /* Lighter overlay for better image visibility */
-            z-index: 1;
-        }
-
-        .carousel-control-prev,
-        .carousel-control-next {
-            width: 5%;
-            background: rgba(0, 0, 0, 0.3);
-            transition: background 0.3s ease;
-        }
-
-        .carousel-control-prev:hover,
-        .carousel-control-next:hover {
-            background: rgba(0, 0, 0, 0.5);
-        }
-
-        .carousel-indicators [data-bs-target] {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background-color: #fff;
-            opacity: 0.5;
-            transition: opacity 0.3s ease;
-        }
-
-        .carousel-indicators .active {
-            opacity: 1;
-            background-color: #26A69A;
-        }
-
-        /* Product Card Styles */
-        .product-listing-section {
-            padding: 2rem 0;
+        .carousel-item img,
+        .single-banner img {
+            max-height: 500px;
         }
 
         .product-card {
-            width: 100%;
-            height: 420px;
-            background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .product-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        }
-
-        .product-thumb {
-            height: 180px;
-            background: #f6faff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 10px;
-        }
-
-        .product-thumb img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-            transition: transform 0.3s ease;
-        }
-
-        .product-card:hover .product-thumb img {
-            transform: scale(1.08);
-        }
-
-        .product-details {
-            padding: 15px;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .product-catagory-line {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 8px;
-        }
-
-        .product-catagory {
-            font-size: 12px;
-            font-weight: 500;
-            text-transform: uppercase;
-            color: #4b6cb7;
-        }
-
-        .wishlist-link {
-            color: #6b7280;
-            font-size: 14px;
-            transition: color 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-        }
-
-        .wishlist-link:hover {
-            color: #4b6cb7;
-        }
-
-        .product-details h4 a {
-            font-weight: 700;
-            font-size: 16px;
-            color: #182848;
-            transition: color 0.3s ease;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            height: 40px;
-        }
-
-        .product-details h4 a:hover {
-            color: #4b6cb7;
-        }
-
-        .product-details p {
-            font-size: 12px;
-            line-height: 16px;
-            margin-bottom: 10px;
-            color: #5f6c85;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            height: 32px;
-        }
-
-        .product-rating {
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .star {
-            font-size: 12px;
-            color: #d1d9e6;
-            margin-right: 3px;
-        }
-
-        .star.filled {
-            color: #3b82f6;
-        }
-
-        .rating-text {
-            font-size: 12px;
-            color: #5f6c85;
+            height: 440px;
         }
 
         .product-bottom-details {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 15px;
-            padding-bottom: 10px;
-            gap: 15px;
+            gap: 20px;
+            padding-top: 18px;
+            padding-bottom: 12px;
         }
 
         .product-price {
+            gap: 6px;
             font-size: 16px;
-            color: #4b6cb7;
-            font-weight: 700;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            align-items: flex-start;
-            max-width: 100px;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            max-width: 120px;
         }
 
         .original-price {
             font-size: 12px;
-            font-weight: 400;
-            text-decoration: line-through;
-            color: #5f6c85;
         }
 
         .current-price {
             font-size: 16px;
-            color: #4b6cb7;
-            font-weight: 700;
         }
 
         .product-links {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            max-width: 130px;
-            justify-content: flex-end;
+            gap: 12px;
+            max-width: 150px;
         }
 
         .cart-btn {
-            color: #6b7280;
-            font-size: 14px;
-            transition: color 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 30px;
-            height: 30px;
-            border: 1px solid #6b7280;
-            border-radius: 50%;
-        }
-
-        .cart-btn:hover {
-            color: #4b6cb7;
-            border-color: #4b6cb7;
+            width: 36px;
+            height: 36px;
+            font-size: 15px;
         }
 
         .buy-now-btn {
-            background: rgb(17, 16, 8);
-            color: white;
-            font-size: 12px;
-            font-weight: 500;
-            padding: 6px 12px;
-            border-radius: 15px;
-            transition: background 0.3s ease, transform 0.2s ease;
-            text-decoration: none;
-            width: 90px;
-            text-align: center;
+            width: 100px;
+            font-size: 13px;
         }
 
-        .buy-now-btn:hover {
-            background: rgb(244, 221, 15);
-            transform: translateY(-1px);
-            color: #fff;
+        .wishlist-link {
+            width: 32px;
+            height: 32px;
+            font-size: 15px;
         }
 
-        /* Pagination Styles */
-        .pagination .page-link {
-            color: #4b6cb7;
+        .brand-logo {
+            width: 120px;
+            height: 120px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .carousel,
+        .single-banner {
+            max-height: 300px;
+            min-height: 150px;
         }
 
-        .pagination .page-item.active .page-link {
-            background-color: #4b6cb7;
-            border-color: #4b6cb7;
-            color: #fff;
+        .carousel-item img,
+        .single-banner img {
+            max-height: 300px;
         }
 
-        .pagination .page-link:hover {
-            background-color: #3b82f6;
-            border-color: #3b82f6;
-            color: #fff;
+        .product-card {
+            height: 400px;
         }
 
-        /* Responsive adjustments */
-        @media (min-width: 1200px) {
-            .carousel {
-                max-height: 500px; /* Increased from 400px */
-                min-height: 250px;
-            }
-
-            .carousel-item img {
-                max-height: 500px;
-            }
-
-            .product-card {
-                height: 440px;
-            }
-
-            .product-bottom-details {
-                gap: 20px;
-                padding-top: 18px;
-                padding-bottom: 12px;
-            }
-
-            .product-price {
-                gap: 6px;
-                font-size: 16px;
-                max-width: 120px;
-            }
-
-            .original-price {
-                font-size: 12px;
-            }
-
-            .current-price {
-                font-size: 16px;
-            }
-
-            .product-links {
-                gap: 12px;
-                max-width: 150px;
-            }
-
-            .cart-btn {
-                width: 36px;
-                height: 36px;
-                font-size: 15px;
-            }
-
-            .buy-now-btn {
-                width: 100px;
-                font-size: 13px;
-            }
-
-            .wishlist-link {
-                width: 32px;
-                height: 32px;
-                font-size: 15px;
-            }
+        .product-thumb {
+            height: 160px;
         }
 
-        @media (max-width: 768px) {
-            .carousel {
-                max-height: 300px; /* Increased from 250px */
-                min-height: 150px;
-            }
+        .brand-logo {
+            width: 80px;
+            height: 80px;
+        }
+    }
 
-            .carousel-item img {
-                max-height: 300px;
-            }
-
-            .product-card {
-                height: 400px;
-            }
-
-            .product-thumb {
-                height: 160px;
-            }
+    @media (max-width: 480px) {
+        .carousel,
+        .single-banner {
+            max-height: 250px;
+            min-height: 120px;
         }
 
-        @media (max-width: 480px) {
-            .carousel {
-                max-height: 250px; /* Increased from 200px */
-                min-height: 120px;
-            }
-
-            .carousel-item img {
-                max-height: 250px;
-            }
-
-            .product-card {
-                height: 380px;
-            }
-
-            .product-thumb {
-                height: 140px;
-            }
-
-            .cart-btn {
-                width: 28px;
-                height: 28px;
-                font-size: 13px;
-            }
-
-            .buy-now-btn {
-                width: 80px;
-                font-size: 11px;
-            }
-
-            .wishlist-link {
-                width: 26px;
-                height: 26px;
-                font-size: 13px;
-            }
-
-            .product-price {
-                max-width: 80px;
-            }
-
-            .product-links {
-                max-width: 120px;
-            }
+        .carousel-item img,
+        .single-banner img {
+            max-height: 250px;
         }
-    </style>
-    <!-- Include Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+        .product-card {
+            height: 380px;
+        }
+
+        .product-thumb {
+            height: 140px;
+        }
+
+        .cart-btn {
+            width: 28px;
+            height: 28px;
+            font-size: 13px;
+        }
+
+        .buy-now-btn {
+            width: 80px;
+            font-size: 11px;
+        }
+
+        .wishlist-link {
+            width: 26px;
+            height: 26px;
+            font-size: 13px;
+        }
+
+        .product-price {
+            max-width: 80px;
+        }
+
+        .product-links {
+            max-width: 120px;
+        }
+
+        .brand-logo {
+            width: 60px;
+            height: 60px;
+        }
+    }
+</style>
+<!-- Include Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 {% endblock %}

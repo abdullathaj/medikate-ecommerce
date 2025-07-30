@@ -10,13 +10,22 @@ urlpatterns = [
     # PRODUCT CARD BUTTONS
     path('add_to_cart/<int:variant_id>/', views.add_to_cart, name='add_to_cart'),
     path('buy_now/<int:variant_id>/', views.buy_now, name='buy_now'),
-    path('wishlist/add/<int:variant_id>/', views.add_to_wishlist, name='add_to_wishlist'),
+    path('add_to_wishlist/<int:variant_id>/', views.add_to_wishlist, name='add_to_wishlist'),
     # NAVBAR BUTTONS
     path('user_cart/',views.users_cart_page,name='user_cart_page'),
     path('user_profile/',views.users_profile_page,name='user_profile_page'),
     path('user_orders/',views.users_orders_page,name='user_orders_page'),
     path('user_wishlist/',views.users_wishlist_page,name='user_wishlist_page'),
     path('user_wallet/',views.users_wallet_page,name='user_wallet_page'),
+    # PROFILE EDITING 
+    path('user_profile_update/',views.users_profile_update_page,name='user_profile_update'),
+    path('delete-address/<int:address_id>/', views.user_delete_address, name='delete_address'),
+    # CART FEATURES
+    path('update_cart_quantity/<int:cart_item_id>/',views.update_cart_quantity,name='update_cart_quantity'),
+    path('remove_cart_item/<int:cart_item_id>/',views.remove_cart_item,name='remove_cart_item'),
+    path('save_for_later/<int:cart_item_id>/',views.save_for_later,name='save_for_later'),
+    
+    
 
 
 ]
