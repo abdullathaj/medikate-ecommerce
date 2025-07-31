@@ -16,7 +16,7 @@ class Useraddform(UserCreationForm):
 
 # FORM FOR ADDING NEW CATEGORY
 
-class CategoryAddForm(ModelForm):
+class CategoryAddForm(forms.ModelForm):
     class Meta:
         model = Categories
         fields = ['name', 'description', 'is_active']
@@ -26,6 +26,13 @@ class CategoryAddForm(ModelForm):
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
+    def clean_name(self):
+        name = self.cleaned_data['name']
+        if Categories.objects.filter(name__iexact=name).exists():
+            raise ValidationError("The category with the same name already exists.")
+        if not re.fullmatch(r'[A-Za-z][A-Za-z0-9\s]*', name):
+            raise ValidationError("Category name should only contain letters, digits, and spaces.")
+        return name
 
 class ProductAddForm(ModelForm):
     class Meta:

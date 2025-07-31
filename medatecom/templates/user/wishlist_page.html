@@ -3,13 +3,12 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h2>Your Wishlist</h2>
+    <h2 class="mb-4 text-center fw-bold">Your Wishlist</h2>
 
-    <!-- Display Messages -->
     {% if messages %}
-        <div class="messages">
+        <div class="messages mb-4">
             {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
                     {{ message }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
@@ -19,15 +18,71 @@
 
     {% if wishlist_items %}
         <div class="row">
+            <!-- Wishlist Items -->
+            <div class="col-lg-8 col-md-12 mb-4">
                 {% for item in wishlist_items %}
-                    <p>{{ item.variant.product.name }} - {{ item.variant.variant_name }}</p>
-                {% empty %}
-                    <p>No items in your wishlist.</p>
+                    <div class="card mb-3 border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-2">
+                                    {% with images=item.variant.product.product_image.all %}
+                                        {% if images %}
+                                            <img src="{{ images.0.image.url }}" 
+                                                 alt="{{ item.variant.product.name }}" 
+                                                 class="cart-item-img" 
+                                                 style="width: 100px; height: 100px; object-fit: cover;">
+                                        {% else %}
+                                            <img src="{% static 'images/placeholder.png' %}" 
+                                                 alt="No image" 
+                                                 class="cart-item-img" 
+                                                 style="width: 100px; height: 100px; object-fit: cover;">
+                                        {% endif %}
+                                    {% endwith %}
+                                </div>
+                                <div class="col-md-6">
+                                    <h5 class="fw-semibold">
+                                        <a href="{% url 'product_details' item.variant.product.id %}" class="text-decoration-none text-dark">
+                                            {{ item.variant.product.name }}
+                                        </a>
+                                    </h5>
+                                    <p class="text-muted mb-1">
+                                        <a href="{% url 'product_details' item.variant.product.id %}" class="text-decoration-none text-muted">
+                                            {{ item.variant.variant_name }}
+                                        </a>
+                                    </p>
+                                    <p class="fw-bold text-primary">₹{{ item.variant.price|floatformat:2 }}</p>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <form method="POST" action="{% url 'remove_from_wishlist' %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="variant_id" value="{{ item.variant.id }}">
+                                        <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 {% endfor %}
-
+            </div>
         </div>
     {% else %}
-        <p class="text-muted">Your wishlist is empty.</p>
+        <div class="text-center py-5">
+            <p class="text-muted fs-5">Your wishlist is empty.</p>
+            <a href="{% url 'shop' %}" class="btn btn-primary mt-3">Explore Products</a>
+        </div>
     {% endif %}
 </div>
+
+<style>
+.cart-item-img {
+    border-radius: 8px;
+}
+.card {
+    transition: all 0.3s ease;
+}
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1) !important;
+}
+</style>
 {% endblock %}

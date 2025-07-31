@@ -17,29 +17,36 @@ class User(AbstractUser):
 # CREATING DELIVERY ADDRESSES FOR USER
 
 class UserAddress(models.Model):
-    user=models.ForeignKey(User,on_delete=models.CASCADE,related_name='addresses')
-    addressline_1=models.CharField(max_length=100)
-    addressline_2=models.CharField(max_length=100, null=True, blank=True)
-    city=models.CharField(max_length=50)
-    state=models.CharField(max_length=50)
-    nation=models.CharField(max_length=50)
-    postal_code=models.CharField(max_length=10)
-    is_default=models.BooleanField(default=False)
-    created_at=models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='addresses')
+    addressline_1 = models.CharField(max_length=100)
+    addressline_2 = models.CharField(max_length=100, null=True, blank=True)
+    city = models.CharField(max_length=50)
+    state = models.CharField(max_length=50)
+    nation = models.CharField(max_length=50)
+    postal_code = models.CharField(max_length=10)
+    is_default = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
 
+    # class Meta:
+    #     constraints = [
+    #         models.UniqueConstraint(
+    #             fields=['user', 'addressline_1', 'addressline_2', 'city', 'state', 'nation', 'postal_code'],
+    #             name='unique_address_per_user'
+    #         )
+    #     ]
 
     def clean(self):
         if self.user.addresses.count() >= 5 and not self.pk:
             raise ValidationError("Maximum 5 addresses allowed per user.")
 
-    def __str__(self):
-        return f'{self.addressline_1}, {self.city}, {self.nation}.'
-    
     def save(self, *args, **kwargs):
-        # Ensure only one address is default per user
         if self.is_default:
             UserAddress.objects.filter(user=self.user, is_default=True).exclude(id=self.id).update(is_default=False)
         super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.addressline_1},{self.addressline_2}, {self.city},{self.state}, {self.nation},{self.postal_code}.'
+
 
 # # MODEL FOR USERS WISHLIST
 class WishlistProducts(models.Model):

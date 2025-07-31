@@ -47,6 +47,42 @@
             {% endfor %}
         </div>
     {% endif %}
+
+    <!-- User Address Section -->
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Delivery Address</h5>
+            </div>
+            <div class="card-body">
+                {% if default_address %}
+                    <div class="mb-3">
+                        <strong>Primary Address (Default):</strong><br>
+                        {{ default_address.addressline_1 }}<br>
+                        {{ default_address.city }}, {{ default_address.state }} - {{ default_address.postal_code }}<br>
+                        {{ default_address.nation }}
+                    </div>
+                {% elif user_addresses %}
+                    <form method="post" action="{% url 'cart_select_address' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="selected_address" class="form-label">Choose a delivery address</label>
+                            <select class="form-select" name="selected_address" id="selected_address" required>
+                                {% for address in user_addresses %}
+                                    <option value="{{ address.id }}" {% if address.id == selected_address_id %}selected{% endif %}>
+                                        {{ address.addressline_1 }}, {{ address.city }} ({{ address.postal_code }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-outline-primary btn-sm">Use Selected Address</button>
+                    </form>
+                {% else %}
+                    <p class="text-muted">No saved addresses. <a href="{% url 'user_profile_update' %}">Add new address</a>.</p>
+                {% endif %}
+            </div>
+        </div>
+
+
     
     {% if cart_items %}
         <div class="row">
@@ -104,9 +140,9 @@
                     <h4>Order Summary</h4>
                     <hr>
                     <p>Original Price: ₹{{ original_total_price|floatformat:2 }}</p>
-                    <p>Discount: -₹{{ discount_total|floatformat:2 }}</p>
+                    <p>Discount: <span style="color:green; text-decoration: line-through;">-₹{{ discount_total|floatformat:2 }}</span></p>
                     <p>Subtotal: ₹{{ selling_total_price|floatformat:2 }}</p>
-                    <p>Taxes (5%): ₹{{ taxes|floatformat:2 }}</p>
+                    <p>Taxes (5%): <span style="color:red;"> ₹{{ taxes|floatformat:2 }}</p>
                     <hr>
                     <h5>Payable Amount: ₹{{ payable_amount|floatformat:2 }}</h5>
                     <p class="text-muted">Estimated Delivery: {{ estimated_delivery_date }}</p>

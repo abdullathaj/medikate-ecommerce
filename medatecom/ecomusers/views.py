@@ -248,6 +248,15 @@ def users_wishlist_page(request):
     print('wishlist:',wishlist_items)
     return render(request, 'user/wishlist_page.html', {'wishlist_items': wishlist_items})
 
+def remove_from_wishlist(request):
+    variant_id = request.POST.get('variant_id')
+    variant = get_object_or_404(ProductVariant, id=variant_id)
+
+    WishlistProducts.objects.filter(user=request.user, variant=variant).delete()
+    messages.success(request, f"{variant} removed from your wishlist.")
+
+    return redirect('user_wishlist_page')
+
 
 
 # USER CART MANAGEMENT , ADDING PRODUCTS FOR AUTHENTICATED USERS
@@ -308,6 +317,14 @@ def users_cart_page(request):
 
 # TAKING USER ADDRESSES FOR DELIVERY
     addresses=UserAddress.objects.filter(user=request.user)
+    default_address=UserAddress.objects.filter(is_default=True).first()
+    selected_address_id=request.session.get('selected_address_id')
+
+    if not selected_address_id or default_address:
+        selected_address_id = default_address.id
+        request.session['selected_address_id']= selected_address_id
+
+
     
 # DELIVERY TIME
     estimated_delivery_date=(datetime.now() + timedelta(days=7)).strftime('%B %d, %Y')
@@ -319,8 +336,11 @@ def users_cart_page(request):
         'discount_total': discount_total,
         'selling_total_price': selling_total_price,
         'taxes': taxes,
-        'addresses': addresses,
+        'default_addresses': default_address,
+        'selected_address_id':selected_address_id,
+        'user_addresses':addresses.exclude(id=default_address.id) if default_address else addresses,
         'estimated_delivery_date': estimated_delivery_date,
+
     }
 
     return render(request,'user/cart_page.html',context)
@@ -354,8 +374,9 @@ def remove_cart_item(request,cart_item_id):
     """ REMOVING AN ITEM FROM THE CART """
 
     cart_item=get_object_or_404(CartProducts,user=request.user,id=cart_item_id)
-    cart_item.delete()
     cart_item.variant.stock += cart_item.quantity
+    cart_item.variant.save()
+    cart_item.delete()
 
     messages.success(request, f"{cart_item.variant} removed from your cart.")
 
@@ -377,7 +398,21 @@ def save_for_later(request,cart_item_id):
     
     return redirect('user_cart_page')
 
+def cart_select_address(request):
+    if request.method == 'POST' and request.user.is_authenticated:
+        try:
+            address_id = int(request.POST.get('selected_address'))
+            address = get_object_or_404(UserAddress, id=address_id, user=request.user)
 
+            # Save to session (don't change default status)
+            request.session['selected_address_id'] = address.id
+            messages.success(request, "Delivery address selected successfully.")
+        except (TypeError, ValueError):
+            messages.error(request, "Invalid address selection.")
+    else:
+        messages.error(request, "Invalid request.")
+
+    return redirect('user_cart_page')
 
 
 
