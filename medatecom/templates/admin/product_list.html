@@ -15,6 +15,29 @@
             <i class="fas fa-plus"></i> Create Product
         </a>
     </div>
+   <!-- Filters -->
+        <form method="GET" class="d-flex align-items-center gap-2" style="flex: 1;">
+
+            <!-- Category dropdown -->
+            <select name="category" class="form-select form-select-sm me-2 mb-1" style="max-width: 150px;">
+                <option value="">All Categories</option>
+                {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>
+                        {{ cat.name }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <!-- Sort dropdown -->
+            <select name="sort" class="form-select form-select-sm me-2 mb-1" style="max-width: 150px;">
+                <option value="newest" {% if sort == "newest" %}selected{% endif %}>Newest First</option>
+                <option value="oldest" {% if sort == "oldest" %}selected{% endif %}>Oldest First</option>
+            </select>
+
+            <button type="submit" class="btn btn-success btn-sm mb-1">
+                <i class="fas fa-filter"></i> Apply
+            </button>
+        </form>
 
     <!-- Product Table -->
     <div class="table-responsive">

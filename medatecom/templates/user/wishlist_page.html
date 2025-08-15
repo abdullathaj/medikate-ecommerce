@@ -20,55 +20,57 @@
         <div class="row">
             <!-- Wishlist Items -->
             <div class="col-lg-8 col-md-12 mb-4">
-                {% for item in wishlist_items %}
-                    <div class="card mb-3 border-0 shadow-sm">
-                        <div class="card-body">
-                            <div class="row align-items-center">
-                                <div class="col-md-2">
-                                    {% with images=item.variant.product.product_image.all %}
-                                        {% if images %}
-                                            <img src="{{ images.0.image.url }}" 
-                                                 alt="{{ item.variant.product.name }}" 
-                                                 class="cart-item-img" 
-                                                 style="width: 100px; height: 100px; object-fit: cover;">
-                                        {% else %}
-                                            <img src="{% static 'images/placeholder.png' %}" 
-                                                 alt="No image" 
-                                                 class="cart-item-img" 
-                                                 style="width: 100px; height: 100px; object-fit: cover;">
-                                        {% endif %}
-                                    {% endwith %}
-                                </div>
-                                <div class="col-md-6">
-                                    <h5 class="fw-semibold">
-                                        <a href="{% url 'product_details' item.variant.product.id %}" class="text-decoration-none text-dark">
-                                            {{ item.variant.product.name }}
-                                        </a>
-                                    </h5>
-                                    <p class="text-muted mb-1">
-                                        <a href="{% url 'product_details' item.variant.product.id %}" class="text-decoration-none text-muted">
-                                            {{ item.variant.variant_name }}
-                                        </a>
-                                    </p>
-                                    <p class="fw-bold text-primary">₹{{ item.variant.price|floatformat:2 }}</p>
-                                </div>
-                                <div class="col-md-4 text-end">
-                                    <form method="POST" action="{% url 'remove_from_wishlist' %}">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="variant_id" value="{{ item.variant.id }}">
-                                        <button type="submit" class="btn btn-sm btn-danger">Remove</button>
-                                    </form>
-                                </div>
+               {% for item in wishlist_items %}
+                <div class="card mb-3 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-2">
+                                {% with product_image=item.variant.product.product_image.first %}
+                                    {% if product_image %}
+                                        <img src="{{ product_image.image.url }}" 
+                                            alt="{{ item.variant.product.name }}" 
+                                            class="cart-item-img" 
+                                            style="width: 100px; height: 100px; object-fit: contain;" 
+                                            loading="lazy">
+                                    {% else %}
+                                        <img src="{% static 'images/placeholder.png' %}" 
+                                            alt="No image" 
+                                            class="cart-item-img" 
+                                            style="width: 100px; height: 100px; object-fit: contain;" 
+                                            loading="lazy">
+                                    {% endif %}
+                                {% endwith %}
+                            </div>
+                            <div class="col-md-6">
+                                <h5 class="fw-semibold">
+                                    <a href="{% url 'product_details' item.variant.id %}" class="text-decoration-none text-dark">
+                                        {{ item.variant.product.name }}
+                                    </a>
+                                </h5>
+                                <p class="text-muted mb-1">
+                                    <a href="{% url 'product_details' item.variant.id %}" class="text-decoration-none text-muted">
+                                        {{ item.variant.variant_name }}
+                                    </a>
+                                </p>
+                                <p class="fw-bold text-primary">₹{{ item.variant.price|floatformat:2 }}</p>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <form method="POST" action="{% url 'remove_from_wishlist' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="variant_id" value="{{ item.variant.id }}">
+                                    <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                                </form>
                             </div>
                         </div>
                     </div>
-                {% endfor %}
+                </div>
+            {% endfor %}
             </div>
         </div>
     {% else %}
         <div class="text-center py-5">
             <p class="text-muted fs-5">Your wishlist is empty.</p>
-            <a href="{% url 'shop' %}" class="btn btn-primary mt-3">Explore Products</a>
+            <a href="{% url 'product_listing' %}" class="btn btn-primary mt-3">Explore Products</a>
         </div>
     {% endif %}
 </div>
@@ -76,6 +78,7 @@
 <style>
 .cart-item-img {
     border-radius: 8px;
+    
 }
 .card {
     transition: all 0.3s ease;

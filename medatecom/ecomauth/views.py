@@ -322,7 +322,7 @@ def loginview(request):
             request.session['email'] = user.email
             request.session.set_expiry(3600)
 
-            messages.success(request, f"Welcome back, {user.username}!")
+            messages.success(request, f"Welcome {user.username}!")
             return redirect('login_home')
         else:
             messages.error(request, "Invalid email or password.")

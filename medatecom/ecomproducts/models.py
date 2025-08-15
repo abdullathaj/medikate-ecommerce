@@ -39,7 +39,7 @@ class ProductVariant(models.Model):
     stock=models.PositiveIntegerField(default=0)
     size=models.CharField(max_length=50,blank=True,null=True)
     is_active=models.BooleanField(default=True)
-    discount = models.PositiveIntegerField(default=10, editable=False)  # % discount (e.g. 10 = 10%)
+    discount = models.PositiveIntegerField(default=10, editable=False) 
 
 
     def __str__(self):

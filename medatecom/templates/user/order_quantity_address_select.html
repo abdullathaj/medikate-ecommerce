@@ -1,0 +1,68 @@
+{% extends 'auth/navbar.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Checkout</h2>
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <!-- Left Section: Quantity Selection -->
+                <div class="col-md-6">
+                    <h5>{{ variant.product.name }} - {{ variant.variant_name }}</h5>
+                    {% with product_image=variant.product.product_image.first %}
+                        {% if product_image %}
+                            <img src="{{ product_image.image.url }}" alt="{{ variant.product.name }} - {{ variant.variant_name }}" class="img-fluid mb-3" style="max-height: 200px; object-fit: cover;">
+                        {% else %}
+                            <img src="https://via.placeholder.com/150?text={{ variant.product.name|urlencode }}%20-%20{{ variant.variant_name|urlencode }}" alt="{{ variant.product.name }} - {{ variant.variant_name }}" class="img-fluid mb-3" style="max-height: 200px; object-fit: cover;">
+                        {% endif %}
+                    {% endwith %}
+                    <form method="post" id="checkoutForm">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="quantity" class="form-label">Quantity:</label>
+                            <input type="number" class="form-control" id="quantity" name="quantity" min="1" max="{{ max_quantity }}" value="1" required>
+                            <small class="form-text text-muted">Available Stock: {{ variant.stock }}</small>
+                        </div>
+                </div>
+                <!-- Right Section: Price Details -->
+                <div class="col-md-6">
+                    <h5>Price Details</h5>
+                    <p>Unit Price: ₹<span id="unitPrice">{{ variant.price|floatformat:2 }}</span></p>
+                    <p>Discount: {{ variant.discount }}%</p>
+                    <p>Original Price: ₹{{ variant.original_price|floatformat:2 }}</p>
+                    <p>Total: ₹<span id="totalPrice" style="color:green">{{ total_price|floatformat:2 }}</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Address Selection Section -->
+    <h3>Select Delivery Address</h3>
+    {% if addresses %}
+        <div class="mb-3">
+            <label for="address_id" class="form-label">Delivery Address:</label>
+            <select class="form-control" id="address_id" name="address_id" required>
+                {% for address in addresses %}
+                    <option value="{{ address.id }}" {% if address.is_default %}selected{% endif %}>
+                        {{ address.addressline_1 }}{% if address.addressline_2 %}, {{ address.addressline_2 }}{% endif %}, {{ address.city }}, {{ address.state }}, {{ address.nation }} - {{ address.postal_code }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary mb-3">Proceed to Payment</button>
+        </form>
+    {% else %}
+        <p>No addresses found. Please add an address in your profile.</p>
+        <a href="{% url 'user_profile_update' %}" class="btn btn-secondary mb-1" >Add Address</a>
+    {% endif %}
+</div>
+
+
+
+<script>
+document.getElementById('quantity').addEventListener('input', function() {
+    const quantity = parseInt(this.value) || 1;
+    const unitPrice = parseFloat('{{ variant.price }}');
+    const totalPrice = (quantity * unitPrice).toFixed(2);
+    document.getElementById('totalPrice').textContent = totalPrice;
+});
+</script>
+{% endblock %}

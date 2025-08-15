@@ -1,0 +1,33 @@
+{% extends 'auth/navbar.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Order Placed Successfully!</h2>
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5>Order </h5>
+            <p><strong>Order Date:</strong> {{ order.created_at|date:"F d, Y H:i" }}</p>
+            <p><strong>Status:</strong> {{ order.get_status_display }}</p>
+            <p><strong>Payment Method:</strong> {{ order.get_payment_method_display }}</p>
+            <p><strong>Total Amount:</strong> ₹{{ order.total_amount|floatformat:2 }}</p>
+            <h6>Items:</h6>
+            <ul>
+                {% for item in order.items.all %}
+                    <li>
+                        {% with product_image=item.variant.product.product_image.first %}
+                            {% if product_image %}
+                                <img src="{{ product_image.image.url }}" alt="{{ item.variant.product.name }} - {{ item.variant.variant_name }}" class="img-fluid" style="max-height: 100px; object-fit: cover; display: inline-block; vertical-align: middle; margin-right: 10px;">
+                            {% else %}
+                                <img src="https://via.placeholder.com/100?text={{ item.variant.product.name|urlencode }}%20-%20{{ item.variant.variant_name|urlencode }}" alt="{{ item.variant.product.name }} - {{ item.variant.variant_name }}" class="img-fluid" style="max-height: 100px; object-fit: cover; display: inline-block; vertical-align: middle; margin-right: 10px;">
+                            {% endif %}
+                        {% endwith %}
+                        {{ item.variant }} x {{ item.quantity }} - ₹{{ item.total_price|floatformat:2 }}
+                    </li>
+                {% endfor %}
+            </ul>
+            <p><strong>Delivery Address:</strong> {{ order.address.addressline_1 }}{% if order.address.addressline_2 %}, {{ order.address.addressline_2 }}{% endif %}, {{ order.address.city }}, {{ order.address.state }}, {{ order.address.nation }} - {{ order.address.postal_code }}</p>
+        </div>
+    </div>
+    <a href="{% url 'order_list' %}" class="btn btn-primary mb-1">View All Orders</a>
+    <a href="{% url 'product_listing' %}" class="btn btn-secondary mb-1">Continue Shopping</a>
+</div>
+{% endblock %}

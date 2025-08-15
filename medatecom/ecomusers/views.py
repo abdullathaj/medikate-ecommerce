@@ -19,44 +19,38 @@ def userhomeview(request):
     products = Product.objects.filter(
         product_variant__is_active=True,
         category__is_active=True
-    ).select_related('category').order_by('-created_at').distinct()[:8]
+    ).select_related('category').order_by('-created_at').distinct()[:4]
     print(products)
 
-    trending_products=products[:8]
-
-    # Set up pagination (4 products per page)
-    paginator = Paginator(products, 4)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    trending_products=products[:4]
 
     
-    return render(request, 'auth/home.html',{'products': page_obj})
+    return render(request, 'auth/home.html',{'products': products, 'trending_products':trending_products})
 
 
-# @login_required(login_url='login') # REDIRECT TO LOGIN PAGE FOR UNAUTHENTICATED USERS.
-# @never_cache
+@login_required(login_url='login') # REDIRECT TO LOGIN PAGE FOR UNAUTHENTICATED USERS.
+@never_cache
 def home_after_login(request):
-
+    
     products = Product.objects.filter(
         product_variant__is_active=True,
         category__is_active=True
-    ).select_related('category').order_by('-created_at').distinct()[:8]
+    ).select_related('category').order_by('-created_at').distinct()[:4]
     print(products)
+    trending_products=products[:4]
+
+    
+   
 
    
 
-    # Set up pagination (4 products per page)
-    paginator = Paginator(products, 4)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-   
-
-    return render(request,'auth/home.html',{'products':page_obj})
+    return render(request,'auth/home.html',{'products':products,'trending products':trending_products})
 
 # PRODUCT DETAILING PAGE
-def product_details(request, product_id):
+def product_details(request, variant_id):
     # Fetch the product
-    product = get_object_or_404(Product, id=product_id, category__is_active=True)
+    variant = get_object_or_404(ProductVariant, id=variant_id, is_active=True, product__category__is_active=True)
+    product=variant.product
 
     # Fetch active variants for the product
     variants = product.product_variant.filter(is_active=True)
@@ -71,6 +65,7 @@ def product_details(request, product_id):
     # Context for template
     context = {
         'product': product,
+        'selected_variant':variant,
         'variants': variants,
         'related_products': related_products,
     }
@@ -86,6 +81,18 @@ def user_product_listing(request):
         product__category__is_active=True
     ).select_related('product', 'product__category').prefetch_related('product__product_image')
 
+    # PRODUCT SEARCH FEATURE
+    query=request.GET.get('q','').strip()
+    if query:
+        variants=variants.filter(
+            Q(product__name__icontains=query) |
+            Q(product__category__name__icontains=query) |
+            Q(product__brand__icontains=query) |
+            Q(product__description__icontains=query)|
+            Q(product__category__description__icontains=query)
+        )
+
+
     # Get all active categories for filter options
     categories = Categories.objects.filter(is_active=True)
 
@@ -93,7 +100,7 @@ def user_product_listing(request):
     brands = Product.objects.filter(
         product_variant__is_active=True,
         category__is_active=True
-    ).exclude(brand__isnull=True).values_list('brand', flat=True).distinct()
+    ).exclude(brand__isnull=True).values_list('brand', flat=True).distinct().order_by('brand')
 
     # Filtering
     selected_categories = request.GET.getlist('category')
@@ -156,6 +163,7 @@ def user_product_listing(request):
         'price_max': price_max,
         'sort': sort,
         'query_string': query_string,
+        'query': query
     }
 
     return render(request, 'user/product_listing.html', context)
@@ -164,21 +172,21 @@ def user_product_listing(request):
 
 # USER PROFILE DETAILS, ADDRESS MANAGEMENT ADD EDIT AND DELETE
 
-# @login_required(login_url='login') 
+@login_required(login_url='login') 
 def users_profile_page(request):
     if not request.user.is_active:
         return redirect('login')
    
     return render(request,'user/profile_page.html')
 
-# @login_required(login_url='login') 
+@login_required(login_url='login') 
 def user_delete_address(request, address_id):
     address = get_object_or_404(UserAddress, id=address_id, user=request.user)
     address.delete()
     messages.success(request, "Address deleted successfully.")
     return redirect('user_profile_page')
 
-# @login_required(login_url='login') 
+@login_required(login_url='login') 
 def users_profile_update_page(request):
     user = request.user
     user_form = UserProfileForm(instance=user)
@@ -216,7 +224,7 @@ def users_profile_update_page(request):
 
 # WISHLIST MANAGEMENT FOR AUTHENTICATED USER ADDING AND REMOVING PRODUCTS, ADDING TO CART
 
-# @login_required(login_url='login') 
+@login_required(login_url='login') 
 def add_to_wishlist(request, variant_id):
     
     variant = get_object_or_404(ProductVariant, id=variant_id,is_active=True)
@@ -233,7 +241,7 @@ def add_to_wishlist(request, variant_id):
 
     return redirect(request.META.get('HTTP_REFERER', 'user_wishlist_page'))
 
-# @login_required(login_url='login') 
+@login_required(login_url='login') 
 def users_wishlist_page(request):
     """FOR SHOWING THE PRODUCTS IN WISHLIST ADDED BY AUTHENTICATED USER
     """
@@ -248,6 +256,7 @@ def users_wishlist_page(request):
     print('wishlist:',wishlist_items)
     return render(request, 'user/wishlist_page.html', {'wishlist_items': wishlist_items})
 
+@login_required(login_url='login') 
 def remove_from_wishlist(request):
     variant_id = request.POST.get('variant_id')
     variant = get_object_or_404(ProductVariant, id=variant_id)
@@ -261,7 +270,7 @@ def remove_from_wishlist(request):
 
 # USER CART MANAGEMENT , ADDING PRODUCTS FOR AUTHENTICATED USERS
 
-#@login_required(login_url='login')
+@login_required(login_url='login')
 def add_to_cart(request, variant_id):
     """Add a product variant to the user's cart or update quantity if it already exists."""
     variant = get_object_or_404(ProductVariant, id=variant_id, is_active=True)
@@ -278,18 +287,17 @@ def add_to_cart(request, variant_id):
             messages.error(request, 'Stock limit reached.')
         else:
             cart_item.quantity += 1
-            cart_item.variant.stock -= 1
-            cart_item.variant.save()
             cart_item.save()
             messages.success(request, f"Updated quantity for {variant} in your cart is {cart_item.quantity}.")
     else:
         CartProducts.objects.create(user=request.user, variant=variant, quantity=1)
-        variant.stock -= 1
-        variant.save()
+
         messages.success(request, f"{variant} has been added to your cart.")
 
     return redirect(request.META.get('HTTP_REFERER', 'user_cart_page'))
 
+
+@login_required(login_url='login')
 def users_cart_page(request):
     if not request.user.is_active:
         return redirect('login')
@@ -315,14 +323,14 @@ def users_cart_page(request):
     taxes= selling_total_price * Decimal('0.05')
     amount_payable= selling_total_price + taxes
 
-# TAKING USER ADDRESSES FOR DELIVERY
-    addresses=UserAddress.objects.filter(user=request.user)
-    default_address=UserAddress.objects.filter(is_default=True).first()
-    selected_address_id=request.session.get('selected_address_id')
+# # TAKING USER ADDRESSES FOR DELIVERY
+#     addresses=UserAddress.objects.filter(user=request.user)
+#     default_address=UserAddress.objects.filter(is_default=True).first()
+#     selected_address_id=request.session.get('selected_address_id')
 
-    if not selected_address_id or default_address:
-        selected_address_id = default_address.id
-        request.session['selected_address_id']= selected_address_id
+#     if not selected_address_id or default_address:
+#         selected_address_id = default_address.id
+#         request.session['selected_address_id']= selected_address_id
 
 
     
@@ -336,10 +344,11 @@ def users_cart_page(request):
         'discount_total': discount_total,
         'selling_total_price': selling_total_price,
         'taxes': taxes,
-        'default_addresses': default_address,
-        'selected_address_id':selected_address_id,
-        'user_addresses':addresses.exclude(id=default_address.id) if default_address else addresses,
         'estimated_delivery_date': estimated_delivery_date,
+        # 'default_addresses': default_address,
+        # 'selected_address_id':selected_address_id,
+        # 'user_addresses':addresses.exclude(id=default_address.id) if default_address else addresses,
+       
 
     }
 
@@ -356,32 +365,27 @@ def update_cart_quantity(request, cart_item_id):
             messages.error(request, 'Stock limit reached.')
         else:
             cart_item.quantity += 1
-            cart_item.variant.stock -= 1
-            cart_item.variant.save()
             cart_item.save()
             messages.success(request, f"Quantity updated for {cart_item.variant}.")
     elif action == 'decrease' and cart_item.quantity > 1:
         cart_item.quantity -= 1
-        cart_item.variant.stock += 1
-        cart_item.variant.save()
         cart_item.save()
         messages.success(request, f"Quantity updated for {cart_item.variant}.")
     
     return redirect('user_cart_page')
 
-
+@login_required(login_url='login') 
 def remove_cart_item(request,cart_item_id):
     """ REMOVING AN ITEM FROM THE CART """
 
     cart_item=get_object_or_404(CartProducts,user=request.user,id=cart_item_id)
-    cart_item.variant.stock += cart_item.quantity
-    cart_item.variant.save()
     cart_item.delete()
 
     messages.success(request, f"{cart_item.variant} removed from your cart.")
 
     return redirect('user_cart_page')
 
+@login_required(login_url='login') 
 def save_for_later(request,cart_item_id):
 
     cart_item=get_object_or_404(CartProducts,user=request.user, id=cart_item_id)
@@ -392,12 +396,12 @@ def save_for_later(request,cart_item_id):
     else:
         WishlistProducts.objects.create(user=request.user,variant=variant)
         messages.success(request,f'{variant} is added to the wishlist.')
-    variant.stock += cart_item.quantity
-    variant.save()
+    
     cart_item.delete()
     
     return redirect('user_cart_page')
 
+@login_required(login_url='login') 
 def cart_select_address(request):
     if request.method == 'POST' and request.user.is_authenticated:
         try:
@@ -418,16 +422,6 @@ def cart_select_address(request):
 
 
 
-
-
-# @login_required(login_url='login') 
-def buy_now(request,variant_id):
-    pass
-
-# USER ORDERS PAGE
-def users_orders_page(request):
-
-    return render(request,'user/orders_page.html')
 
 
 # USER WALLET PAGE

@@ -12,12 +12,9 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
-from decouple import config
-
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -28,8 +25,7 @@ SECRET_KEY = 'django-insecure-=fwwjz3le%mg1wi6*flk!4ypt8hrs@ab+pk4qn-wdz!=8@ldt)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 # Application definition
 
@@ -37,45 +33,40 @@ INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.sessions', # SESSION HANDLING
+    'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-# custom apps
+    # Custom apps
     'ecomusers',
     'ecomadmin',
     'ecomauth',
     'ecomproducts',
     'ecomorders',
-    # pip installations
-
-    # GOOGLE AUTHENTICATION
+    # Google authentication
     'django.contrib.sites',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
-
 ]
-# GOOGLE AUTHENTICATION AND EMAIL VERIFICATION
+
+# Google authentication and email verification
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-
-SITE_ID=2
-
+SITE_ID = 2  # Ensure Site object with id=2 exists
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
-ACCOUNT_EMAIL_VERIFICATION = "none"
-ACCOUNT_LOGIN_METHODS ={'email'}
-
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
-
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config('GOOGLE_CLIENT_ID')
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config('GOOGLE_CLIENT_SECRET')
+# Allauth settings
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']  # Replaced deprecated settings
+SOCIALACCOUNT_AUTO_SIGNUP = True  # Bypasses signup form for social logins
+SOCIALACCOUNT_LOGIN_ON_GET = True
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
@@ -89,46 +80,42 @@ SOCIALACCOUNT_PROVIDERS = {
         'APP': {
             'client_id': '1093804396164-flrutqfcmm7qhlfgusdc7705bogc6osm.apps.googleusercontent.com',
             'secret': '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',
-            'key': ''
+            'key': '',
         }
     }
 }
-# TO AVOID THE INTERMEDIATE CONFIRMATION PAGE
-SOCIALACCOUNT_LOGIN_ON_GET=True
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',# SESSION HANDLING
+    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # CUSTOM MIDDLEWARES
-    'allauth.account.middleware.AccountMiddleware', # google authentication
+    # Custom middlewares
+    'allauth.account.middleware.AccountMiddleware',
     'ecomauth.middlwares.BlockedUserLogoutMiddleware',
-
 ]
-# SESSION HANDLING AND COOKIE MANAGEMENT
-SESSION_COOKIE_AGE=3600
-SESSION_EXPIRE_AT_BROWSER_CLOSE=True
-SESSION_SAVE_EVERY_REQUEST=True
 
+# Session handling and cookie management
+SESSION_COOKIE_AGE = 3600
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_SAVE_EVERY_REQUEST = True
 
 ROOT_URLCONF = 'medatecom.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR,'templates')],  #adding templates of BASE_DIRECTORY(HTML Files)
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages'
-                
+                'django.contrib.messages.context_processors.messages',
             ],
         },
     },
@@ -136,21 +123,19 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'medatecom.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME':'medat_database',
-        'USER':'postgres',
-        'PASSWORD':'13jan1999',
-        'HOST':'localhost',
-        'PORT':'5432',
+        'NAME': 'medat_database',
+        'USER': 'postgres',
+        'PASSWORD': '13jan1999',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -170,7 +155,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
@@ -182,34 +166,26 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
-STATIC_ROOT=os.path.join(BASE_DIR,'staticfiles')    #adding static files of BASE_DIRECTORY(CSS,JS,Images,Audio,Documents).
-
-STATICFILES_DIRS=[os.path.join(BASE_DIR,'static')]
-
-MEDIA_URL='/media/'
-
-MEDIA_ROOT=os.path.join(BASE_DIR,'media')
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 AUTH_USER_MODEL = 'ecomusers.User'
 
 # Email configuration
-
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'abdullashefi@gmail.com'
 EMAIL_HOST_PASSWORD = 'jlmj gpeq ddug hbke'
-DEFAULT_FROM_EMAIL ='abdullashefi@gmail.com'
-
-
-
+DEFAULT_FROM_EMAIL = 'abdullashefi@gmail.com'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

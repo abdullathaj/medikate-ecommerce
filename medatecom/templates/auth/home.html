@@ -48,8 +48,8 @@
 
     <!-- Product Listing Section -->
     <section id='product-listing' class="product-listing-section container my-5">
-        <h2 class="text-center mb-4">Latest Products</h2>
-        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+         <h2 class="text-center mb-4">Latest Products</h2>
+        <div class="row row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
             {% for product in products %}
                 <!-- Product Card -->
                 <div class="col">
@@ -57,14 +57,14 @@
                         <div class="product-thumb">
                             {% with product_image=product.product_image.first %}
                                 {% if product_image %}
-                                    <img src="{{ product_image.image.url }}" alt="{{ product.name }}">
+                                    <img src="{{ product_image.image.url }}" alt="{{ product.name }}" loading="lazy">
                                 {% else %}
-                                    <img src="https://via.placeholder.com/150?text={{ product.name|urlencode }}" alt="{{ product.name }}">
+                                    <img src="https://via.placeholder.com/150?text={{ product.name|urlencode }}" alt="{{ product.name }}" loading="lazy">
                                 {% endif %}
                             {% endwith %}
                         </div>
                         <div class="product-details">
-                           <div class="product-catagory-line d-flex justify-content-between align-items-center">
+                            <div class="product-catagory-line d-flex justify-content-between align-items-center">
                                 <span class="product-catagory">{{ product.category.name }}</span>
                                 {% with variant=product.product_variant.first %}
                                     {% if variant %}
@@ -74,17 +74,15 @@
                                     {% endif %}
                                 {% endwith %}
                             </div>
-
-                            <h4><a href="{% url 'product_details' product.id %}">{{ product.name|truncatechars:30 }}</a></h4>
+                            {% with variant=product.product_variant.first %}
+                                {% if variant %}
+                                    <h4><a href="{% url 'product_details' variant.id %}">{{ product.name|truncatechars:30 }}</a></h4>
+                                {% else %}
+                                    <h4>{{ product.name|truncatechars:30 }}</h4>
+                                {% endif %}
+                            {% endwith %}
                             <p>{{ product.description|truncatewords:10 }}</p>
-                            <div class="product-rating">
-                                <span class="star filled">★</span>
-                                <span class="star filled">★</span>
-                                <span class="star filled">★</span>
-                                <span class="star filled">★</span>
-                                <span class="star">★</span>
-                                <span class="rating-text">(4.0)</span>
-                            </div>
+                            
                             <div class="product-bottom-details">
                                 {% with variant=product.product_variant.first %}
                                     {% if variant %}
@@ -93,14 +91,14 @@
                                             <span class="current-price">₹{{ variant.price|floatformat:2 }}</span>
                                         </div>
                                         <div class="product-links">
-                                            <a href="{% url 'add_to_cart' variant.id  %}" title="Add to Cart" class="cart-btn"><i class="fas fa-shopping-cart"></i></a>
-                                            <a href="" class="buy-now-btn">Buy Now</a>
+                                            <a href="{% url 'add_to_cart' variant.id %}" title="Add to Cart" class="cart-btn"><i class="fas fa-shopping-cart"></i></a>
+                                            <a href="{% url "buy_now" variant.id %}" class="buy-now-btn">Buy Now</a>
                                         </div>
                                     {% else %}
                                         <div class="product-price">N/A</div>
                                         <div class="product-links">
-                                            <a href="#" title="Add to Cart" class="cart-btn"><i class="fas fa-shopping-cart"></i></a>
-                                            <a href="#" class="buy-now-btn">Buy Now</a>
+                                            <a href="{% url "add_to_cart" variant.id %}" title="Add to Cart" class="cart-btn"><i class="fas fa-shopping-cart"></i></a>
+                                            <a href="{% url "buy_now" variant.id %}" class="buy-now-btn">Buy Now</a>
                                         </div>
                                     {% endif %}
                                 {% endwith %}
@@ -115,50 +113,6 @@
             {% endfor %}
         </div>
 
-        <!-- Pagination -->
-        {% if products.has_other_pages %}
-            <nav aria-label="Product pagination" class="mt-4">
-                <ul class="pagination justify-content-center">
-                    {% if products.has_previous %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ products.previous_page_number }}#product-listing" aria-label="Previous">
-                                <span aria-hidden="true">«</span>
-                            </a>
-                        </li>
-                    {% else %}
-                        <li class="page-item disabled">
-                            <a class="page-link" href="#" aria-label="Previous">
-                                <span aria-hidden="true">«</span>
-                            </a>
-                        </li>
-                    {% endif %}
-                    {% for num in products.paginator.page_range %}
-                        {% if products.number == num %}
-                            <li class="page-item active" aria-current="page">
-                                <a class="page-link" href="?page={{ num }}#product-listing">{{ num }}</a>
-                            </li>
-                        {% else %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ num }}#product-listing">{{ num }}</a>
-                            </li>
-                        {% endif %}
-                    {% endfor %}
-                    {% if products.has_next %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ products.next_page_number }}#product-listing" aria-label="Next">
-                                <span aria-hidden="true">»</span>
-                            </a>
-                        </li>
-                    {% else %}
-                        <li class="page-item disabled">
-                            <a class="page-link" href="#" aria-label="Next">
-                                <span aria-hidden="true">»</span>
-                            </a>
-                        </li>
-                    {% endif %}
-                </ul>
-            </nav>
-        {% endif %}
     </section>
 
     <!-- Single Banner Section -->
@@ -200,6 +154,21 @@
         </div>
     </section>
 </div>
+ <!-- Toast Container -->
+                    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1055">
+                        {% if messages %}
+                            {% for message in messages %}
+                            <div class="toast align-items-center text-white bg-{% if message.tags == 'success' %}success{% elif message.tags == 'error' %}danger{% else %}info{% endif %} border-0 show" role="alert" aria-live="assertive" aria-atomic="true">
+                                <div class="d-flex">
+                                    <div class="toast-body">
+                                        {{ message }}
+                                    </div>
+                                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
 
 <style>
     /* Ensure the main content fills the available space */

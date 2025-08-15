@@ -7,13 +7,12 @@ class UserProfileForm(UserChangeForm):
     password=None
     class Meta:
         model=User
-        fields=['username','first_name','last_name','email','phone']
+        fields=['username','first_name','last_name','phone']
         widgets={
             'username':forms.TextInput(attrs={'class':'form-control'}),
             'first_name':forms.TextInput(attrs={'class':'form-control'}),
             'last_name':forms.TextInput(attrs={'class':'form-control'}),
             'phone':forms.TextInput(attrs={'class':'form-control'}),
-            'email':forms.EmailInput(attrs={'class':'form-control'})
 
         }
 

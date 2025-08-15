@@ -55,6 +55,41 @@
             width: auto;
             
         }
+        .search-container {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 10px 45px 10px 15px; /* padding-right for icon space */
+            border: 2px solid #0d6efd;
+            border-radius: 25px;
+            outline: none;
+        }
+
+        .search-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            padding: 0;
+            color: #0d6efd;
+            cursor: pointer;
+        }
+
+        .search-btn:hover {
+            color: #084298;
+        }
+
+        .search-icon {
+            width: 20px;
+            height: 20px;
+        }
 
         .nav-links {
             display: flex;
@@ -169,22 +204,22 @@
         }
 
         .footer {
-            background-color: #26A69A;
-            color: white;
+            background-color: #e1ecebff;
+            color: #1a7a71;
             padding: 20px 0;
             text-align: center;
             margin-top: auto;
         }
 
         .footer a {
-            color: #f5f5f5;
+            color: #1a7a71;
             text-decoration: none;
             margin: 0 15px;
             transition: color 0.3s;
         }
 
         .footer a:hover {
-            color: #ffffff;
+            color: #015048ff;
             text-decoration: underline;
         }
 
@@ -285,13 +320,18 @@
                 <a href="{% url 'product_listing' %}" class="nav-item">Product</a>
             </div>
 
-            <!-- Search Section -->
-            <div class="search-container">
-                <input type="text" class="search-box" placeholder="Search...">
-                <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-6-6m2-5a7 7 0 1 1-14 0 7 7 0 0 1 14 0z"></path>
-                </svg>
-            </div>
+            <!-- Search section -->
+<div class="search-container my-3">
+  <form action="{% url 'product_listing' %}" method="GET">
+    <input type="text" class="search-box" placeholder="Search products..." name="q" value="{{ query|default:'' }}">
+    <button type="submit" class="search-btn">
+      <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+    </button>
+  </form>
+</div>
 
             <!-- Cart, Login/Logout, and Profile Section -->
             <div class="nav-links">
@@ -359,7 +399,7 @@
                     window.location.href = "{% url 'user_profile_page' %}";
                     break;
                 case 'orders':
-                    window.location.href = "{% url 'user_orders_page' %}";
+                    window.location.href = "{% url 'order_list' %}";
                     break;
                 case 'wishlist':
                     window.location.href = "{% url 'user_wishlist_page' %}";

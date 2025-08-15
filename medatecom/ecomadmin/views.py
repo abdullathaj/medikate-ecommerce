@@ -164,6 +164,20 @@ def admin_edit_category(request, category_id):
 def admin_product_details(request):
     products=Product.objects.all().order_by('id')
     variants=ProductVariant.objects.select_related('product__category').order_by('product__id')
+    categories=Categories.objects.all()
+
+    # filter by categories
+    category_id=request.GET.get('category')
+    if category_id and category_id.isdigit():
+        variants=variants.filter(product__category_id=category_id)
+
+    # order by created at
+    sort=request.GET.get('sort','newest')
+    if sort=='newest':
+        variants=variants.order_by('-product__created_at')
+    elif sort=='oldest':
+        variants=variants.order_by('product__created_at')
+    
 
 
     query = request.GET.get('q')
@@ -177,7 +191,11 @@ def admin_product_details(request):
     page_number=request.GET.get('page')
     page_obj=paginator.get_page(page_number)
 
-    return render(request,'admin/product_list.html',{'products':products,'variants':page_obj,'page_obj':page_obj,'query':query})
+    return render(request,'admin/product_list.html',
+                  {'products':products,
+                   'variants':page_obj,'page_obj':page_obj,
+                   'query':query,'categories':categories,
+                   'sort':sort,'selected_category':category_id})
 
 
 # ADMIN ADDING NEW PRODUCT,VATIENT AND IMAGES

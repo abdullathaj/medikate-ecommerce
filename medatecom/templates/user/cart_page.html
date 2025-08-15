@@ -1,38 +1,7 @@
-{% extends "auth/navbar.html" %}
+{% extends 'auth/navbar.html' %}
 {% load static %}
-{% block content %}
-<!-- Bootstrap CSS -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<style>
-    .cart-item-img {
-        max-width: 100px;
-        height: auto;
-    }
-    .cart-summary {
-        background-color: #f8f9fa;
-        padding: 20px;
-        border-radius: 8px;
-    }
-    .quantity-control {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    @media (max-width: 768px) {
-        .cart-item-img {
-            max-width: 80px;
-        }
-        .cart-summary {
-            margin-top: 20px;
-        }
-    }
-    /* Ensure no extra space above content */
-    body {
-        margin-top: 0 !important;
-        padding-top: 0 !important;
-    }
-</style>
 
+{% block content %}
 <div class="container mt-5">
     <h2 class="mb-4">Your Cart</h2>
 
@@ -49,114 +18,116 @@
     {% endif %}
 
     <!-- User Address Section -->
-        <div class="card mb-4">
-            <div class="card-header bg-light">
-                <h5 class="mb-0">Delivery Address</h5>
-            </div>
-            <div class="card-body">
-                {% if default_address %}
-                    <div class="mb-3">
-                        <strong>Primary Address (Default):</strong><br>
-                        {{ default_address.addressline_1 }}<br>
-                        {{ default_address.city }}, {{ default_address.state }} - {{ default_address.postal_code }}<br>
-                        {{ default_address.nation }}
-                    </div>
-                {% elif user_addresses %}
-                    <form method="post" action="{% url 'cart_select_address' %}">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <label for="selected_address" class="form-label">Choose a delivery address</label>
-                            <select class="form-select" name="selected_address" id="selected_address" required>
-                                {% for address in user_addresses %}
-                                    <option value="{{ address.id }}" {% if address.id == selected_address_id %}selected{% endif %}>
-                                        {{ address.addressline_1 }}, {{ address.city }} ({{ address.postal_code }})
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <button type="submit" class="btn btn-outline-primary btn-sm">Use Selected Address</button>
-                    </form>
-                {% else %}
-                    <p class="text-muted">No saved addresses. <a href="{% url 'user_profile_update' %}">Add new address</a>.</p>
-                {% endif %}
-            </div>
+    {% comment %} <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Delivery Address</h5>
         </div>
+        <div class="card-body">
+            {% if default_address %}
+                <div class="mb-3">
+                    <strong>Primary Address (Default):</strong><br>
+                    {{ default_address.addressline_1 }}<br>
+                    {{ default_address.city }}, {{ default_address.state }} - {{ default_address.postal_code }}<br>
+                    {{ default_address.nation }}
+                </div>
+            {% elif user_addresses %}
+                <form method="post" action="{% url 'cart_select_address' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="selected_address" class="form-label">Choose a delivery address</label>
+                        <select class="form-select" name="selected_address" id="selected_address" required>
+                            {% for address in user_addresses %}
+                                <option value="{{ address.id }}" {% if address.id == selected_address_id %}selected{% endif %}>
+                                    {{ address.addressline_1 }}, {{ address.city }} ({{ address.postal_code }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-outline-primary btn-sm">Use Selected Address</button>
+                </form>
+            {% else %}
+                <p class="text-muted">No saved addresses. <a href="{% url 'user_profile_update' %}">Add new address</a>.</p>
+            {% endif %}
+        </div>
+    </div> {% endcomment %}
 
-
-    
     {% if cart_items %}
-        <div class="row">
-            <!-- Left Section: Cart Items -->
-            <div class="col-lg-8 col-md-12 mb-4">
-                {% for item in cart_items %}
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <div class="row align-items-center">
-                                <div class="col-md-2">
-                                    {% with images=item.variant.product.product_image.all %}
-                                        {% if images %}
-                                            <img src="{{ images.0.image.url }}" alt="{{ item.variant.product.name }}" class="cart-item-img">
-                                        {% else %}
-                                            <img src="{% static 'images/placeholder.png' %}" alt="No image" class="cart-item-img">
-                                        {% endif %}
-                                    {% endwith %}
+    <div class="row">
+        <!-- Left Section: Cart Items -->
+        <div class="col-lg-8 col-md-12 mb-4">
+            {% for item in cart_items %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-2">
+                                {% with product_image=item.variant.product.product_image.first %}
+                                    {% if product_image %}
+                                        <img src="{{ product_image.image.url }}" alt="{{ item.variant.product.name }}" class="img-fluid" style="height: 100px; object-fit: contain;">
+                                    {% else %}
+                                        <img src="{% static 'images/placeholder.png' %}" alt="No image" class="img-fluid" style="height: 100px; object-fit: contain;">
+                                    {% endif %}
+                                {% endwith %}
+                            </div>
+                            <div class="col-md-4">
+                                <h5 class="fw-semibold">
+                                    <a href="{% url 'product_details' item.variant.id %}" class="text-decoration-none text-dark">{{ item.variant.product.name }}</a>
+                                </h5>
+                                <p class="text-muted mb-1">
+                                    <a href="{% url 'product_details' item.variant.id %}" class="text-decoration-none text-muted">
+                                        {{ item.variant.variant_name }}
+                                    </a>
+                                </p>
+                                <p>Unit Price: ₹{{ item.variant.price|floatformat:2 }}</p>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="d-flex align-items-center">
+                                    <form action="{% url 'update_cart_quantity' item.id %}" method="post" class="me-2">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="decrease">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary">-</button>
+                                    </form>
+                                    <span class="mx-2">{{ item.quantity }}</span>
+                                    <form action="{% url 'update_cart_quantity' item.id %}" method="post" class="ms-2">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="increase">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary">+</button>
+                                    </form>
                                 </div>
-                                <div class="col-md-4">
-                                    <h5>{{ item.variant.product.name }}</h5>
-                                    <p class="text-muted">{{ item.variant.variant_name }}</p>
-                                    <p>Unit Price: ₹{{ item.variant.price|floatformat:2 }}</p>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="quantity-control d-flex align-items-center">
-                                        <form action="{% url 'update_cart_quantity' item.id %}" method="post">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="action" value="decrease">
-                                            <button type="submit" class="btn btn-sm btn-outline-secondary">-</button>
-                                        </form>
-                                        <span class="mx-2">{{ item.quantity }}</span>
-                                        <form action="{% url 'update_cart_quantity' item.id %}" method="post">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="action" value="increase">
-                                            <button type="submit" class="btn btn-sm btn-outline-secondary">+</button>
-                                        </form>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 text-end">
-                                    <p>Total: ₹{{ item.total_price|floatformat:2 }}</p>
-                                    <div class="mt-2">
-                                        <a href="{% url 'remove_cart_item' item.id %}" class="btn btn-sm btn-danger mb-1">Remove</a>
-                                        <a href="{% url 'save_for_later' item.id %}" class="btn btn-sm btn-outline-primary">Save for Later</a>
-                                    </div>
+                            </div>
+                            <div class="col-md-3 text-end">
+                                <p>Total: ₹{{ item.total_price|floatformat:2 }}</p>
+                                <div class="mt-2">
+                                    <a href="{% url 'remove_cart_item' item.id %}" class="btn btn-sm btn-danger mb-1">Remove</a>
+                                    <a href="{% url 'save_for_later' item.id %}" class="btn btn-sm btn-outline-primary">Save for Later</a>
                                 </div>
                             </div>
                         </div>
                     </div>
-                {% endfor %}
-            </div>
-            
-            <!-- Right Section: Price Summary -->
-            <div class="col-lg-4 col-md-12">
-                <div class="cart-summary">
-                    <h4>Order Summary</h4>
-                    <hr>
-                    <p>Original Price: ₹{{ original_total_price|floatformat:2 }}</p>
-                    <p>Discount: <span style="color:green; text-decoration: line-through;">-₹{{ discount_total|floatformat:2 }}</span></p>
-                    <p>Subtotal: ₹{{ selling_total_price|floatformat:2 }}</p>
-                    <p>Taxes (5%): <span style="color:red;"> ₹{{ taxes|floatformat:2 }}</p>
-                    <hr>
-                    <h5>Payable Amount: ₹{{ payable_amount|floatformat:2 }}</h5>
-                    <p class="text-muted">Estimated Delivery: {{ estimated_delivery_date }}</p>
-                    <a href="" class="btn btn-primary w-100 mt-3">Proceed to Checkout</a>
                 </div>
+            {% endfor %}
+        </div>
+
+        <!-- Right Section: Price Summary -->
+        <div class="col-lg-4 col-md-12">
+            <div class="card p-3 shadow-sm">
+                <h4>Order Summary</h4>
+                <hr>
+                <p>Original Price: ₹{{ original_total_price|floatformat:2 }}</p>
+                <p>Discount: <span class="text-success text-decoration-line-through">-₹{{ discount_total|floatformat:2 }}</span></p>
+                <p>Subtotal: ₹{{ selling_total_price|floatformat:2 }}</p>
+                <p>Taxes (5%): <span class="text-danger">₹{{ taxes|floatformat:2 }}</span></p>
+                <hr>
+                <h5>Payable Amount: ₹{{ payable_amount|floatformat:2 }}</h5>
+                <p class="text-muted">Estimated Delivery: {{ estimated_delivery_date }}</p>
+                <a href="#" class="btn btn-primary w-100 mt-3">Proceed to Checkout</a>
             </div>
         </div>
+    </div>
     {% else %}
-        <div class="text-center">
-            <p class="text-muted">Your cart is empty.</p>
-            <a href="{% url 'login_home' %}" class="btn btn-primary">Continue Shopping</a>
-        </div>
+    <div class="text-center my-5">
+        <p class="text-muted">Your cart is empty.</p>
+        <a href="{% url 'login_home' %}" class="btn btn-primary">Continue Shopping</a>
+    </div>
     {% endif %}
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 {% endblock %}

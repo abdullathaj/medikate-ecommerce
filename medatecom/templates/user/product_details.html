@@ -62,120 +62,128 @@
                 <p class="product-description mb-4">{{ product.description|default:"No description available." }}</p>
 
                 <!-- Variant Selection -->
-                        <div class="mb-4">
-                            <h5>Available Variants</h5>
-                            <select class="form-select" id="variantSelect" aria-label="Select Variant">
-                                {% for variant in variants %}
-                                <option value="{{ variant.id }}"
-                                        data-price="{{ variant.price|floatformat:2 }}"
-                                        data-original-price="{{ variant.original_price|floatformat:2 }}"
-                                        data-stock="{{ variant.stock }}">
-                                    {{ variant.variant_name }} {% if variant.size %}({{ variant.size }}){% endif %}
-                                </option>
-                                {% empty %}
-                                <option disabled>No variants available</option>
-                                {% endfor %}
-                            </select>
-                        </div>
+                    <div class="mb-4">
+                        <h5>Available Variants</h5>
+                        <select class="form-select" id="variantSelect" aria-label="Select Variant">
+                            {% for variant in variants %}
+                            <option value="{{ variant.id }}"
+                                    data-price="{{ variant.price|floatformat:2 }}"
+                                    data-original-price="{{ variant.original_price|floatformat:2 }}"
+                                    data-stock="{{ variant.stock }}"
+                                    {% if variant.id == selected_variant.id %}selected{% endif %}>
+                                {{ variant.variant_name }} {% if variant.size %}({{ variant.size }}){% endif %}
+                            </option>
+                            {% empty %}
+                            <option disabled>No variants available</option>
+                            {% endfor %}
+                        </select>
+                    </div>
 
-                        <!-- Price and Stock Display -->
-                        <div class="product-price mb-3">
-                            <span class="current-price fs-4 fw-bold" id="currentPrice">
-                                ₹{{ variants.0.price|floatformat:2 }}
-                            </span>
-                            <small class="original-price text-muted text-decoration-line-through ms-2" id="originalPrice">
-                                ₹{{ variants.0.original_price|floatformat:2 }}
-                            </small>
-                            <span class="d-block mt-2" id="stockStatus">
-                                {% if variants.0.stock == 0 %}
-                                <span class="text-danger">Out of Stock</span>
-                                {% elif variants.0.stock < 5 %}
-                                <span class="text-warning">Limited Stock ({{ variants.0.stock }} available)</span>
-                                {% else %}
-                                <span class="text-success">In Stock ({{ variants.0.stock }} available)</span>
-                                {% endif %}
-                            </span>
-                        </div>
+                <!-- Price and Stock Display -->
+                <div class="product-price mb-3">
+                    <span class="current-price fs-4 fw-bold" id="currentPrice">
+                        ₹{{ selected_variant.price|floatformat:2 }}
+                    </span>
+                    <small class="original-price text-muted text-decoration-line-through ms-2" id="originalPrice">
+                        ₹{{ selected_variant.original_price|floatformat:2 }}
+                    </small>
+                    <span class="d-block mt-2" id="stockStatus">
+                        {% if selected_variant.stock == 0 %}
+                        <span class="text-danger">Out of Stock</span>
+                        {% elif selected_variant.stock < 5 %}
+                        <span class="text-warning">Limited Stock ({{ selected_variant.stock }} available)</span>
+                        {% else %}
+                        <span class="text-success">In Stock ({{ selected_variant.stock }} available)</span>
+                        {% endif %}
+                    </span>
+                </div>
 
-                        <!-- Action Buttons -->
-                        <div class="product-actions">
-                            <a href="#" class="btn btn-primary buy-now-btn me-2">Buy Now</a>
-                            <a href="{% url 'add_to_cart' 0 %}" id="addToCartBtn" class="btn btn-outline-secondary" title="Add to Cart">
-                                <i class="fas fa-shopping-cart"></i> Add to Cart
-                            </a>
-                            <a href="{% url 'add_to_wishlist' 0 %}" id="addToWishlistBtn" class="btn btn-outline-secondary ms-2" title="Add to Wishlist">
-                                <i class="fas fa-heart"></i>
-                            </a>
-                        </div>
-
-
-
+                <!-- Action Buttons -->
+                <div class="product-actions">
+                    <a href="{% url 'buy_now' selected_variant.id %}" class="btn btn-primary buy-now-btn me-2">Buy Now</a>
+                    <a href="{% url 'add_to_cart' selected_variant.id %}" id="addToCartBtn" class="btn btn-outline-secondary" title="Add to Cart">
+                        <i class="fas fa-shopping-cart"></i> Add to Cart
+                    </a>
+                    <a href="{% url 'add_to_wishlist' selected_variant.id %}" id="addToWishlistBtn" class="btn btn-outline-secondary ms-2" title="Add to Wishlist">
+                        <i class="fas fa-heart"></i>
+                    </a>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- Related Products Section -->
     <section class="related-products-section container my-5">
-        <h2 class="text-center mb-4">Related Products</h2>
-        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-            {% for related_product in related_products %}
-                <!-- Related Product Card -->
-                <div class="col">
-                    <div class="product-card">
-                        <div class="product-thumb">
-                            {% with product_image=related_product.product_image.first %}
-                                {% if product_image %}
-                                    <img src="{{ product_image.image.url }}" alt="{{ related_product.name }}" loading="lazy">
-                                {% else %}
-                                    <img src="https://via.placeholder.com/150?text={{ related_product.name|urlencode }}" alt="{{ related_product.name }}" loading="lazy">
+    <h2 class="text-center mb-4">Related Products</h2>
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+        {% for related_product in related_products %}
+            <!-- Related Product Card -->
+            <div class="col">
+                <div class="product-card">
+                    <div class="product-thumb">
+                        {% with product_image=related_product.product_image.first %}
+                            {% if product_image %}
+                                <img src="{{ product_image.image.url }}" alt="{{ related_product.name }}" loading="lazy">
+                            {% else %}
+                                <img src="https://via.placeholder.com/150?text={{ related_product.name|urlencode }}" alt="{{ related_product.name }}" loading="lazy">
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                    <div class="product-details">
+                        <div class="product-catagory-line">
+                            <span class="product-catagory">{{ related_product.category.name }}</span>
+                            {% with variant=related_product.product_variant.first %}
+                                {% if variant %}
+                                    <a href="{% url 'add_to_wishlist' variant.id %}" title="Add to Wishlist" class="wishlist-link"><i class="fas fa-heart"></i></a>
                                 {% endif %}
                             {% endwith %}
                         </div>
-                        <div class="product-details">
-                            <div class="product-catagory-line">
-                                <span class="product-catagory">{{ related_product.category.name }}</span>
-                                <a href="#" title="Add to Wishlist" class="wishlist-link"><i class="fas fa-heart"></i></a>
-                            </div>
-                            <h4><a href="{% url 'product_details' related_product.id %}">{{ related_product.name|truncatechars:30 }}</a></h4>
-                            <p>{{ related_product.description|truncatewords:10 }}</p>
-                            <div class="product-rating">
-                                <span class="star filled">★</span>
-                                <span class="star filled">★</span>
-                                <span class="star filled">★</span>
-                                <span class="star filled">★</span>
-                                <span class="star">★</span>
-                                <span class="rating-text">(4.0)</span>
-                            </div>
-                            <div class="product-bottom-details">
-                                {% with variant=related_product.product_variant.first %}
-                                    {% if variant %}
-                                        <div class="product-price">
-                                            <small class="original-price">₹{{ variant.original_price|floatformat:2 }}</small>
-                                            <span class="current-price">₹{{ variant.price|floatformat:2 }}</span>
-                                        </div>
-                                        <div class="product-links">
-                                            <a href="#" title="Add to Cart" class="cart-btn"><i class="fas fa-shopping-cart"></i></a>
-                                            <a href="#" class="buy-now-btn">Buy Now</a>
-                                        </div>
-                                    {% else %}
-                                        <div class="product-price">N/A</div>
-                                        <div class="product-links">
-                                            <a href="#" title="Add to Cart" class="cart-btn"><i class="fas fa-shopping-cart"></i></a>
-                                            <a href="#" class="buy-now-btn">Buy Now</a>
-                                        </div>
-                                    {% endif %}
-                                {% endwith %}
-                            </div>
+                        {% with variant=related_product.product_variant.first %}
+                            {% if variant %}
+                                <h4><a href="{% url 'product_details' variant.id %}">{{ related_product.name|truncatechars:30 }}</a></h4>
+                            {% else %}
+                                <h4>{{ related_product.name|truncatechars:30 }}</h4>
+                            {% endif %}
+                        {% endwith %}
+                        <p>{{ related_product.description|truncatewords:10 }}</p>
+                        <div class="product-rating">
+                            <span class="star filled">★</span>
+                            <span class="star filled">★</span>
+                            <span class="star filled">★</span>
+                            <span class="star filled">★</span>
+                            <span class="star">★</span>
+                            <span class="rating-text">(4.0)</span>
+                        </div>
+                        <div class="product-bottom-details">
+                            {% with variant=related_product.product_variant.first %}
+                                {% if variant %}
+                                    <div class="product-price">
+                                        <small class="original-price">₹{{ variant.original_price|floatformat:2 }}</small>
+                                        <span class="current-price">₹{{ variant.price|floatformat:2 }}</span>
+                                    </div>
+                                    <div class="product-links">
+                                        <a href="{% url 'add_to_cart' variant.id %}" title="Add to Cart" class="cart-btn"><i class="fas fa-shopping-cart"></i></a>
+                                        <a href="{% url 'buy_now' variant.id %}" class="buy-now-btn">Buy Now</a>
+                                    </div>
+                                {% else %}
+                                    <div class="product-price">N/A</div>
+                                    <div class="product-links">
+                                        <a href="{% url 'add_to_cart' variant.id %}" title="Add to Cart" class="cart-btn"><i class="fas fa-shopping-cart"></i></a>
+                                        <a href="{% url "buy_now" variant.id %}" class="buy-now-btn">Buy Now</a>
+                                    </div>
+                                {% endif %}
+                            {% endwith %}
                         </div>
                     </div>
                 </div>
-            {% empty %}
-                <div class="col">
-                    <p class="text-center">No related products available.</p>
-                </div>
-            {% endfor %}
-        </div>
-    </section>
+            </div>
+        {% empty %}
+            <div class="col">
+                <p class="text-center">No related products available.</p>
+            </div>
+        {% endfor %}
+    </div>
+</section>
 
     <style>
         /* Product Details Section */

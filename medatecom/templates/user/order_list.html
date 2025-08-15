@@ -1,0 +1,35 @@
+{% extends 'auth/navbar.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Your Orders</h2>
+    {% if orders %}
+        <div class="row">
+            {% for order in orders %}
+                {% for item in order.items.all %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5>Order </h5>
+                                {% with product_image=item.variant.product.product_image.first %}
+                                    {% if product_image %}
+                                        <img src="{{ product_image.image.url }}" alt="{{ item.variant.product.name }} - {{ item.variant.variant_name }}" class="img-fluid mb-2" style="max-height: 100px; object-fit: cover;">
+                                    {% else %}
+                                        <img src="https://via.placeholder.com/100?text={{ item.variant.product.name|urlencode }}%20-%20{{ item.variant.variant_name|urlencode }}" alt="{{ item.variant.product.name }} - {{ item.variant.variant_name }}" class="img-fluid mb-2" style="max-height: 100px; object-fit: cover;">
+                                    {% endif %}
+                                {% endwith %}
+                                <p><strong>Product:</strong> {{ item.variant.product.name }} - {{ item.variant.variant_name }}</p>
+                                <p><strong>Price:</strong> ₹{{ item.total_price|floatformat:2 }} (x{{ item.quantity }})</p>
+                                <p><strong>Status:</strong> {{ order.get_status_display }}</p>
+                                <a href="{% url 'order_details' order_id=order.id %}" class="btn btn-primary btn-sm">Order Details</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No orders found. Start shopping to place an order!</p>
+        <a href="{% url 'product_listing' %}" class="btn btn-primary">Shop Now</a>
+    {% endif %}
+</div>
+{% endblock %}

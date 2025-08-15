@@ -92,7 +92,7 @@
                                             <span class="product-catagory">{{ variant.product.category.name }}</span>
                                             <a href="{% url 'add_to_wishlist' variant.id %}" title="Add to Wishlist" class="wishlist-link"><i class="fas fa-heart"></i></a>
                                         </div>
-                                        <h4><a href="{% url 'product_details' variant.product.id %}">{{ variant.product.name|truncatechars:20 }} - {{ variant.variant_name|truncatechars:10 }}</a></h4>
+                                        <h4><a href="{% url 'product_details' variant.id %}">{{ variant.product.name|truncatechars:20 }} - {{ variant.variant_name|truncatechars:10 }}</a></h4>
                                         <p>{{ variant.product.description|truncatewords:10 }}</p>
                                         {% if variant.size %}
                                             <p class="variant-size">Size: {{ variant.size }}</p>
