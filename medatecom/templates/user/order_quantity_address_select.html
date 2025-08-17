@@ -10,7 +10,7 @@
                     <h5>{{ variant.product.name }} - {{ variant.variant_name }}</h5>
                     {% with product_image=variant.product.product_image.first %}
                         {% if product_image %}
-                            <img src="{{ product_image.image.url }}" alt="{{ variant.product.name }} - {{ variant.variant_name }}" class="img-fluid mb-3" style="max-height: 200px; object-fit: cover;">
+                            <img src="{{ product_image.image.url }}" alt="{{ variant.product.name }} - {{ variant.variant_name }}" class="img-fluid mb-3" style="max-height: 100px; object-fit: cover;">
                         {% else %}
                             <img src="https://via.placeholder.com/150?text={{ variant.product.name|urlencode }}%20-%20{{ variant.variant_name|urlencode }}" alt="{{ variant.product.name }} - {{ variant.variant_name }}" class="img-fluid mb-3" style="max-height: 200px; object-fit: cover;">
                         {% endif %}

@@ -2,19 +2,58 @@
 {% block content %}
 <div class="container mt-5">
     <h2>Payment Method</h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
     <div class="card mb-4">
         <div class="card-body">
-            <h5>{{ variant.product.name }} - {{ variant.variant_name }}</h5>
-            {% with product_image=variant.product.product_image.first %}
-                {% if product_image %}
-                    <img src="{{ product_image.image.url }}" alt="{{ variant.product.name }} - {{ variant.variant_name }}" class="img-fluid mb-3" style="max-height: 200px; object-fit: cover;">
-                {% else %}
-                    <img src="https://via.placeholder.com/150?text={{ variant.product.name|urlencode }}%20-%20{{ variant.variant_name|urlencode }}" alt="{{ variant.product.name }} - {{ variant.variant_name }}" class="img-fluid mb-3" style="max-height: 200px; object-fit: cover;">
-                {% endif %}
-            {% endwith %}
-            <p>Quantity: {{ quantity }}</p>
-            <p>Total: ₹{{ total_price|floatformat:2 }}</p>
-            <p>Delivery Address: {{ address.addressline_1 }}{% if address.addressline_2 %}, {{ address.addressline_2 }}{% endif %}, {{ address.city }}, {{ address.state }}, {{ address.nation }} - {{ address.postal_code }}</p>
+            <h5>Order Summary</h5>
+            {% if is_cart_checkout %}
+                {% for item in variants %}
+                    <div class="d-flex flex-column flex-md-row align-items-md-center mb-3">
+                        <div class="me-md-3 mb-2 mb-md-0">
+                            {% with product_image=item.variant.product.product_image.first %}
+                                {% if product_image %}
+                                    <img src="{{ product_image.image.url }}" alt="{{ item.variant.product.name }} - {{ item.variant.variant_name }}" class="img-fluid" style="width: 100px; height: 100px; object-fit: contain;">
+                                {% else %}
+                                    <img src="https://via.placeholder.com/100?text={{ item.variant.product.name|urlencode }}%20-%20{{ item.variant.variant_name|urlencode }}" alt="{{ item.variant.product.name }} - {{ item.variant.variant_name }}" class="img-fluid" style="max-height: 100px; object-fit: cover;">
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+                        <div>
+                            <p class="mb-1"><strong>{{ item.variant.product.name }} - {{ item.variant.variant_name }}</strong></p>
+                            <p class="mb-1">Quantity: {{ item.quantity }}</p>
+                            <p class="mb-1">Price: ₹{{ item.price|floatformat:2 }}</p>
+                            <p class="mb-1">Total: ₹{{ item.item_total|floatformat:2 }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="d-flex flex-column flex-md-row align-items-md-center mb-3">
+                    <div class="me-md-3 mb-2 mb-md-0">
+                        {% with product_image=variants.0.variant.product.product_image.first %}
+                            {% if product_image %}
+                                <img src="{{ product_image.image.url }}" alt="{{ variants.0.variant.product.name }} - {{ variants.0.variant.variant_name }}" class="img-fluid" style="max-height: 100px; object-fit: cover;">
+                            {% else %}
+                                <img src="https://via.placeholder.com/100?text={{ variants.0.variant.product.name|urlencode }}%20-%20{{ variants.0.variant.variant_name|urlencode }}" alt="{{ variants.0.variant.product.name }} - {{ variants.0.variant.variant_name }}" class="img-fluid" style="max-height: 100px; object-fit: cover;">
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                    <div>
+                        <p class="mb-1"><strong>{{ variants.0.variant.product.name }} - {{ variants.0.variant.variant_name }}</strong></p>
+                        <p class="mb-1">Quantity: {{ variants.0.quantity }}</p>
+                        <p class="mb-1">Price: ₹{{ variants.0.price|floatformat:2 }}</p>
+                        <p class="mb-1">Total: ₹{{ variants.0.item_total|floatformat:2 }}</p>
+                    </div>
+                </div>
+            {% endif %}
+            <p><strong>Order Total:</strong> ₹{{ total_amount|floatformat:2 }}</p>
+            <p><strong>Delivery Address:</strong> {{ address.addressline_1 }}{% if address.addressline_2 %}, {{ address.addressline_2 }}{% endif %}, {{ address.city }}, {{ address.state }}, {{ address.nation }} - {{ address.postal_code }}</p>
         </div>
     </div>
     <form method="post">
@@ -28,6 +67,11 @@
             </div>
         </div>
         <button type="submit" class="btn btn-primary">Place Order</button>
+        {% if is_cart_checkout %}
+            <a href="{% url 'cart_checkout' %}" class="btn btn-secondary">Back</a>
+        {% else %}
+            <a href="{% url 'buy_now' variants.0.variant.id %}" class="btn btn-secondary">Back</a>
+        {% endif %}
     </form>
 </div>
 {% endblock %}

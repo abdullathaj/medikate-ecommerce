@@ -1,29 +1,54 @@
 {% extends 'auth/navbar.html' %}
 {% block content %}
 <div class="container mt-5">
-    <h2>Order Details </h2>
+    <h2>Order Details #{{ order.id }}</h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
     <div class="card mb-4">
         <div class="card-body">
-            <p><strong>Order Date:</strong> {{ order.created_at|date:"F d, Y H:i" }}</p>
-            <p><strong>Status:</strong> {{ order.get_status_display }}</p>
-            <p><strong>Payment Method:</strong> {{ order.get_payment_method_display }}</p>
-            <p><strong>Total Amount:</strong> ₹{{ order.total_amount|floatformat:2 }}</p>
-            <h6>Items:</h6>
-            <ul>
+            <h5>Items</h5>
+            <ul class="list-unstyled">
                 {% for item in order.items.all %}
-                    <li>
-                        {% with product_image=item.variant.product.product_image.first %}
-                            {% if product_image %}
-                                <img src="{{ product_image.image.url }}" alt="{{ item.variant.product.name }} - {{ item.variant.variant_name }}" class="img-fluid" style="max-height: 100px; object-fit: cover; display: inline-block; vertical-align: middle; margin-right: 10px;">
-                            {% else %}
-                                <img src="https://via.placeholder.com/100?text={{ item.variant.product.name|urlencode }}%20-%20{{ item.variant.variant_name|urlencode }}" alt="{{ item.variant.product.name }} - {{ item.variant.variant_name }}" class="img-fluid" style="max-height: 100px; object-fit: cover; display: inline-block; vertical-align: middle; margin-right: 10px;">
+                    <li class="d-flex flex-column flex-md-row align-items-md-center mb-3">
+                        <div class="me-md-3 mb-2 mb-md-0" style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center;">
+                            {% with product_image=item.variant.product.product_image.first %}
+                                {% if product_image %}
+                                    <img src="{{ product_image.image.url }}" alt="{{ item.variant.product.name }} - {{ item.variant.variant_name }}" class="img-fluid" style="width: 100px; height: 100px; object-fit: contain;">
+                                {% else %}
+                                    <img src="https://via.placeholder.com/100?text={{ item.variant.product.name|urlencode }}%20-%20{{ item.variant.variant_name|urlencode }}" alt="{{ item.variant.product.name }} - {{ item.variant.variant_name }}" class="img-fluid" style="width: 100px; height: 100px; object-fit: contain;">
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+                        <div class="flex-grow-1">
+                            <p class="mb-1"><strong>{{ item.variant.product.name }} - {{ item.variant.variant_name }}</strong></p>
+                            <p class="mb-1">Quantity: {{ item.quantity }}</p>
+                            <p class="mb-1">Price: ₹{{ item.price|floatformat:2 }}</p>
+                            <p class="mb-1">Total: ₹{{ item.total_price|floatformat:2 }}</p>
+                            <p class="mb-1"><strong>Item Status:</strong> {{ item.get_status_display }}</p>
+                            <p class="mb-1"><strong>Delivery Status:</strong> {{ item.display_status }}</p>
+                            {% if item.status == 'ACTIVE' %}
+                                <form method="post" action="{% url 'cancel_order_item' order_id=order.id item_id=item.id %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm mt-2">Cancel Item</button>
+                                </form>
                             {% endif %}
-                        {% endwith %}
-                        {{ item.variant }} x {{ item.quantity }} - ₹{{ item.total_price|floatformat:2 }}
+                        </div>
                     </li>
                 {% endfor %}
             </ul>
+            <hr>
+            <p><strong>Order Date:</strong> {{ order.created_at|date:"F d, Y H:i" }}</p>
+            <p><strong>Expected Delivery Date:</strong> {{ order.expected_delivery_date|date:"F d, Y" }}</p>
+            <p><strong>Payment Method:</strong> {{ order.get_payment_method_display }}</p>
+            <p><strong>Order Status:</strong> {{ order.get_status_display }}</p>
             <p><strong>Delivery Address:</strong> {{ order.address.addressline_1 }}{% if order.address.addressline_2 %}, {{ order.address.addressline_2 }}{% endif %}, {{ order.address.city }}, {{ order.address.state }}, {{ order.address.nation }} - {{ order.address.postal_code }}</p>
+            <p><strong>Total Amount:</strong> ₹{{ order.total_amount|floatformat:2 }} (Including taxes, adjusted for cancellations)</p>
         </div>
     </div>
     <a href="{% url 'order_list' %}" class="btn btn-secondary mb-1">Back to Orders</a>

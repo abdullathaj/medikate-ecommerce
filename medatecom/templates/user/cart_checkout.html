@@ -1,0 +1,77 @@
+{% extends 'auth/navbar.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Checkout</h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5>Order Summary</h5>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Original Price</th>
+                        <th>Selling Price</th>
+                        <th>Discount</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in cart_items %}
+                        <tr>
+                            <td>
+                                {% with product_image=item.variant.product.product_image.first %}
+                                    {% if product_image %}
+                                        <img src="{{ product_image.image.url }}" alt="{{ item.variant.product.name }} - {{ item.variant.variant_name }}" class="img-fluid" style="max-height: 50px; object-fit: cover; display: inline-block; vertical-align: middle; margin-right: 10px;">
+                                    {% else %}
+                                        <img src="https://via.placeholder.com/50?text={{ item.variant.product.name|urlencode }}%20-%20{{ item.variant.variant_name|urlencode }}" alt="{{ item.variant.product.name }} - {{ item.variant.variant_name }}" class="img-fluid" style="max-height: 50px; object-fit: cover; display: inline-block; vertical-align: middle; margin-right: 10px;">
+                                    {% endif %}
+                                {% endwith %}
+                                {{ item.variant.product.name }} - {{ item.variant.variant_name }}
+                            </td>
+                            <td>{{ item.quantity }}</td>
+                            <td>₹{{ item.variant.original_price|floatformat:2 }}</td>
+                            <td>₹{{ item.variant.price|floatformat:2 }}</td>
+                            <td>₹{{ item.item_discount|floatformat:2 }}</td>
+                            <td>₹{{ item.item_total|floatformat:2 }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <hr>
+            <p><strong>Original Total:</strong> ₹{{ original_total_price|floatformat:2 }}</p>
+            <p><strong>Discount:</strong> ₹{{ discount_total|floatformat:2 }}</p>
+            <p><strong>Selling Total:</strong> ₹{{ selling_total_price|floatformat:2 }}</p>
+            <p><strong>Taxes (5%):</strong> ₹{{ taxes|floatformat:2 }}</p>
+            <p><strong>Amount Payable:</strong> ₹{{ amount_payable|floatformat:2 }}</p>
+            <p><strong>Estimated Delivery:</strong> {{ estimated_delivery_date }}</p>
+        </div>
+    </div>
+    <form method="post">
+        {% csrf_token %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5>Select Delivery Address</h5>
+                <select class="form-select" name="address_id" required>
+                    <option value="" {% if not default_address %}selected{% endif %}>Select an address</option>
+                    {% for address in addresses %}
+                        <option value="{{ address.id }}" {% if address == default_address %}selected{% endif %}>
+                            {{ address.addressline_1 }}{% if address.addressline_2 %}, {{ address.addressline_2 }}{% endif %}, {{ address.city }}, {{ address.state }}, {{ address.nation }} - {{ address.postal_code }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Proceed to Payment</button>
+        <a href="{% url 'user_cart_page' %}" class="btn btn-secondary">Back to Cart</a>
+    </form>
+</div>
+{% endblock %}

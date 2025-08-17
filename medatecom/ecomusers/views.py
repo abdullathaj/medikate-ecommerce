@@ -79,7 +79,7 @@ def user_product_listing(request):
     variants = ProductVariant.objects.filter(
         is_active=True,
         product__category__is_active=True
-    ).select_related('product', 'product__category').prefetch_related('product__product_image')
+    ).select_related('product', 'product__category').prefetch_related('product__product_image').order_by('product__created_at')
 
     # PRODUCT SEARCH FEATURE
     query=request.GET.get('q','').strip()
@@ -279,7 +279,6 @@ def add_to_cart(request, variant_id):
         messages.error(request, f"{variant} is out of stock.")
         return redirect(request.META.get('HTTP_REFERER', 'user_cart_page'))
 
-    # Fetch the cart item if it exists
     cart_item = CartProducts.objects.filter(user=request.user, variant=variant).first()
 
     if cart_item:
@@ -291,52 +290,55 @@ def add_to_cart(request, variant_id):
             messages.success(request, f"Updated quantity for {variant} in your cart is {cart_item.quantity}.")
     else:
         CartProducts.objects.create(user=request.user, variant=variant, quantity=1)
-
         messages.success(request, f"{variant} has been added to your cart.")
 
     return redirect(request.META.get('HTTP_REFERER', 'user_cart_page'))
-
 
 @login_required(login_url='login')
 def users_cart_page(request):
     if not request.user.is_active:
         return redirect('login')
     
-    cart_items=CartProducts.objects.filter(
+    cart_items = CartProducts.objects.filter(
         user=request.user,
         variant__is_active=True,
-        
     ).select_related('variant__product')
-    print('Cart items: ',cart_items)
-# PRICE CALCULATION INCLUDING SELLING PRICE, ORIGINAL PRICE,DISCOUNT PRICE, TAXES
-
-    original_total_price=Decimal('0')
-    selling_total_price=Decimal('0')
-    discount_total=Decimal('0')
-
+    
+    original_total_price = Decimal('0')
+    selling_total_price = Decimal('0')
+    discount_total = Decimal('0')
+    
+    cart_item_details = []
     for item in cart_items:
-        original_item_price= item.quantity* item.variant.original_price
+        if item.quantity > item.variant.stock:
+            messages.error(request, f"Insufficient stock for {item.variant}. Only {item.variant.stock} available.")
+            return redirect('user_cart_page')
+        original_item_price = item.quantity * item.variant.original_price
         original_total_price += original_item_price
-        selling_item_price= item.variant.price * item.quantity
+        selling_item_price = item.quantity * item.variant.price
         selling_total_price += selling_item_price
         discount_total += original_item_price - selling_item_price
-    taxes= selling_total_price * Decimal('0.05')
-    amount_payable= selling_total_price + taxes
-
-# # TAKING USER ADDRESSES FOR DELIVERY
-#     addresses=UserAddress.objects.filter(user=request.user)
-#     default_address=UserAddress.objects.filter(is_default=True).first()
-#     selected_address_id=request.session.get('selected_address_id')
-
-#     if not selected_address_id or default_address:
-#         selected_address_id = default_address.id
-#         request.session['selected_address_id']= selected_address_id
-
-
+        # Store per-item calculations as strings
+        cart_item_details.append({
+            'variant_id': item.variant.id,
+            'quantity': item.quantity,
+            'item_total': str(selling_item_price),
+            'item_discount': str(original_item_price - selling_item_price)
+        })
     
-# DELIVERY TIME
-    estimated_delivery_date=(datetime.now() + timedelta(days=7)).strftime('%B %d, %Y')
-
+    taxes =  Decimal('0.00')
+    amount_payable = selling_total_price + taxes
+    
+    # Store price details in session
+    request.session['cart_price_data'] = {
+        'original_total_price': str(original_total_price),
+        'selling_total_price': str(selling_total_price),
+        'discount_total': str(discount_total),
+        'taxes': str(taxes),
+        'amount_payable': str(amount_payable),
+        'cart_item_details': cart_item_details
+    }
+    
     context = {
         'cart_items': cart_items,
         'payable_amount': amount_payable,
@@ -344,15 +346,10 @@ def users_cart_page(request):
         'discount_total': discount_total,
         'selling_total_price': selling_total_price,
         'taxes': taxes,
-        'estimated_delivery_date': estimated_delivery_date,
-        # 'default_addresses': default_address,
-        # 'selected_address_id':selected_address_id,
-        # 'user_addresses':addresses.exclude(id=default_address.id) if default_address else addresses,
-       
-
+        'estimated_delivery_date': (datetime.now() + timedelta(days=7)).strftime('%B %d, %Y'),
     }
+    return render(request, 'user/cart_page.html', context)
 
-    return render(request,'user/cart_page.html',context)
 
 @login_required(login_url='login')
 def update_cart_quantity(request, cart_item_id):
@@ -401,22 +398,22 @@ def save_for_later(request,cart_item_id):
     
     return redirect('user_cart_page')
 
-@login_required(login_url='login') 
-def cart_select_address(request):
-    if request.method == 'POST' and request.user.is_authenticated:
-        try:
-            address_id = int(request.POST.get('selected_address'))
-            address = get_object_or_404(UserAddress, id=address_id, user=request.user)
+# @login_required(login_url='login') 
+# def cart_select_address(request):
+#     if request.method == 'POST' and request.user.is_authenticated:
+#         try:
+#             address_id = int(request.POST.get('selected_address'))
+#             address = get_object_or_404(UserAddress, id=address_id, user=request.user)
 
-            # Save to session (don't change default status)
-            request.session['selected_address_id'] = address.id
-            messages.success(request, "Delivery address selected successfully.")
-        except (TypeError, ValueError):
-            messages.error(request, "Invalid address selection.")
-    else:
-        messages.error(request, "Invalid request.")
+#             # Save to session (don't change default status)
+#             request.session['selected_address_id'] = address.id
+#             messages.success(request, "Delivery address selected successfully.")
+#         except (TypeError, ValueError):
+#             messages.error(request, "Invalid address selection.")
+#     else:
+#         messages.error(request, "Invalid request.")
 
-    return redirect('user_cart_page')
+#     return redirect('user_cart_page')
 
 
 
