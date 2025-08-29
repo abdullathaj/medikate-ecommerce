@@ -2,14 +2,28 @@
 {% block content %}
 <div class="container mt-5">
     <h2>Payment Method</h2>
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        {% endfor %}
-    {% endif %}
+
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="toast align-items-center text-white 
+                    {% if message.tags == 'error' %}bg-danger
+                    {% elif message.tags == 'success' %}bg-success
+                    {% elif message.tags == 'info' %}bg-info
+                    {% elif message.tags == 'warning' %}bg-warning
+                    {% else %}bg-primary{% endif %} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            {{ message }}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
     <div class="card mb-4">
         <div class="card-body">
             <h5>Order Summary</h5>
@@ -74,4 +88,19 @@
         {% endif %}
     </form>
 </div>
+<!-- JavaScript to Initialize Toasts -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+    var toastList = toastElList.map(function (toastEl) {
+        return new bootstrap.Toast(toastEl, {
+            autohide: true,
+            delay: 5000 // Toast auto-hides after 5 seconds
+        });
+    });
+    toastList.forEach(function (toast) {
+        toast.show();
+    });
+});
+</script>
 {% endblock %}

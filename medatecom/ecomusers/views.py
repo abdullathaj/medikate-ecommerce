@@ -1,15 +1,18 @@
 from django.shortcuts import render,redirect,get_object_or_404
-from django.http import Http404
+from django.http import Http404,JsonResponse
+import json
+from django.db import IntegrityError,transaction
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from .models import UserAddress,User,WishlistProducts,CartProducts
 from ecomproducts.models import Product,ProductVariant,ProductImage,Categories
 from django.core.paginator import Paginator
 from django.db.models import Min,Q,F,Sum,FloatField
-from .forms import UserProfileForm,UserAddressForm
+from .forms import UserProfileForm,UserAddressForm,UserPasswordChangeForm
 from django.contrib import messages
 from datetime import timedelta,datetime
 from decimal import Decimal
+from django.contrib.auth import update_session_auth_hash
 
 # Create your views here.
 # home page for User BEFORE LOGIN
@@ -179,6 +182,7 @@ def users_profile_page(request):
    
     return render(request,'user/profile_page.html')
 
+@never_cache
 @login_required(login_url='login') 
 def user_delete_address(request, address_id):
     address = get_object_or_404(UserAddress, id=address_id, user=request.user)
@@ -186,11 +190,13 @@ def user_delete_address(request, address_id):
     messages.success(request, "Address deleted successfully.")
     return redirect('user_profile_page')
 
+@never_cache
 @login_required(login_url='login') 
 def users_profile_update_page(request):
     user = request.user
     user_form = UserProfileForm(instance=user)
     address_form = UserAddressForm(initial={'user': user})
+    password_form=UserPasswordChangeForm(user=user)
 
     if request.method == 'POST':
         if 'update_profile' in request.POST:
@@ -215,15 +221,50 @@ def users_profile_update_page(request):
                     for error in error_list:
                         messages.error(request, error)
 
+        elif 'update_password' in request.POST:
+            password_form = UserPasswordChangeForm(user=user, data=request.POST)
+            if password_form.is_valid():
+                password_form.save()
+                update_session_auth_hash(request, user)  # Keep user logged in
+                messages.success(request, "Password updated successfully.")
+                return redirect('user_profile_update')
+            else:
+                for field, error_list in password_form.errors.items():
+                    for error in error_list:
+                        messages.error(request, f"{password_form.fields[field].label}: {error}")
+
+
     return render(request, 'user/profile_edit.html', {
         'user_form': user_form,
         'address_form': address_form,
+        'password_form':password_form,
     })
 
-
+@never_cache
+@login_required(login_url='login')
+def user_edit_address(request, address_id):
+    address = get_object_or_404(UserAddress, id=address_id, user=request.user)
+    if request.method == 'POST':
+        form = UserAddressForm(request.POST, instance=address)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Address updated successfully.")
+            return redirect('user_profile_page')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{form.fields[field].label}: {error}")
+    else:
+        form = UserAddressForm(instance=address)
+    
+    return render(request, 'user/profile_address_edit.html', {
+        'form': form,
+        'address_id': address_id
+    })
 
 # WISHLIST MANAGEMENT FOR AUTHENTICATED USER ADDING AND REMOVING PRODUCTS, ADDING TO CART
 
+@never_cache
 @login_required(login_url='login') 
 def add_to_wishlist(request, variant_id):
     
@@ -256,6 +297,7 @@ def users_wishlist_page(request):
     print('wishlist:',wishlist_items)
     return render(request, 'user/wishlist_page.html', {'wishlist_items': wishlist_items})
 
+@never_cache
 @login_required(login_url='login') 
 def remove_from_wishlist(request):
     variant_id = request.POST.get('variant_id')
@@ -269,29 +311,31 @@ def remove_from_wishlist(request):
 
 
 # USER CART MANAGEMENT , ADDING PRODUCTS FOR AUTHENTICATED USERS
-
+@never_cache
 @login_required(login_url='login')
 def add_to_cart(request, variant_id):
     """Add a product variant to the user's cart or update quantity if it already exists."""
-    variant = get_object_or_404(ProductVariant, id=variant_id, is_active=True)
+    try:
+        variant = get_object_or_404(ProductVariant, id=variant_id, is_active=True)
+        
+        if variant.stock < 1:
+            messages.error(request, f"{variant} is out of stock.")
+            return redirect(request.META.get('HTTP_REFERER', 'user_cart_page'))
 
-    if variant.stock < 1:
-        messages.error(request, f"{variant} is out of stock.")
-        return redirect(request.META.get('HTTP_REFERER', 'user_cart_page'))
-
-    cart_item = CartProducts.objects.filter(user=request.user, variant=variant).first()
-
-    if cart_item:
-        if cart_item.variant.stock < 1:
-            messages.error(request, 'Stock limit reached.')
+        if CartProducts.objects.filter(user=request.user, variant=variant).exists():
+            messages.info(request,f'The item {variant} is already in the cart.')
+            print(f'{variant} is already in cartl.')
         else:
-            cart_item.quantity += 1
-            cart_item.save()
-            messages.success(request, f"Updated quantity for {variant} in your cart is {cart_item.quantity}.")
-    else:
-        CartProducts.objects.create(user=request.user, variant=variant, quantity=1)
-        messages.success(request, f"{variant} has been added to your cart.")
+            CartProducts.objects.create(user=request.user, variant=variant, quantity=1)
+            messages.success(request,f" the Item {variant} is added to the cart.")
+            print(f'{variant} is added to the cart.')
 
+    except IntegrityError:
+        messages.error(request,"Something is wrong for adding to the cart. Please try again.")
+
+    except Exception as e:
+        messages.error(request,f'Unexpected error : {str(e)}')
+    
     return redirect(request.META.get('HTTP_REFERER', 'user_cart_page'))
 
 @login_required(login_url='login')
@@ -350,27 +394,38 @@ def users_cart_page(request):
     }
     return render(request, 'user/cart_page.html', context)
 
-
+@never_cache
 @login_required(login_url='login')
 def update_cart_quantity(request, cart_item_id):
-    """Increase or decrease cart item quantity and adjust variant stock."""
-    cart_item = get_object_or_404(CartProducts, user=request.user, id=cart_item_id)
+    """Increase or decrease cart item quantity with stock validation."""
+    try:
+        cart_item = get_object_or_404(CartProducts, user=request.user, id=cart_item_id)
+        action = request.POST.get('action')
 
-    action = request.POST.get('action')
-    if action == 'increase':
-        if cart_item.variant.stock < 1:
-            messages.error(request, 'Stock limit reached.')
+        if action == 'increase':
+            if cart_item.quantity + 1 >= cart_item.variant.stock:messages.error(request, f"Cannot increase quantity. Stock limit reached.")
+            else:
+                cart_item.quantity += 1
+                cart_item.save()
+                messages.success(request,f"Quantity updated for {cart_item.variant} as {cart_item.quantity}.")
+
+        elif action == 'decrease':
+            if cart_item.quantity > 1:
+                cart_item.quantity -= 1
+                cart_item.save()
+                messages.success(request, f"Quantity updated for {cart_item.variant} as {cart_item.quantity}.")
+                                        
+            else:
+                messages.warning(request, "Quantity must be at least 1.")
         else:
-            cart_item.quantity += 1
-            cart_item.save()
-            messages.success(request, f"Quantity updated for {cart_item.variant}.")
-    elif action == 'decrease' and cart_item.quantity > 1:
-        cart_item.quantity -= 1
-        cart_item.save()
-        messages.success(request, f"Quantity updated for {cart_item.variant}.")
-    
+            messages.error(request, "Invalid action.")
+
+    except Exception as e:
+        messages.error(request, f"Unexpected error occurred: {str(e)}")
+
     return redirect('user_cart_page')
 
+@never_cache
 @login_required(login_url='login') 
 def remove_cart_item(request,cart_item_id):
     """ REMOVING AN ITEM FROM THE CART """
@@ -382,6 +437,8 @@ def remove_cart_item(request,cart_item_id):
 
     return redirect('user_cart_page')
 
+
+@never_cache
 @login_required(login_url='login') 
 def save_for_later(request,cart_item_id):
 
@@ -397,26 +454,6 @@ def save_for_later(request,cart_item_id):
     cart_item.delete()
     
     return redirect('user_cart_page')
-
-# @login_required(login_url='login') 
-# def cart_select_address(request):
-#     if request.method == 'POST' and request.user.is_authenticated:
-#         try:
-#             address_id = int(request.POST.get('selected_address'))
-#             address = get_object_or_404(UserAddress, id=address_id, user=request.user)
-
-#             # Save to session (don't change default status)
-#             request.session['selected_address_id'] = address.id
-#             messages.success(request, "Delivery address selected successfully.")
-#         except (TypeError, ValueError):
-#             messages.error(request, "Invalid address selection.")
-#     else:
-#         messages.error(request, "Invalid request.")
-
-#     return redirect('user_cart_page')
-
-
-
 
 
 

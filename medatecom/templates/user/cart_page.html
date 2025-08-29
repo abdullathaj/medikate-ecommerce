@@ -5,58 +5,35 @@
 <div class="container mt-5">
     <h2 class="mb-4">Your Cart</h2>
 
-    <!-- Display Messages -->
-    {% if messages %}
-        <div class="messages">
+   <!-- Toast Container -->
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
+        {% if messages %}
             {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <div class="toast align-items-center text-white 
+                    {% if message.tags == 'error' %}bg-danger
+                    {% elif message.tags == 'success' %}bg-success
+                    {% elif message.tags == 'info' %}bg-info
+                    {% elif message.tags == 'warning' %}bg-warning
+                    {% else %}bg-primary{% endif %} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            {{ message }}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
                 </div>
             {% endfor %}
-        </div>
-    {% endif %}
+        {% endif %}
+    </div>
 
-    <!-- User Address Section -->
-    {% comment %} <div class="card mb-4">
-        <div class="card-header bg-light">
-            <h5 class="mb-0">Delivery Address</h5>
-        </div>
-        <div class="card-body">
-            {% if default_address %}
-                <div class="mb-3">
-                    <strong>Primary Address (Default):</strong><br>
-                    {{ default_address.addressline_1 }}<br>
-                    {{ default_address.city }}, {{ default_address.state }} - {{ default_address.postal_code }}<br>
-                    {{ default_address.nation }}
-                </div>
-            {% elif user_addresses %}
-                <form method="post" action="{% url 'cart_select_address' %}">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="selected_address" class="form-label">Choose a delivery address</label>
-                        <select class="form-select" name="selected_address" id="selected_address" required>
-                            {% for address in user_addresses %}
-                                <option value="{{ address.id }}" {% if address.id == selected_address_id %}selected{% endif %}>
-                                    {{ address.addressline_1 }}, {{ address.city }} ({{ address.postal_code }})
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-outline-primary btn-sm">Use Selected Address</button>
-                </form>
-            {% else %}
-                <p class="text-muted">No saved addresses. <a href="{% url 'user_profile_update' %}">Add new address</a>.</p>
-            {% endif %}
-        </div>
-    </div> {% endcomment %}
+   
 
     {% if cart_items %}
     <div class="row">
         <!-- Left Section: Cart Items -->
         <div class="col-lg-8 col-md-12 mb-4">
             {% for item in cart_items %}
-                <div class="card mb-3">
+                <div class="card mb-3 border-white">
                     <div class="card-body">
                         <div class="row align-items-center">
                             <div class="col-md-2">
@@ -90,7 +67,8 @@
                                     <form action="{% url 'update_cart_quantity' item.id %}" method="post" class="ms-2">
                                         {% csrf_token %}
                                         <input type="hidden" name="action" value="increase">
-                                        <button type="submit" class="btn btn-sm btn-outline-secondary">+</button>
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                            {% if item.quantity >= item.variant.stock %}disabled{% endif %}>+</button>
                                     </form>
                                 </div>
                             </div>
@@ -130,4 +108,22 @@
     </div>
     {% endif %}
 </div>
+
+<script>
+// JavaScript to Initialize Toasts 
+
+document.addEventListener('DOMContentLoaded', function () {
+    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+    var toastList = toastElList.map(function (toastEl) {
+        return new bootstrap.Toast(toastEl, {
+            autohide: true,
+            delay: 3000 // Toast auto-hides after 5 seconds
+        });
+    });
+    toastList.forEach(function (toast) {
+        toast.show();
+    });
+});
+
+</script>
 {% endblock %}

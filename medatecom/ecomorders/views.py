@@ -1,55 +1,74 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db import transaction
+from django.views.decorators.cache import never_cache
+from django.db import transaction,IntegrityError
+from django.db.models import Q
 from .models import Order, OrderItem
 from ecomproducts.models import Categories, Product, ProductImage, ProductVariant
 from ecomusers.models import User, UserAddress, CartProducts
 from decimal import Decimal
 from datetime import datetime, timedelta
+from django.core.paginator import Paginator
 
 @login_required(login_url='login')
 def buy_now(request, variant_id):
-    variant = get_object_or_404(ProductVariant, id=variant_id, is_active=True)
-    
-    if request.method == 'POST':
-        quantity = int(request.POST.get('quantity', 1))
-        address_id = request.POST.get('address_id')
+    ''' FOR SINGLE PRODUCT PURCHASE FROM A PRODUCT CARD. GETTING QUANTITY AND SELECT ADDRESS FOR DELIVERY. '''
+    try:
+        variant = get_object_or_404(ProductVariant, id=variant_id, is_active=True)
+
+        if variant.stock <1:         # IF PRODUCT OUT OF STOCK
+            messages.error(request,f'Product {variant} is out of stock. Please try again later.')
+            return redirect(request.META.get('HTTP_REFERER','product_listing'))
         
-        if quantity < 1:
-            messages.error(request, "Quantity must be at least 1.")
-            return redirect('buy_now', variant_id=variant_id)
+        if request.method == 'POST':
+            # GETTING QUANTITY OF PRODUCT FROM TEMPLATE
+            quantity = int(request.POST.get('quantity', 1))
+            address_id = request.POST.get('address_id')
             
-        if quantity > variant.stock:
-            messages.error(request, f"Only {variant.stock} items available in stock.")
-            return redirect('buy_now', variant_id=variant_id)
+            if quantity < 1:
+                messages.error(request, "Quantity must be at least 1.")
+                return redirect('buy_now', variant_id=variant_id)
+                
+            if quantity > variant.stock:        
+                messages.error(request, f"Only {variant.stock} items available in stock.")
+                return redirect('buy_now', variant_id=variant_id)
+                
+            if not address_id:
+                messages.error(request, "Please select a delivery address Or add a new address.")
+                return redirect('buy_now', variant_id=variant_id)
+                
+            address = get_object_or_404(UserAddress, id=address_id, user=request.user)
             
-        if not address_id:
-            messages.error(request, "Please select a delivery address.")
-            return redirect('buy_now', variant_id=variant_id)
+            request.session['order_data'] = {
+                'variant_id': variant.id,
+                'quantity': quantity,
+                'price': str(variant.price),
+                'address_id': address_id,
+                'is_cart_checkout': False,
+            }
+            return redirect('payment_method')
             
-        address = get_object_or_404(UserAddress, id=address_id, user=request.user)
-        
-        request.session['order_data'] = {
-            'variant_id': variant.id,
-            'quantity': quantity,
-            'price': str(variant.price),
-            'address_id': address_id,
-            'is_cart_checkout': False,
+        addresses = UserAddress.objects.filter(user=request.user)
+        context = {
+            'variant': variant,
+            'max_quantity': min(variant.stock, 10),
+            'addresses': addresses,
+            'total_price': variant.price
         }
-        return redirect('payment_method')
-        
-    addresses = UserAddress.objects.filter(user=request.user)
-    context = {
-        'variant': variant,
-        'max_quantity': min(variant.stock, 10),
-        'addresses': addresses,
-        'total_price': variant.price
-    }
-    return render(request, 'user/order_quantity_address_select.html', context)
+        return render(request, 'user/order_quantity_address_select.html', context)
+    except IntegrityError:
+        messages.error(request, f'Something went wrong. Please try again.')
+        return redirect(request.META.get('HTTP_REFERER','product_listing'))
+    except Exception as e:
+        messages.error(request,f"Unexcpected error occured: {str(e)}")
+        return redirect(request.META.get('HTTP_REFERER','product_listing'))
+    
 
 @login_required(login_url='login')
 def cart_checkout(request):
+    ''' MULTI PRODUCT PURCHASE FROM CART. SELECT ADDRESS FOR DELIVERY. '''
+
     cart_items = CartProducts.objects.filter(
         user=request.user,
         variant__is_active=True
@@ -89,6 +108,14 @@ def cart_checkout(request):
     
     estimated_delivery_date = (datetime.now() + timedelta(days=7)).strftime('%B %d, %Y')
     
+    # Fetch addresses
+    addresses = UserAddress.objects.filter(user=request.user)
+    if not addresses.exists():
+        messages.warning(request, "Please add a delivery address before checkout.")
+        return redirect('user_profile_update')  # <-- Redirect to profile edit if no address found
+
+    default_address = addresses.filter(is_default=True).first()
+
     if request.method == 'POST':
         address_id = request.POST.get('address_id')
         
@@ -128,9 +155,11 @@ def cart_checkout(request):
     }
     return render(request, 'user/cart_checkout.html', context)
 
-
+@never_cache
 @login_required(login_url='login')
 def payment_method(request):
+    ''' SELECT PAYMENT METHOD FOR PURCHASE. '''
+
     if 'order_data' not in request.session:
         messages.error(request, "No order data found. Please start over.")
         return redirect('product_listing')
@@ -187,20 +216,25 @@ def payment_method(request):
                     address=address,
                     total_amount=total_amount,
                     payment_method='COD',
-                    status='PENDING',
+                    # status='PENDING',
                     is_paid=False
                 )
+                print(f'order {order} created with {order.payment_method} toral payment is {total_amount}')                
                 
                 for item in variants:
-                    OrderItem.objects.create(
-                        order=order,
-                        variant=item['variant'],
-                        quantity=item['quantity'],
-                        price=item['price'],
-                        status='ACTIVE'
-                    )
-                    item['variant'].stock -= item['quantity']
-                    item['variant'].save()
+                    for _ in range(item['quantity']):  # EACH QUANTITY CREATE EACH ORDER ITEM
+                        OrderItem.objects.create(
+                            order=order,
+                            variant=item['variant'],
+                            quantity= 1,
+                            price=item['price'],
+                            status='ACTIVE',
+                            delivery_status='PENDING'
+                        )
+                        item['variant'].stock -= 1
+                        item['variant'].save()
+                for item in OrderItem.objects.filter(order=order):
+                    print(f'ordered items are: {item.variant} x {item.quantity} @ {item.total_price} with {item.delivery_status}')
                 
                 if is_cart_checkout:
                     CartProducts.objects.filter(user=request.user).delete()
@@ -221,6 +255,7 @@ def payment_method(request):
     }
     return render(request, 'user/payment_method.html', context)
 
+@never_cache
 @login_required(login_url='login')
 def order_success(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
@@ -229,10 +264,61 @@ def order_success(request, order_id):
     }
     return render(request, 'user/order_success.html', context)
 
+
 @login_required(login_url='login')
 def orderlist(request):
-    orders = Order.objects.filter(user=request.user).order_by('-created_at')
-    return render(request, 'user/order_list.html', {'orders': orders})
+    query = request.GET.get('q', '').strip()
+    status_filter = request.GET.get('status', '').strip()  # new filter param
+    
+    if query:
+        # Search directly in OrderItem
+        items = OrderItem.objects.filter(
+            order__user=request.user
+        ).filter(
+            Q(variant__variant_name__icontains=query) |
+            Q(variant__product__name__icontains=query) |
+            Q(variant__product__brand__icontains=query) |
+            Q(variant__product__category__name__icontains=query)
+        )
+        
+        # Apply delivery status filter if provided
+        if status_filter:
+            if status_filter.upper() == "CANCELLED":
+                items = items.filter(Q(status="CANCELLED") | Q(delivery_status="CANCELLED"))
+            else:
+                items = items.filter(delivery_status=status_filter.upper())
+
+        items = items.select_related("order", "variant", "variant__product").distinct()
+        print('Only Showing the Items with filtered status.')
+        for i in items:
+            print(i.variant,i.delivery_status)
+        
+        paginator = Paginator(items, 10)
+    else:
+        orders = Order.objects.filter(user=request.user).order_by('-created_at')
+        
+        # Apply delivery status filter on items inside orders
+        if status_filter:
+            orders = orders.filter(items__delivery_status=status_filter.upper()).distinct()
+            print('Showing the co-odered items delivery status also.')
+            for order in orders:
+                print(f"\nOrder #{order.id} - {order.user.username}")
+                for item in order.items.all():
+                    print(f"   Item: {item.variant} | Delivery Status: {item.display_status}")
+        
+        paginator = Paginator(orders, 5)
+
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'user/order_list.html', {
+        'query': query,
+        'status_filter': status_filter,
+        'orders': page_obj if not query else None,  # only if query is empty
+        'items': page_obj if query else None,       # only if query exists
+        'page_obj': page_obj,
+    })
+
 
 @login_required(login_url='login')
 def order_details(request, order_id):
@@ -242,40 +328,48 @@ def order_details(request, order_id):
     }
     return render(request, 'user/order_details.html', context)
 
-
+@never_cache
 @login_required(login_url='login')
 def cancel_order_item(request, order_id, item_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
     item = get_object_or_404(OrderItem, id=item_id, order=order)
-    
+
     if request.method == 'POST':
+        selected_reason = request.POST.get("reason")
+        other_reason_text = request.POST.get("other_reason", "").strip()
+
         try:
             with transaction.atomic():
                 # Restore stock
                 item.variant.stock += item.quantity
                 item.variant.save()
-                
-                # Update order total by subtracting item total (price includes any discounts from cart checkout)
+
+                # Update order total
                 item_total = item.quantity * item.price
-                order.total_amount = max(0, order.total_amount - item_total)  # Ensure total_amount doesn't go negative
-                item.status = 'CANCELLED'  # Mark item as cancelled instead of deleting
+                order.total_amount = max(0, order.total_amount - item_total)
+
+                # Mark as cancelled
+                item.status = 'CANCELLED'
+                item.delivery_status = 'CANCELLED'
+                item.cancellation_reason = selected_reason
+                if selected_reason == "OTHER":
+                    item.other_reason = other_reason_text
                 item.save()
-                
-                # If no active items remain, cancel the entire order
+
+                # Cancel entire order if all items are cancelled
                 if not order.items.filter(status='ACTIVE').exists():
                     order.status = 'CANCELLED'
-                    order.total_amount=Decimal('0.00')
+                    order.total_amount = Decimal('0.00')
                     order.save()
                     messages.success(request, "Order cancelled as all items were removed.")
                     return redirect('order_list')
-                
-                # Save updated order
+
                 order.save()
                 messages.success(request, f"Item {item.variant} cancelled successfully.")
                 return redirect('order_details', order_id=order.id)
-                
+
         except Exception as e:
             messages.error(request, f"Error cancelling item: {str(e)}")
             return redirect('order_details', order_id=order.id)
-    
-    return redirect('order_details', order_id=order.id)
+
+    return render(request, "user/cancel_order_item.html", {"item": item, "order": order})

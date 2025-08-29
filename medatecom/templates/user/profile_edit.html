@@ -3,83 +3,122 @@
 
 {% block content %}
 <!-- Toast Container -->
-<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1055;">
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
     {% if messages %}
         {% for message in messages %}
-        <div class="toast align-items-center text-white 
-            {% if message.tags == 'success' %}bg-success
-            {% elif message.tags == 'error' or message.tags == 'danger' %}bg-danger
-            {% elif message.tags == 'warning' %}bg-warning text-dark
-            {% else %}bg-info
-            {% endif %} border-0 show" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="d-flex">
-                <div class="toast-body">
-                    {{ message }}
+            <div class="toast align-items-center text-white 
+                {% if message.tags == 'error' %}bg-danger
+                {% elif message.tags == 'success' %}bg-success
+                {% elif message.tags == 'info' %}bg-info
+                {% elif message.tags == 'warning' %}bg-warning
+                {% else %}bg-primary{% endif %} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        {{ message }}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                 </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
-        </div>
         {% endfor %}
     {% endif %}
 </div>
 
 <div class="container mt-5">
-    <div class="row">
-        <!-- Personal Info Form -->
-        <div class="col-lg-6 col-md-12 mb-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10 col-sm-12">
             <div class="card shadow">
                 <div class="card-header bg-secondary text-white">
-                    <h5>Update Personal Info</h5>
+                    <h4 class="mb-0">Profile Settings</h4>
                 </div>
                 <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        {% for field in user_form %}
-                            <div class="mb-3">
-                                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                {{ field }}
-                                {% if field.errors %}
-                                    <div class="text-danger small">{{ field.errors|striptags }}</div>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-                        <button type="submit" name="update_profile" class="btn btn-success text-white">Update Info</button>
-                    </form>
-                </div>
-            </div>
-        </div>
+                    <!-- Tabs Navigation -->
+                    <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="personal-tab" data-bs-toggle="tab" data-bs-target="#personal" type="button" role="tab" aria-controls="personal" aria-selected="true">Personal Info</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="address-tab" data-bs-toggle="tab" data-bs-target="#address" type="button" role="tab" aria-controls="address" aria-selected="false">Add New Address</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="password-tab" data-bs-toggle="tab" data-bs-target="#password" type="button" role="tab" aria-controls="password" aria-selected="false">Change Password</button>
+                        </li>
+                    </ul>
 
-        <!-- Address Form -->
-        <div class="col-lg-6 col-md-12 mb-4">
-            <div class="card shadow">
-                <div class="card-header bg-secondary text-white">
-                    <h5>Add / Update Address</h5>
-                </div>
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        {% for field in address_form %}
-                            <div class="mb-3">
-                                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                {{ field }}
-                                {% if field.errors %}
-                                    <div class="text-danger small">{{ field.errors|striptags }}</div>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-                        <button type="submit" name="update_address" class="btn btn-success">Save Address</button>
-                    </form>
+                    <!-- Tabs Content -->
+                    <div class="tab-content mt-3" id="profileTabsContent">
+                        <!-- Personal Info Form -->
+                        <div class="tab-pane fade show active" id="personal" role="tabpanel" aria-labelledby="personal-tab">
+                            <form method="post">
+                                {% csrf_token %}
+                                {% for field in user_form %}
+                                    <div class="mb-3">
+                                        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                        {{ field }}
+                                        {% if field.errors %}
+                                            <div class="text-danger small">{{ field.errors|striptags }}</div>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                                <button type="submit" name="update_profile" class="btn btn-success text-white">Update Info</button>
+                            </form>
+                        </div>
+
+                        <!-- Address Form -->
+                        <div class="tab-pane fade" id="address" role="tabpanel" aria-labelledby="address-tab">
+                            <form method="post">
+                                {% csrf_token %}
+                                {% for field in address_form %}
+                                    <div class="mb-3">
+                                        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                        {{ field }}
+                                        {% if field.errors %}
+                                            <div class="text-danger small">{{ field.errors|striptags }}</div>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                                <button type="submit" name="update_address" class="btn btn-success">Save Address</button>
+                            </form>
+                        </div>
+
+                        <!-- Password Change Form -->
+                        <div class="tab-pane fade" id="password" role="tabpanel" aria-labelledby="password-tab">
+                            <form method="post">
+                                {% csrf_token %}
+                                {% for field in password_form %}
+                                    <div class="mb-3">
+                                        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                        {{ field }}
+                                        {% if field.help_text %}
+                                            <div class="form-text">{{ field.help_text|safe }}</div>
+                                        {% endif %}
+                                        {% if field.errors %}
+                                            <div class="text-danger small">{{ field.errors|striptags }}</div>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                                <button type="submit" name="update_password" class="btn btn-success">Change Password</button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Bootstrap Toast JS -->
+<!-- JavaScript to Initialize Toasts -->
 <script>
-    document.querySelectorAll('.toast').forEach(toastEl => {
-        const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+document.addEventListener('DOMContentLoaded', function () {
+    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+    var toastList = toastElList.map(function (toastEl) {
+        return new bootstrap.Toast(toastEl, {
+            autohide: true,
+            delay: 5000 // Toast auto-hides after 5 seconds
+        });
+    });
+    toastList.forEach(function (toast) {
         toast.show();
     });
+});
 </script>
 {% endblock %}

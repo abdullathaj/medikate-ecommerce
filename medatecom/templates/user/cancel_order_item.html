@@ -1,0 +1,40 @@
+{% extends "auth/navbar.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h4>Cancel {{ item.variant }}</h4>
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            <label for="reason" class="form-label">Select a reason</label>
+            <select id="reason" name="reason" class="form-select" required onchange="toggleOtherReason(this)">
+                <option value="">-- Select Reason --</option>
+                <option value="DELAY">Delivery taking too long</option>
+                <option value="CHANGED_MIND">Changed my mind</option>
+                <option value="FOUND_BETTER">Found a better price elsewhere</option>
+                <option value="WRONG_ITEM">Ordered wrong item</option>
+                <option value="OTHER">Other reason</option>
+            </select>
+        </div>
+
+        <div class="mb-3" id="other-reason-box" style="display: none;">
+            <label for="other_reason" class="form-label">Other Reason</label>
+            <textarea name="other_reason" id="other_reason" class="form-control" rows="3"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-danger">Confirm Cancel</button>
+        <a href="{% url 'order_details' order.id %}" class="btn btn-secondary">Back</a>
+    </form>
+</div>
+
+<script>
+function toggleOtherReason(select) {
+    let otherBox = document.getElementById("other-reason-box");
+    if (select.value === "OTHER") {
+        otherBox.style.display = "block";
+    } else {
+        otherBox.style.display = "none";
+    }
+}
+</script>
+{% endblock %}

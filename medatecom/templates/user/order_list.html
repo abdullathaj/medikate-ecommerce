@@ -2,52 +2,147 @@
 {% block content %}
 <div class="container mt-5">
     <h2>Your Orders</h2>
+
+             <!-- Search Form -->
+    <form method="get" class="d-flex justify-content-start mb-3">
+        <input type="text" name="q" value="{{ query|default:'' }}" 
+               class="form-control w-25 me-2" placeholder="Search for orders...">
+        <button type="submit" class="btn btn-success">Search</button>
+
+        <select name="status" class="form-select mx-3" style="max-width: 200px;">
+        <option value="">All Statuses</option>
+        <option value="PENDING" {% if status_filter == "PENDING" %}selected{% endif %}>Pending</option>
+        <option value="PROCESSING" {% if status_filter == "PROCESSING" %}selected{% endif %}>Processing</option>
+        <option value="SHIPPED" {% if status_filter == "SHIPPED" %}selected{% endif %}>Shipped</option>
+        <option value="ARRIVED" {% if status_filter == "ARRIVED" %}selected{% endif %}>Arrived</option>
+        <option value="DELIVERED" {% if status_filter == "DELIVERED" %}selected{% endif %}>Delivered</option>
+        <option value="CANCELLED" {% if status_filter == "CANCELLED" %}selected{% endif %}>Cancelled</option>
+    </select>
+
+    <button type="submit" class="btn btn-primary">Filter</button>
+
+    </form>
+
+{% if query %}
+    <div class="list-group">
+        {% for item in items %}
+            <div class="list-group-item d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    {% with product_image=item.variant.product.product_image.first %}
+                        {% if product_image %}
+                            <img src="{{ product_image.image.url }}" 
+                                 alt="{{ item.variant.product.name }} - {{ item.variant.variant_name }}" 
+                                 class="rounded me-3"
+                                 style="width:60px; height:60px; object-fit:contain;">
+                        {% else %}
+                            <img src="https://via.placeholder.com/60?text={{ item.variant.product.name|urlencode }}" 
+                                 alt="{{ item.variant.product.name }} - {{ item.variant.variant_name }}" 
+                                 class="rounded me-3"
+                                 style="width:60px; height:60px; object-fit:contain;">
+                        {% endif %}
+                    {% endwith %}
+                    <div>
+                        <strong>{{ item.variant.product.name }}</strong><br>
+                        <small>{{ item.variant.variant_name }}</small>
+                    </div>
+                </div>
+                <div class="text-end" style="min-width: 140px;">
+                    <p class="mb-1"><strong>₹{{ item.total_price|floatformat:2 }}</strong></p>
+                    <span class="badge 
+                        {% if item.display_status == 'Pending' %}bg-warning
+                        {% elif item.display_status == 'Shipped' %}bg-info
+                        {% elif item.display_status == 'Delivered' %}bg-success
+                        {% elif item.display_status == 'Cancelled' %}bg-danger
+                        {% else %}bg-secondary{% endif %}">
+                        {{ item.display_status }}
+                    </span>
+                    <div>
+                        <a href="{% url 'order_details' order_id=item.order.id %}" class="btn btn-sm btn-outline-primary mt-1">View</a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    {% else %}
+
     {% if orders %}
-        <div class="row">
+        <div class="list-group">
             {% for order in orders %}
                 {% for item in order.items.all %}
-                    <div class="col-md-4 mb-3">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <h5>Order #{{ order.id }}</h5>
-                                {% with product_image=item.variant.product.product_image.first %}
-                                    {% if product_image %}
-                                        <img src="{{ product_image.image.url }}" alt="{{ item.variant.product.name }} - {{ item.variant.variant_name }}" class="img-fluid mb-2" style="max-height: 100px; object-fit: cover;">
-                                    {% else %}
-                                        <img src="https://via.placeholder.com/100?text={{ item.variant.product.name|urlencode }}%20-%20{{ item.variant.variant_name|urlencode }}" alt="{{ item.variant.product.name }} - {{ item.variant.variant_name }}" class="img-fluid mb-2" style="max-height: 100px; object-fit: cover;">
-                                    {% endif %}
-                                {% endwith %}
-                                <p>{{ item.variant.product.name }} - {{ item.variant.variant_name }}</p>
-                                <p><strong>Quantity:</strong> {{ item.quantity }}</p>
-                                <p><strong>Price:</strong> ₹{{ item.total_price|floatformat:2 }}</p>
-                                {% comment %} <p><strong>Ordered Date:</strong> {{ order.created_at|date:"F d, Y H:i" }}</p> {% endcomment %}
-                                <p><strong>Order Status:</strong> {{ item.get_status_display }}</p>
-                                <p><strong>Delivery Status:</strong> {{ item.display_status }}</p>
-                                <a href="{% url 'order_details' order_id=order.id %}" class="btn btn-primary btn-sm">Order Details</a>
+                    <div class="list-group-item d-flex align-items-center justify-content-between">
+                        <!-- Left side: Product Image + Name -->
+                        <div class="d-flex align-items-center">
+                            {% with product_image=item.variant.product.product_image.first %}
+                                {% if product_image %}
+                                    <img src="{{ product_image.image.url }}" 
+                                         alt="{{ item.variant.product.name }} - {{ item.variant.variant_name }}" 
+                                         class="rounded me-3" 
+                                         style="width:60px; height:60px; object-fit:contain;">
+                                {% else %}
+                                    <img src="https://via.placeholder.com/60?text={{ item.variant.product.name|urlencode }}" 
+                                         alt="{{ item.variant.product.name }} - {{ item.variant.variant_name }}" 
+                                         class="rounded me-3" 
+                                         style="width:60px; height:60px; object-fit:contain;">
+                                {% endif %}
+                            {% endwith %}
+                            <div>
+                                <strong>{{ item.variant.product.name }}</strong><br>
+                                <small>{{ item.variant.variant_name }}</small>
+                            </div>
+                        </div>
+
+                        <!-- Right side: Price + Status + View -->
+                        <div class="text-end" style="min-width: 140px;">
+                            <p class="mb-1"><strong>₹{{ item.total_price|floatformat:2 }}</strong></p>
+                            <span class="badge 
+                                {% if item.display_status == 'Pending' %}bg-warning
+                                {% elif item.display_status == 'Shipped' %}bg-info
+                                {% elif item.display_status == 'Delivered' %}bg-success
+                                {% elif item.display_status == 'Cancelled' %}bg-danger
+                                {% else %}bg-secondary{% endif %}">
+                                {{ item.display_status }}
+                            </span>
+                            <div>
+                                <a href="{% url 'order_details' order_id=order.id %}" class="btn btn-sm btn-outline-primary mt-1">View</a>
                             </div>
                         </div>
                     </div>
                 {% endfor %}
-                {% if not order.items.exists %}
-                    <div class="col-md-4 mb-3">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <h5>Order #{{ order.id }}</h5>
-                                <img src="https://via.placeholder.com/100?text=Empty+Order" alt="Empty Order" class="img-fluid mb-2" style="max-height: 100px; object-fit: cover;">
-                                <p>No items in this order</p>
-                                <p><strong>Total Price:</strong> ₹{{ order.total_amount|floatformat:2 }}</p>
-                                <p><strong>Ordered Date:</strong> {{ order.created_at|date:"F d, Y H:i" }}</p>
-                                <p><strong>Order Status:</strong> {{ order.get_status_display }}</p>
-                                <a href="{% url 'order_details' order_id=order.id %}" class="btn btn-primary btn-sm">Order Details</a>
-                            </div>
-                        </div>
-                    </div>
-                {% endif %}
             {% endfor %}
         </div>
+
+                <!-- Pagination Controls -->
+                    <nav aria-label="Page navigation" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                            {% endif %}
+
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link">Next</span></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
     {% else %}
         <p>No orders found. Start shopping to place an order!</p>
         <a href="{% url 'product_listing' %}" class="btn btn-primary">Shop Now</a>
     {% endif %}
+{% endif %}
 </div>
 {% endblock %}

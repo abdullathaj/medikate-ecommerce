@@ -2,6 +2,27 @@
 {% load static %}
 
 {% block content %}
+
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="toast align-items-center text-white 
+                    {% if message.tags == 'error' %}bg-danger
+                    {% elif message.tags == 'success' %}bg-success
+                    {% elif message.tags == 'info' %}bg-info
+                    {% elif message.tags == 'warning' %}bg-warning
+                    {% else %}bg-primary{% endif %} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            {{ message }}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
     <!-- Product Details Section -->
     <section class="product-details-section container my-5">
         <div class="row">
@@ -49,9 +70,9 @@
 
             <!-- Product Information -->
             <div class="col-lg-6">
-                <h2 class="mb-3">{{ product.name }}</h2>
-                <span class="product-catagory d-block mb-2">{{ product.category.name }}</span>
-                <div class="product-rating mb-3">
+                <h2 class="m-3">{{ product.name }}</h2>
+                <span class="product-catagory d-block m-2">{{ product.category.name }}</span>
+                <div class="product-rating m-3">
                     <span class="star filled">★</span>
                     <span class="star filled">★</span>
                     <span class="star filled">★</span>
@@ -59,10 +80,10 @@
                     <span class="star">★</span>
                     <span class="rating-text">(4.0)</span>
                 </div>
-                <p class="product-description mb-4">{{ product.description|default:"No description available." }}</p>
+                <p class="product-description my-4 mx-2">{{ product.description|default:"No description available." }}</p>
 
                 <!-- Variant Selection -->
-                    <div class="mb-4">
+                    <div class="m-4">
                         <h5>Available Variants</h5>
                         <select class="form-select" id="variantSelect" aria-label="Select Variant">
                             {% for variant in variants %}
@@ -80,7 +101,7 @@
                     </div>
 
                 <!-- Price and Stock Display -->
-                <div class="product-price mb-3">
+                <div class="product-price m-3">
                     <span class="current-price fs-4 fw-bold" id="currentPrice">
                         ₹{{ selected_variant.price|floatformat:2 }}
                     </span>
@@ -100,11 +121,11 @@
 
                 <!-- Action Buttons -->
                 <div class="product-actions">
-                    <a href="{% url 'buy_now' selected_variant.id %}" class="btn btn-primary buy-now-btn me-2">Buy Now</a>
+                    <a href="{% url 'buy_now' selected_variant.id %}" class="btn btn-primary buy-now-btn mx-2">Buy Now</a>
                     <a href="{% url 'add_to_cart' selected_variant.id %}" id="addToCartBtn" class="btn btn-outline-secondary" title="Add to Cart">
                         <i class="fas fa-shopping-cart"></i> Add to Cart
                     </a>
-                    <a href="{% url 'add_to_wishlist' selected_variant.id %}" id="addToWishlistBtn" class="btn btn-outline-secondary ms-2" title="Add to Wishlist">
+                    <a href="{% url 'add_to_wishlist' selected_variant.id %}" id="addToWishlistBtn" class="btn btn-outline-secondary mx-2" title="Add to Wishlist">
                         <i class="fas fa-heart"></i>
                     </a>
                 </div>
@@ -161,13 +182,13 @@
                                         <small class="original-price">₹{{ variant.original_price|floatformat:2 }}</small>
                                         <span class="current-price">₹{{ variant.price|floatformat:2 }}</span>
                                     </div>
-                                    <div class="product-links">
+                                     <div class="product-links">
                                         <a href="{% url 'add_to_cart' variant.id %}" title="Add to Cart" class="cart-btn"><i class="fas fa-shopping-cart"></i></a>
                                         <a href="{% url 'buy_now' variant.id %}" class="buy-now-btn">Buy Now</a>
-                                    </div>
+                                    </div> 
                                 {% else %}
                                     <div class="product-price">N/A</div>
-                                    <div class="product-links">
+                                     <div class="product-links">
                                         <a href="{% url 'add_to_cart' variant.id %}" title="Add to Cart" class="cart-btn"><i class="fas fa-shopping-cart"></i></a>
                                         <a href="{% url "buy_now" variant.id %}" class="buy-now-btn">Buy Now</a>
                                     </div>
@@ -324,7 +345,7 @@
 
         .product-thumb {
             height: 180px;
-            background: #f6faff;
+            background: #ffffffff;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -698,5 +719,21 @@ document.addEventListener('DOMContentLoaded', function () {
     variantSelect.addEventListener('change', updateInfo);
     updateInfo();
 });
+
+// JavaScript to Initialize Toasts 
+
+document.addEventListener('DOMContentLoaded', function () {
+    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+    var toastList = toastElList.map(function (toastEl) {
+        return new bootstrap.Toast(toastEl, {
+            autohide: true,
+            delay: 5000 // Toast auto-hides after 5 seconds
+        });
+    });
+    toastList.forEach(function (toast) {
+        toast.show();
+    });
+});
+
 </script>
 {% endblock %}

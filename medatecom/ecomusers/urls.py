@@ -21,6 +21,8 @@ urlpatterns = [
     # PROFILE EDITING 
     path('user_profile_update/',views.users_profile_update_page,name='user_profile_update'),
     path('delete-address/<int:address_id>/', views.user_delete_address, name='delete_address'),
+    path('edit-address/<int:address_id>/', views.user_edit_address, name='edit_address'),
+
     
     # CART FEATURES
     path('update_cart_quantity/<int:cart_item_id>/',views.update_cart_quantity,name='update_cart_quantity'),

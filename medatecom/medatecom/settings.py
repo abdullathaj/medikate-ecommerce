@@ -25,7 +25,8 @@ SECRET_KEY = 'django-insecure-=fwwjz3le%mg1wi6*flk!4ypt8hrs@ab+pk4qn-wdz!=8@ldt)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = []
+CSRF_TRUSTED_ORIGINS=[]
 
 # Application definition
 
@@ -36,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     # Custom apps
     'ecomusers',
     'ecomadmin',
@@ -56,33 +58,33 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-SITE_ID = 2  # Ensure Site object with id=2 exists
+SITE_ID = 2  # make sure Site with id=2 exists in django_site table
+
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
 # Allauth settings
-ACCOUNT_EMAIL_VERIFICATION = 'none'
-ACCOUNT_LOGIN_METHODS = {'email'}
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']  # Replaced deprecated settings
-SOCIALACCOUNT_AUTO_SIGNUP = True  # Bypasses signup form for social logins
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_UNIQUE_EMAIL = True
+
+SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_LOGIN_ON_GET = True
+
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
-        'SCOPE': [
-            'profile',
-            'email',
-        ],
-        'AUTH_PARAMS': {
-            'access_type': 'online',
-        },
-        'APP': {
-            'client_id': '1093804396164-flrutqfcmm7qhlfgusdc7705bogc6osm.apps.googleusercontent.com',
-            'secret': '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',
-            'key': '',
-        }
-    }
+        'SCOPE': ['profile', 'email'],
+        'AUTH_PARAMS': {'access_type': 'online'},
+
+        # 'APP': {
+        #     'client_id': os.getenv('GOOGLE_CLIENT_ID', "1093804396164-flrutqfcmm7qhlfgusdc7705bogc6osm.apps.googleusercontent.com"),
+        #     'secret': os.getenv('GOOGLE_CLIENT_SECRET', "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"),
+        #     'key': ''
+        # }
+}
 }
 
 MIDDLEWARE = [

@@ -1,6 +1,7 @@
 from django.shortcuts import render,redirect,get_object_or_404
 from ecomusers.models import User
 from ecomproducts.models import Categories,Product,ProductVariant,ProductImage
+from ecomorders.models import Order,OrderItem
 from django.contrib.admin.views.decorators import staff_member_required
 from django.views.decorators.cache import never_cache
 from .forms import Useraddform,CategoryAddForm,ProductAddForm,ProductImageForm,VariantAddForm,VariantFormset,ImageFormset
@@ -18,7 +19,7 @@ from django.core.paginator import Paginator
 
 # DASHBOARD for Admin
 
-# @staff_member_required
+@staff_member_required
 # @never_cache
 def admin_dashboard(request):
 
@@ -28,7 +29,7 @@ def admin_dashboard(request):
 
 
 # USER MANAGEMENT FOR ADMIN
-# @staff_member_required
+@staff_member_required
 # @never_cache
 def admin_customer_details(request):
     users = User.objects.all()
@@ -48,7 +49,7 @@ def admin_customer_details(request):
 
 
 # ADD NEW USER
-# @staff_member_required
+@staff_member_required
 # @never_cache
 def admin_add_user(request):
    if request.method=='POST':
@@ -68,7 +69,7 @@ def admin_add_user(request):
 
 # ADMIN BLOCK AND UNBLOCK USER
 
-# @staff_member_required
+@staff_member_required
 # @never_cache
 def admin_block_user(request,user_id):
     user=get_object_or_404(User,id=user_id)
@@ -84,7 +85,7 @@ def admin_block_user(request,user_id):
 
 
 # CATEGORY TABLE
-# @staff_member_required
+@staff_member_required
 # @never_cache
 def admin_category_list(request):
     categories=Categories.objects.all()
@@ -122,7 +123,7 @@ def admin_add_category(request):
 
 
 # ADMIN HIDE AND SHOWING CATEGORIES
-# @staff_member_required
+@staff_member_required
 # @never_cache 
 def admin_hide_category(request, category_id):
     category = get_object_or_404(Categories, id=category_id)
@@ -136,7 +137,7 @@ def admin_hide_category(request, category_id):
 
 
 # ADMIN EDITING CATEGORIES
-# @staff_member_required
+@staff_member_required
 # @never_cache
 def admin_edit_category(request, category_id):
     category = get_object_or_404(Categories, id=category_id)
@@ -159,7 +160,7 @@ def admin_edit_category(request, category_id):
 # ADMIN PRODUCT MANAGEMENT
 
 # PRODUCT TABLE
-# @staff_member_required
+@staff_member_required
 # @never_cache
 def admin_product_details(request):
     products=Product.objects.all().order_by('id')
@@ -199,7 +200,7 @@ def admin_product_details(request):
 
 
 # ADMIN ADDING NEW PRODUCT,VATIENT AND IMAGES
-# @staff_member_required
+@staff_member_required
 # @never_cache
 def admin_add_product(request):
     variant_formset = VariantFormset
@@ -264,7 +265,7 @@ def admin_add_product(request):
     })
 
 # ADMIN EDITING THE PRODUCT,Variant AND IMAGES
-# @staff_member_required
+@staff_member_required
 # @never_cache
 def admin_edit_product(request,product_id):
     
@@ -347,7 +348,7 @@ def admin_edit_product(request,product_id):
 
 
 # ADMIN HIDING AND SHOWING EXISTING PRODUCTS
-# @staff_member_required
+@staff_member_required
 # @never_cache
 def admin_hide_product(request, variant_id):
     variant = get_object_or_404(ProductVariant, id=variant_id)
@@ -358,5 +359,65 @@ def admin_hide_product(request, variant_id):
         messages.success(request, f"Product '{variant.product.name}' is now {'visible' if variant.is_active else 'hidden'}.")
 
     return redirect('admin_product_list')
+
+
+
+# ADMIN ORDER MANAGEMENT
+def admin_order_list(request):
+    query = request.GET.get('q','').strip()  # search input
+    orders = Order.objects.all().order_by('-created_at')
+
+    if query:
+        orders = orders.filter(
+            Q(id__icontains=query) |
+            Q(user__email__icontains=query) |
+            Q(address__addressline_1__icontains=query) |
+            Q(address__addressline_2__icontains=query) |
+            Q(address__city__icontains=query) |
+            Q(address__state__icontains=query) |
+            Q(address__nation__icontains=query) |
+            Q(address__postal_code__icontains=query)
+        )
+    
+    # Pagination
+    paginator = Paginator(orders, 4)  # Show 10 orders per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'query':query,
+        'orders': page_obj,   # pass paginated object
+    }
+    return render(request, 'admin/admin_order_list.html', context)
+
+
+
+def admin_order_item_list(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    items = order.items.all()
+    context = {'order': order, 'items': items}
+    return render(request, 'admin/admin_order_item_list.html', context)
+
+
+
+def admin_edit_order_status(request, item_id):
+    if request.method == 'POST':
+        item = get_object_or_404(OrderItem, id=item_id)
+        new_status = request.POST.get('delivery_status')
+        
+        # Validate the new status
+        valid_statuses = [status for status, _ in OrderItem.DELIVERY_STATUS_CHOICES if status != 'CANCELLED']
+        if new_status in valid_statuses:
+            item.delivery_status = new_status
+            item.save()
+            messages.success(request, f"Delivery status for Order Item #{item.id} updated to {new_status}.")
+        else:
+            messages.error(request, "Invalid delivery status selected.")
+        
+        return redirect('admin_order_item_list', order_id=item.order.id)
+    
+    # If not POST, redirect to the order items list
+    item = get_object_or_404(OrderItem, id=item_id)
+    return redirect('admin/admin_order_item_list', order_id=item.order.id)
 
     

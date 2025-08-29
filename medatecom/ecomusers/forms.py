@@ -1,6 +1,8 @@
 from django import forms
 from django.contrib.auth.forms import UserChangeForm
 from .models import User,UserAddress
+from django.contrib.auth import password_validation
+from django.contrib.auth.hashers import check_password
 
 class UserProfileForm(UserChangeForm):
     
@@ -63,3 +65,47 @@ class UserAddressForm(forms.ModelForm):
             raise forms.ValidationError("You can only add up to 5 addresses.")
 
         return cleaned_data
+
+
+class UserPasswordChangeForm(forms.Form):
+    old_password = forms.CharField(
+        label="Current Password",
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        strip=False,
+    )
+    new_password1 = forms.CharField(
+        label="New Password",
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        strip=False,
+        help_text=password_validation.password_validators_help_text_html(),
+    )
+    new_password2 = forms.CharField(
+        label="Confirm New Password",
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        strip=False,
+    )
+
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+    def clean_old_password(self):
+        old_password = self.cleaned_data.get("old_password")
+        if not check_password(old_password, self.user.password):
+            raise forms.ValidationError("Current password is incorrect.")
+        return old_password
+
+    def clean_new_password2(self):
+        new_password1 = self.cleaned_data.get("new_password1")
+        new_password2 = self.cleaned_data.get("new_password2")
+        if new_password1 and new_password2 and new_password1 != new_password2:
+            raise forms.ValidationError("The new passwords do not match.")
+        if new_password1:
+            password_validation.validate_password(new_password2, self.user)
+        return new_password2
+
+    def save(self):
+        new_password = self.cleaned_data["new_password1"]
+        self.user.set_password(new_password)
+        self.user.save()
+        return self.user

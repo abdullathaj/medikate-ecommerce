@@ -15,6 +15,7 @@ from django.utils.dateparse import parse_datetime
 from allauth.socialaccount.models import SocialToken # GOOGLE AUTHENTICATION
 import requests
 
+
 # VIEWS FOR USER AUTHENTICARION AND AUTHERISATION.
 
 
