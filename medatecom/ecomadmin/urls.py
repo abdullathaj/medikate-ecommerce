@@ -24,4 +24,6 @@ urlpatterns = [
     path('admin_order_item_list/<int:order_id>/',views.admin_order_item_list,name='admin_order_item_list'),
     path('admin_edit_order_status/<int:item_id>/', views.admin_edit_order_status, name='admin_edit_order_status'),   
 
+    # ADMIN COUPON MANAGEMENT
+    path('admin_coupon_list/',views.admin_coupon_list, name='admin_coupon_list'),
 ]
