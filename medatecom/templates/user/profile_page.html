@@ -36,11 +36,12 @@
                         <div class="col-md-6">
                             <p><strong>Username:</strong> {{ user.username }}</p>
                             <p><strong>Email:</strong> {{ user.email }}</p>
-                            <p><strong>First Name:</strong> {{ user.first_name|default:"Not set" }}</p>
+                            <p><strong>Phone:</strong> {{ user.phone|default:"Not set" }}</p>
                         </div>
                         <div class="col-md-6">
+                           <p><strong>First Name:</strong> {{ user.first_name|default:"Not set" }}</p>
                             <p><strong>Last Name:</strong> {{ user.last_name|default:"Not set" }}</p>
-                            <p><strong>Phone:</strong> {{ user.phone|default:"Not set" }}</p>
+                            
                         </div>
                     </div>
                 </div>

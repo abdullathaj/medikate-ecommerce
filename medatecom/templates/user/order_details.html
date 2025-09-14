@@ -1,7 +1,7 @@
 {% extends 'auth/navbar.html' %}
 {% block content %}
 <div class="container mt-5">
-    <h2>Order Details #{{ order.id }}</h2>
+    <h2>Order Item Details</h2>
     <!-- Toast Container -->
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
         {% if messages %}
@@ -24,51 +24,62 @@
     </div>
     <div class="card mb-4">
         <div class="card-body">
-            <h5>Items</h5>
-            <ul class="list-unstyled">
-                {% for item in order.items.all %}
-                    <li class="d-flex flex-column flex-md-row align-items-md-center mb-3">
-                        <div class="me-md-3 mb-2 mb-md-0" style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center;">
-                            {% with product_image=item.variant.product.product_image.first %}
-                                {% if product_image %}
-                                    <img src="{{ product_image.image.url }}" alt="{{ item.variant.product.name }} - {{ item.variant.variant_name }}" class="img-fluid" style="width: 100px; height: 100px; object-fit: contain;">
-                                {% else %}
-                                    <img src="https://via.placeholder.com/100?text={{ item.variant.product.name|urlencode }}%20-%20{{ item.variant.variant_name|urlencode }}" alt="{{ item.variant.product.name }} - {{ item.variant.variant_name }}" class="img-fluid" style="width: 100px; height: 100px; object-fit: contain;">
-                                {% endif %}
-                            {% endwith %}
-                        </div>
-                        <div class="flex-grow-1">
-                            <p class="mb-1"><strong>{{ item.variant.product.name }} - {{ item.variant.variant_name }}</strong></p>
-                            <p class="mb-1">Quantity: {{ item.quantity }}</p>
-                            <p class="mb-1">Price: ₹{{ item.price|floatformat:2 }}</p>
-                            <p class="mb-1">Total: ₹{{ item.total_price|floatformat:2 }}</p>
-                            <p class="mb-1"><strong>Item Status:</strong> {{ item.get_status_display }}</p>
-                            <p class="mb-1"><strong>Delivery Status:</strong> {{ item.display_status }}</p>
-                                {% if item.status == 'ACTIVE' %}
-                                    <a href="{% url 'cancel_order_item' order_id=order.id item_id=item.id %}" 
-                                    class="btn btn-danger btn-sm mt-2">
-                                    Cancel Item
-                                    </a>
-                                {% endif %}
-                                {% if item.status == 'CANCELLED' %}
-                                    <p class="mb-1"><strong>Cancellation Reason:</strong> 
-                                        {{ item.get_cancellation_reason_display }}
-                                        {% if item.cancellation_reason == "OTHER" and item.other_reason %}
-                                            - {{ item.other_reason }}
-                                        {% endif %}
-                                    </p>
-                                {% endif %}
-                        </div>
-                    </li>
-                {% endfor %}
-            </ul>
+            <h5>Item Details</h5>
+            <div class="d-flex flex-column flex-md-row align-items-md-center mb-3">
+                <div class="me-md-3 mb-2 mb-md-0" style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center;">
+                    {% with product_image=order_item.variant.product.product_image.first %}
+                        {% if product_image %}
+                            <img src="{{ product_image.image.url }}" alt="{{ order_item.variant.product.name }} - {{ order_item.variant.variant_name }}" class="img-fluid" style="width: 100px; height: 100px; object-fit: contain;">
+                        {% else %}
+                            <img src="https://via.placeholder.com/100?text={{ order_item.variant.product.name|urlencode }}%20-%20{{ order_item.variant.variant_name|urlencode }}" alt="{{ order_item.variant.product.name }} - {{ order_item.variant.variant_name }}" class="img-fluid" style="width: 100px; height: 100px; object-fit: contain;">
+                        {% endif %}
+                    {% endwith %}
+                </div>
+                <div class="flex-grow-1">
+                    <p class="mb-1">
+                        <strong style="color: #28a745;">{{ order_item.variant.product.name }} - {{ order_item.variant.variant_name }}</strong>
+                    </p>
+                    <p class="mb-1">Quantity: {{ order_item.quantity }}</p>
+                    <p class="mb-1">Price: ₹{{ order_item.price|floatformat:2 }}</p>
+                    <p class="mb-1">Total: ₹{{ order_item.total_price|floatformat:2 }}</p>
+                    <p class="mb-1"><strong>Item Status:</strong> {{ order_item.get_status_display }}</p>
+                    <p class="mb-1"><strong>Delivery Status:</strong> {{ order_item.display_status }}</p>
+                    {% if order_item.status == 'ACTIVE' and order_item.delivery_status != 'DELIVERED' %}
+                        <a href="{% url 'cancel_order_item' order_id=order_item.order.id item_id=order_item.id %}" 
+                           class="btn btn-danger btn-sm mt-2">
+                            Cancel Item
+                        </a>
+                    {% endif %}
+                    {% if order_item.status == 'CANCELLED' %}
+                        <p class="mb-1"><strong>Cancellation Reason:</strong> 
+                            {{ order_item.get_cancellation_reason_display }}
+                            {% if order_item.cancellation_reason == "OTHER" and order_item.other_reason %}
+                                - {{ order_item.other_reason }}
+                            {% endif %}
+                        </p>
+                    {% endif %}
+                    {% if order_item.status == 'RETURNED' %}
+                        <p class="mb-1"><strong>Return Reason:</strong> 
+                            {{ order_item.get_return_reason_display }}
+                            {% if order_item.return_reason == "OTHER" and order_item.return_other_reason %}
+                                - {{ order_item.return_other_reason }}
+                            {% endif %}
+                        </p>
+                    {% endif %}
+                    {% if order_item.delivery_status == 'DELIVERED' and order_item.status != 'RETURNED' %}
+                        <a href="{% url 'return_order_item' order_id=order_item.order.id item_id=order_item.id %}" 
+                           class="btn btn-warning btn-sm">
+                            Return Item
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
             <hr>
-            <p><strong>Order Date:</strong> {{ order.created_at|date:"F d, Y H:i" }}</p>
-            <p><strong>Expected Delivery Date:</strong> {{ order.expected_delivery_date|date:"F d, Y" }}</p>
-            <p><strong>Payment Method:</strong> {{ order.payment_method }}</p>
-            {% comment %} <p><strong>Order Status:</strong> {{ order.get_status_display }}</p> {% endcomment %}
-            <p><strong>Delivery Address:</strong> {{ order.address.addressline_1 }}{% if order.address.addressline_2 %}, {{ order.address.addressline_2 }}{% endif %}, {{ order.address.city }}, {{ order.address.state }}, {{ order.address.nation }} - {{ order.address.postal_code }}</p>
-            <p><strong>Total Amount:</strong> ₹{{ order.total_amount|floatformat:2 }} (Including taxes, adjusted for cancellations)</p>
+            <p><strong>Order Date:</strong> {{ order_item.order.created_at|date:"F d, Y H:i" }}</p>
+            <p><strong>Expected Delivery Date:</strong> {{ order_item.order.expected_delivery_date|date:"F d, Y" }}</p>
+            <p><strong>Payment Method:</strong> {{ order_item.order.payment_method }}</p>
+            <p><strong>Delivery Address:</strong> {{ order_item.order.address.addressline_1 }}{% if order_item.order.address.addressline_2 %}, {{ order_item.order.address.addressline_2 }}{% endif %}, {{ order_item.order.address.city }}, {{ order_item.order.address.state }}, {{ order_item.order.address.nation }} - {{ order_item.order.address.postal_code }}</p>
+            <p><strong>Order Total:</strong> ₹{{ order_item.order.total_amount|floatformat:2 }} (Including taxes, adjusted for cancellations)</p>
         </div>
     </div>
     <a href="{% url 'order_list' %}" class="btn btn-secondary mb-1">Back to Orders</a>

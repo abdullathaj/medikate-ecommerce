@@ -15,7 +15,9 @@ psycopg2==2.9.10
 pycparser==2.22
 PyJWT==2.10.1
 python-decouple==3.8
+razorpay==1.4.2
 requests==2.32.4
+setuptools==80.9.0
 sqlparse==0.5.3
 tzdata==2025.2
 urllib3==2.5.0

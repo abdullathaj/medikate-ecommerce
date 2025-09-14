@@ -42,6 +42,9 @@
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="password-tab" data-bs-toggle="tab" data-bs-target="#password" type="button" role="tab" aria-controls="password" aria-selected="false">Change Password</button>
                         </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="email-tab" data-bs-toggle="tab" data-bs-target="#email" type="button" role="tab" aria-controls="email" aria-selected="false">Change Email</button>
+                        </li>
                     </ul>
 
                     <!-- Tabs Content -->
@@ -97,6 +100,23 @@
                                     </div>
                                 {% endfor %}
                                 <button type="submit" name="update_password" class="btn btn-success">Change Password</button>
+                            </form>
+                        </div>
+
+                    <!-- Email Change Form -->
+                        <div class="tab-pane fade" id="email" role="tabpanel" aria-labelledby="email-tab">
+                            <form method="post">
+                                {% csrf_token %}
+                                {% for field in email_form %}
+                                    <div class="mb-3">
+                                        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                        {{ field }}
+                                        {% if field.errors %}
+                                            <div class="text-danger small">{{ field.errors|striptags }}</div>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                                <button type="submit" name="request_email_otp" class="btn btn-success">Request OTP</button>
                             </form>
                         </div>
                     </div>

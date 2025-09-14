@@ -5,12 +5,12 @@ from datetime import timedelta
 from django.utils import timezone
 
 
-
 # Create your models here.
 class Order(models.Model):
     
     PAYMENT_CHOICES=[
         ('COD','Cash on Delivery'),
+        ('RAZORPAY','Razorpay'),
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
@@ -20,6 +20,9 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_paid = models.BooleanField(default=False)
+    razorpay_order_id= models.CharField(max_length=255, null= True, blank= True)
+    razorpay_payment_id= models.CharField(max_length=255, blank=True, null=True)
+    razorpay_signature= models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return f"Order #{self.id} by {self.user.username}"
@@ -50,6 +53,7 @@ class OrderItem(models.Model):
     STATUS_CHOICES=[
         ('ACTIVE','Active'),
         ('CANCELLED','Cancelled'),
+        ('RETURNED','Returned'),
     ]
 
     DELIVERY_STATUS_CHOICES = [
@@ -59,6 +63,7 @@ class OrderItem(models.Model):
         ('ARRIVED', 'Arrived'),
         ('DELIVERED', 'Delivered'),
         ('CANCELLED', 'Cancelled'),
+        ('RETURNED','Returned'),
     ]
 
     CANCELLATION_REASON_CHOICES = [
@@ -68,6 +73,15 @@ class OrderItem(models.Model):
         ('WRONG_ITEM', 'Ordered wrong item'),
         ('OTHER', 'Other reason'),
     ]
+
+    RETURN_REASON_CHOICES = [
+        ('DAMAGED', 'Product was damaged'),
+        ('DEFECTIVE', 'Product was defective'),
+        ('WRONG_ITEM', 'Wrong item delivered'),
+        ('NOT_SATISFIED', 'Not satisfied with the product'),
+        ('OTHER', 'Other reason'),
+    ]
+
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items',null=True)
     variant = models.ForeignKey(ProductVariant, on_delete=models.SET_NULL, null=True)
     quantity = models.PositiveIntegerField(default=1)
@@ -77,6 +91,10 @@ class OrderItem(models.Model):
     # Regarding with item cancellation.
     cancellation_reason=models.CharField(max_length=50, choices= CANCELLATION_REASON_CHOICES, blank=True, null=True)
     other_reason= models.TextField(blank=True, null=True) # If the user selected other reasons.
+
+    # REGARDING WITH ITEM RETURNING
+    return_reason= models.CharField(max_length=50, choices=RETURN_REASON_CHOICES, blank=True, null=True)
+    return_other_reason=models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.variant} x {self.quantity}"
@@ -89,6 +107,9 @@ class OrderItem(models.Model):
     def display_status(self):
         if self.order.overall_status=='CANCELLED' or self.status=='CANCELLED':
             return 'Cancelled'
+        
+        if self.status == 'RETURNED':
+            return 'Returned'
         
         if self.delivery_status:
             return dict(self.DELIVERY_STATUS_CHOICES).get(self.delivery_status,self.delivery_status)

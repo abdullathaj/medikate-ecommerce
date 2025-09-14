@@ -17,7 +17,7 @@
                     <th class="px-3 py-2 text-uppercase text-secondary">Product & Variant</th>
                     <th class="px-3 py-2 text-uppercase text-secondary">Item Price</th>
                     <th class="px-3 py-2 text-uppercase text-secondary">Delivery Status</th>
-                    <th class="px-3 py-2 text-uppercase text-secondary">Cancellation Reason </th>
+                    <th class="px-3 py-2 text-uppercase text-secondary">Cancel/ Return Reason </th>
                     <th class="px-3 py-2 text-uppercase text-secondary">Actions</th>
                 </tr>
             </thead>
@@ -45,13 +45,21 @@
                             {% if item.cancellation_reason == "OTHER" and item.other_reason %}
                                 - {{ item.other_reason }}
                             {% endif %}
+                        {% elif item.status == 'RETURNED' %}
+                            {{ item.get_return_reason_display }}
+                            {% if item.return_reason == "OTHER" and item.return_other_reason %}
+                                - {{ item.return_other_reason }}
+                            {% endif %}
                         {% else %}
                             <span class="text-muted small">N/A</span>
                         {% endif %}
                     </td>
+
                     <td class="px-3 py-2">
                         {% if item.status == "CANCELLED" %}
                             <span class="badge bg-danger">Cancelled</span>
+                        {% elif item.status == "RETURNED" %}
+                            <span class="badge bg-warning text-dark">Returned</span>
                         {% else %}
                             <form method="POST" action="{% url 'admin_edit_order_status' item.id %}">
                                 {% csrf_token %}
@@ -70,6 +78,7 @@
                             </form>
                         {% endif %}
                     </td>
+
 
                 </tr>
                 {% empty %}

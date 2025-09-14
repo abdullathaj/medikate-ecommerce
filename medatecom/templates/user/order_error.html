@@ -1,0 +1,8 @@
+{% extends 'auth/navbar.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h2 style="color:red;">Payment Failed!</h2>
+    <p>Unfortunately, your payment could not be processed.</p>
+    <a href="{% url 'product_listing' %}" class="btn btn-secondary">Back to Shopping</a>
+</div>
+{% endblock %}

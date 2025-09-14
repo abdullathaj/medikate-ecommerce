@@ -4,15 +4,20 @@ import json
 from django.db import IntegrityError,transaction
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
-from .models import UserAddress,User,WishlistProducts,CartProducts
+from .models import UserAddress,User,WishlistProducts,CartProducts,Wallet
 from ecomproducts.models import Product,ProductVariant,ProductImage,Categories
 from django.core.paginator import Paginator
 from django.db.models import Min,Q,F,Sum,FloatField
-from .forms import UserProfileForm,UserAddressForm,UserPasswordChangeForm
+from .forms import UserProfileForm,UserAddressForm,UserPasswordChangeForm,EmailChangeForm
+from django.core.mail import send_mail
+from django.conf import settings
 from django.contrib import messages
 from datetime import timedelta,datetime
+from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from decimal import Decimal
 from django.contrib.auth import update_session_auth_hash
+import random
 
 # Create your views here.
 # home page for User BEFORE LOGIN
@@ -177,6 +182,7 @@ def user_product_listing(request):
 
 @login_required(login_url='login') 
 def users_profile_page(request):
+    ''' RENDERING USERS PROFILE PAGE CONTAIN USER DETAILS AND ADDRESSES'''
     if not request.user.is_active:
         return redirect('login')
    
@@ -185,6 +191,7 @@ def users_profile_page(request):
 @never_cache
 @login_required(login_url='login') 
 def user_delete_address(request, address_id):
+    ''' TO DELETE CURRENT ADDRESSES '''
     address = get_object_or_404(UserAddress, id=address_id, user=request.user)
     address.delete()
     messages.success(request, "Address deleted successfully.")
@@ -193,10 +200,12 @@ def user_delete_address(request, address_id):
 @never_cache
 @login_required(login_url='login') 
 def users_profile_update_page(request):
+    ''' TO UPDATE THE USER PROFILE AS EDIT USER DETAILS, ADD NEW ADDRESSES, CHANGE EMAIL AND CHANGE PASSWORD '''
     user = request.user
     user_form = UserProfileForm(instance=user)
     address_form = UserAddressForm(initial={'user': user})
     password_form=UserPasswordChangeForm(user=user)
+    email_form=EmailChangeForm()
 
     if request.method == 'POST':
         if 'update_profile' in request.POST:
@@ -232,17 +241,81 @@ def users_profile_update_page(request):
                 for field, error_list in password_form.errors.items():
                     for error in error_list:
                         messages.error(request, f"{password_form.fields[field].label}: {error}")
+        
+        elif 'request_email_otp' in request.POST:
+            email_form=EmailChangeForm(request.POST)
+            if email_form.is_valid():
+                new_email=email_form.cleaned_data['new_email']
+                otp=str(random.randint(100000,999999))
+                expiry_time=timezone.now() + timedelta(seconds=60)
 
+                request.session['change_email']= new_email
+                request.session['email_otp']= otp
+                request.session['email_expiry_time']= expiry_time.isoformat()
+                print(f'generated otp is {otp}.')
+
+                subject='OTP for Email Change.'
+                message=f'The OTP for Email verification is {otp} \n Please enter the otp and confirm.'
+                from_mail=settings.DEFAULT_FROM_EMAIL
+                recipient_list=[new_email]
+
+                try:
+                    send_mail(subject,message,from_mail,recipient_list)
+                    messages.success(request,f'OTP sent to your given email.\n Plese check it.')
+                    return redirect('verify_email_otp')
+                
+                except Exception as e:
+                    print(f'error occured as: {str(e)}')
+                    messages.error(request,f'Email couldnt sent. Something went wrong.\n Try again.')
+                    return redirect('user_profile_update')
 
     return render(request, 'user/profile_edit.html', {
         'user_form': user_form,
         'address_form': address_form,
         'password_form':password_form,
+        'email_form': email_form,
     })
 
 @never_cache
 @login_required(login_url='login')
+def verify_email_otp(request):
+    ''' OTP VERIFICATION FOR CHANGE EMAIL '''
+    if request.method=='POST':
+        entered_otp= request.POST.get('otp')
+        new_email=request.session.get('change_email')
+        stored_otp= request.session.get('email_otp')
+        expiry_str= request.session.get('email_expiry_time')
+
+        if not new_email or not stored_otp or not expiry_str:
+            messages.error(request,f'Session has expired. Please try again.')
+            return redirect('user_profile_update')
+        if stored_otp != entered_otp:
+            messages.error(request,f'The OTP is not correct. Try again.')
+            return redirect('user_profile_update')
+        expiry_time= parse_datetime(expiry_str)
+        if timezone.now() > expiry_time:
+            request.session.pop('change_email',None)
+            request.session.pop('email_otp',None)
+            request.session.pop('email_expiry_time', None)
+
+            messages.error(request,f'OTP has expired.Please try again.')
+            return redirect('user_profile_update')
+        user= request.user
+        user.email= new_email
+        user.save()
+
+        for i in ['change_email','email_otp','email_expiry_time']:
+            request.session.pop(i,None)
+        messages.success(request,f'The email is updated to {new_email} for {user}')
+        return redirect('user_profile_update')
+
+        
+    return render(request,'user/verify_email_otp.html')
+
+@never_cache
+@login_required(login_url='login')
 def user_edit_address(request, address_id):
+    ''' EDIT CURRENT USER ADDRESS '''
     address = get_object_or_404(UserAddress, id=address_id, user=request.user)
     if request.method == 'POST':
         form = UserAddressForm(request.POST, instance=address)
@@ -357,6 +430,12 @@ def users_cart_page(request):
         if item.quantity > item.variant.stock:
             messages.error(request, f"Insufficient stock for {item.variant}. Only {item.variant.stock} available.")
             return redirect('user_cart_page')
+        
+        if item.quantity >5:
+            item.quantity=5
+            item.save()
+            messages.info(request,f'The maximum purchase quantity of same product is limited to 5.')
+
         original_item_price = item.quantity * item.variant.original_price
         original_total_price += original_item_price
         selling_item_price = item.quantity * item.variant.price
@@ -403,7 +482,10 @@ def update_cart_quantity(request, cart_item_id):
         action = request.POST.get('action')
 
         if action == 'increase':
-            if cart_item.quantity + 1 >= cart_item.variant.stock:messages.error(request, f"Cannot increase quantity. Stock limit reached.")
+            if cart_item.quantity >=5:
+                messages.warning(request,f'You can only select maximum of 5 products for each product.')
+            elif cart_item.quantity + 1 >= cart_item.variant.stock:
+                messages.error(request, f"Cannot increase quantity. Stock limit reached.")
             else:
                 cart_item.quantity += 1
                 cart_item.save()
@@ -459,6 +541,10 @@ def save_for_later(request,cart_item_id):
 
 
 # USER WALLET PAGE
+@login_required(login_url='login')
+@never_cache
 def users_wallet_page(request):
 
-    return render(request,'user/wallet_page.html')
+    wallet,created=Wallet.objects.get_or_create(user=request.user)
+
+    return render(request,'user/wallet_page.html',{'wallet':wallet})

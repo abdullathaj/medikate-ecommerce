@@ -18,6 +18,21 @@ class UserProfileForm(UserChangeForm):
 
         }
 
+class EmailChangeForm(forms.Form):
+
+    new_email=forms.EmailField(
+        label="New Email",
+        widget=forms.EmailInput(attrs={'class':'form-control'}),
+        max_length=100
+    )
+
+    def clean_new_email(self):
+        new_email=self.cleaned_data['new_email']
+        if User.objects.filter(email=new_email).exists():
+            raise forms.ValidationError('This email is already exists.')
+        return new_email
+
+
 class UserAddressForm(forms.ModelForm):
     class Meta:
         model = UserAddress

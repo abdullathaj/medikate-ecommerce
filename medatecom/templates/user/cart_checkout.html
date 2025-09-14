@@ -80,10 +80,11 @@
                         </option>
                     {% endfor %}
                 </select>
+               <a href="{% url "user_profile_update" %}" class="btn btn-success mt-2"> Add new Address </a>
             </div>
         </div>
-        <button type="submit" class="btn btn-primary">Proceed to Payment</button>
-        <a href="{% url 'user_cart_page' %}" class="btn btn-secondary">Back to Cart</a>
+        <button type="submit" class="btn btn-primary mb-1">Proceed to Payment</button>
+        <a href="{% url 'user_cart_page' %}" class="btn btn-secondary mb-1">Back to Cart</a>
     </form>
 </div>
 

@@ -17,6 +17,7 @@
         <option value="ARRIVED" {% if status_filter == "ARRIVED" %}selected{% endif %}>Arrived</option>
         <option value="DELIVERED" {% if status_filter == "DELIVERED" %}selected{% endif %}>Delivered</option>
         <option value="CANCELLED" {% if status_filter == "CANCELLED" %}selected{% endif %}>Cancelled</option>
+        <option value="RETURNED" {% if status_filter == "RETURNED" %}selected{% endif %}>Returned</option>
     </select>
 
     <button type="submit" class="btn btn-primary">Filter</button>
@@ -57,7 +58,7 @@
                         {{ item.display_status }}
                     </span>
                     <div>
-                        <a href="{% url 'order_details' order_id=item.order.id %}" class="btn btn-sm btn-outline-primary mt-1">View</a>
+                        <a href="{% url 'order_details' order_id=item.order.id item_id=item.id %}" class="btn btn-sm btn-outline-primary mt-1">View</a>
                     </div>
                 </div>
             </div>
@@ -103,7 +104,8 @@
                                 {{ item.display_status }}
                             </span>
                             <div>
-                                <a href="{% url 'order_details' order_id=order.id %}" class="btn btn-sm btn-outline-primary mt-1">View</a>
+                                <a href="{% url 'order_details' order_id=item.order.id item_id=item.id %}" 
+                                class="btn btn-sm btn-outline-primary mt-1">View</a>
                             </div>
                         </div>
                     </div>

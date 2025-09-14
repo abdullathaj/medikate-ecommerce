@@ -364,8 +364,8 @@ def admin_hide_product(request, variant_id):
 
 # ADMIN ORDER MANAGEMENT
 def admin_order_list(request):
-    query = request.GET.get('q','').strip()  # search input
-    orders = Order.objects.all().order_by('-created_at')
+    query = request.GET.get('q', '').strip()
+    orders = Order.objects.all().order_by('-created_at')   # ✅ note the ()
 
     if query:
         orders = orders.filter(
@@ -376,19 +376,21 @@ def admin_order_list(request):
             Q(address__city__icontains=query) |
             Q(address__state__icontains=query) |
             Q(address__nation__icontains=query) |
-            Q(address__postal_code__icontains=query)
-        )
-    
-    # Pagination
-    paginator = Paginator(orders, 4)  # Show 10 orders per page
+            Q(address__postal_code__icontains=query) |
+            Q(items__variant__product__name__icontains=query) |
+            Q(items__variant__product__category__name__icontains=query)
+        ).distinct()
+
+    paginator = Paginator(orders, 4)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    
+
     context = {
-        'query':query,
-        'orders': page_obj,   # pass paginated object
+        'query': query,
+        'orders': page_obj,
     }
     return render(request, 'admin/admin_order_list.html', context)
+
 
 
 
