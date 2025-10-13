@@ -11,6 +11,7 @@ urlpatterns = [
     path('add_to_cart/<int:variant_id>/', views.add_to_cart, name='add_to_cart'),
     path('add_to_wishlist/<int:variant_id>/', views.add_to_wishlist, name='add_to_wishlist'),
     path('remove_from_wishlist/', views.remove_from_wishlist, name='remove_from_wishlist'),
+    path('move_to_cart/<int:variant_id>/', views.move_to_cart, name='move_to_cart'),
 
 
     # NAVBAR BUTTONS
@@ -30,6 +31,8 @@ urlpatterns = [
     path('remove_cart_item/<int:cart_item_id>/',views.remove_cart_item,name='remove_cart_item'),
     path('save_for_later/<int:cart_item_id>/',views.save_for_later,name='save_for_later'),
     # path('cart_select_address/',views.cart_select_address,name='cart_select_address'),
+    path('apply_coupon/', views.apply_coupon, name='apply_coupon'),
+    path('remove_coupon/',views.remove_coupon, name='remove_coupon'),
     
     
 

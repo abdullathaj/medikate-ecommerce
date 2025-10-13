@@ -14,21 +14,21 @@
         {% if error %}
             <div class="alert alert-danger text-center" role="alert">{{ error }}</div>
         {% endif %}
-            <!-- Toast Container -->
-                    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1055">
-                        {% if messages %}
-                            {% for message in messages %}
-                                <div class="toast align-items-center text-white bg-{% if message.tags == 'success' %}success{% elif message.tags == 'error' %}danger{% else %}info{% endif %} border-0 show" role="alert" aria-live="assertive" aria-atomic="true">
-                                    <div class="d-flex">
-                                        <div class="toast-body">
-                                            {{ message }}
-                                        </div>
-                                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        {% endif %}
+        <!-- Toast Container -->
+        <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1055">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="toast align-items-center text-white bg-{% if message.tags == 'success' %}success{% elif message.tags == 'error' %}danger{% else %}info{% endif %} border-0 show" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                {{ message }}
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
                     </div>
+                {% endfor %}
+            {% endif %}
+        </div>
 
         <form method="POST" action="{% url 'register' %}" class="d-flex flex-column gap-3">
             {% csrf_token %}
@@ -43,11 +43,7 @@
                     <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email" required>
                     <div class="invalid-feedback field-error"></div>
                 </div>
-                <div class="col-12 form-group phone">
-                    <label for="phone" class="form-label"><i class="fas fa-phone me-2 text-success"></i>Phone</label>
-                    <input type="tel" id="phone" name="phone" class="form-control" placeholder="Enter your phone number" required>
-                    <div class="invalid-feedback field-error"></div>
-                </div>
+               
                 <div class="col-12 form-group password">
                     <label for="password" class="form-label"><i class="fas fa-lock me-2 text-success"></i>Password</label>
                     <input type="password" id="password" name="password" class="form-control" placeholder="Enter your password" required>
@@ -59,6 +55,16 @@
                     <input type="password" id="confirm-password" name="confirm_password" class="form-control" placeholder="Confirm your password" required>
                     <div class="invalid-feedback field-error"></div>
                 </div>
+                 <div class="col-12 form-group phone">
+                    <label for="phone" class="form-label"><i class="fas fa-phone me-2 text-success"></i>Phone</label>
+                    <input type="tel" id="phone" name="phone" class="form-control" placeholder="Enter your phone number" required>
+                    <div class="invalid-feedback field-error"></div>
+                </div>
+                <div class="col-12 form-group referral-code">
+                    <label for="referral-code" class="form-label"><i class="fas fa-gift me-2 text-success"></i>Referral Code (Optional)</label>
+                    <input type="text" id="referral-code" name="referral_code" class="form-control" placeholder="Enter referral code">
+                    <div class="invalid-feedback field-error"></div>
+                </div>
             </div>
             <button type="submit" class="btn btn-success w-100 mt-3">Register</button>
         </form>
@@ -66,8 +72,8 @@
         <div class="d-flex justify-content-center mt-4">
             <a href="{% provider_login_url 'google' %}" class="btn btn-outline-dark w-100">
                 <i class="fab fa-google me-2"></i> Sign In with Google
-             </a>
-        </div> 
+            </a>
+        </div>
 
         <div class="text-center mt-3">
             <span class="text-muted">Already have an account?</span>
@@ -77,11 +83,10 @@
 </div>
 
 <style>
-    /* Glassy effect */
     .register-form {
         background: rgba(255, 255, 255, 0.15);
         backdrop-filter: blur(12px);
-        max-width: 680px; /* Wide container */
+        max-width: 680px;
         width: 100%;
         opacity: 0;
         animation: fadeIn 1s ease-out forwards;
@@ -93,21 +98,19 @@
         }
     }
 
-    /* Form input styling */
     .form-group input {
-        padding-left: 2.5rem; /* Space for icons */
+        padding-left: 2.5rem;
         transition: all 0.3s ease;
     }
 
     .form-group label i {
-        color: #2e7d32; /* Green for health theme */
+        color: #2e7d32;
     }
 
     .form-group .password-strength.weak { color: #dc3545; }
     .form-group .password-strength.medium { color: #ffc107; }
     .form-group .password-strength.strong { color: #28a745; }
 
-    /* Slide-up animation for fields */
     .form-group {
         opacity: 0;
         transform: translateY(15px);
@@ -119,6 +122,7 @@
     .form-group:nth-child(3) { animation-delay: 0.3s; }
     .form-group:nth-child(4) { animation-delay: 0.4s; }
     .form-group:nth-child(5) { animation-delay: 0.5s; }
+    .form-group:nth-child(6) { animation-delay: 0.6s; }
 
     @keyframes slideUp {
         to {
@@ -127,16 +131,16 @@
         }
     }
 
-    /* Responsive adjustments */
     @media (min-width: 768px) {
-        .form-group.name, .form-group.email, .form-group.password, .form-group.confirm-password {
+        .form-group.name, .form-group.email, .form-group.password, .form-group.confirm-password, 
+        .form-group.referral-code, .form-group.phone  {
             flex: 0 0 50%;
             max-width: 50%;
         }
-        .form-group.phone {
+        {% comment %} .form-group.phone {
             flex: 0 0 100%;
             max-width: 100%;
-        }
+        } {% endcomment %}
     }
 
     @media (max-width: 576px) {
@@ -157,21 +161,12 @@
     }
 </style>
 
-<!-- Bootstrap JS (for form validation) -->
+<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
-    // Toast Message
-    document.addEventListener('DOMContentLoaded', function () {
-        const toastElList = [].slice.call(document.querySelectorAll('.toast'));
-        toastElList.forEach(function (toastEl) {
-            const toast = new bootstrap.Toast(toastEl, { delay: 4000 });
-            toast.show();
-        });
-    });
-
     document.addEventListener('DOMContentLoaded', () => {
         const form = document.querySelector('.register-form form');
         const inputs = {
@@ -179,20 +174,21 @@
             email: document.getElementById('email'),
             phone: document.getElementById('phone'),
             password: document.getElementById('password'),
-            confirmPassword: document.getElementById('confirm-password')
+            confirmPassword: document.getElementById('confirm-password'),
+            referralCode: document.getElementById('referral-code')
         };
         const errors = {
             name: inputs.name.nextElementSibling,
             email: inputs.email.nextElementSibling,
             phone: inputs.phone.nextElementSibling,
             password: inputs.password.nextElementSibling,
-            confirmPassword: inputs.confirmPassword.nextElementSibling
+            confirmPassword: inputs.confirmPassword.nextElementSibling,
+            referralCode: inputs.referralCode.nextElementSibling
         };
         const passwordStrength = document.querySelector('.password-strength');
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const phoneRegex = /^\d{10,}$/;
 
-        // Real-time validation
         const validateField = (field, value) => {
             let error = '';
             let isValid = true;
@@ -221,7 +217,6 @@
                         error = 'Password must be at least 8 characters';
                         isValid = false;
                     }
-                    // Password strength
                     let strength = 'Weak';
                     let strengthClass = 'weak';
                     if (value.length >= 12 && /[A-Z]/.test(value) && /[0-9]/.test(value) && /[^A-Za-z0-9]/.test(value)) {
@@ -240,6 +235,9 @@
                         isValid = false;
                     }
                     break;
+                case 'referralCode':
+                    // No strict validation for optional field
+                    break;
             }
 
             errors[field].textContent = error;
@@ -247,7 +245,6 @@
             inputs[field].classList.toggle('is-invalid', !isValid && value);
         };
 
-        // Event listeners for real-time validation
         Object.keys(inputs).forEach(field => {
             inputs[field].addEventListener('input', () => validateField(field, inputs[field].value));
             inputs[field].addEventListener('focus', () => {
@@ -259,13 +256,14 @@
             });
         });
 
-        // Form submission validation
         form.addEventListener('submit', (e) => {
             let hasError = false;
             Object.keys(inputs).forEach(field => {
-                validateField(field, inputs[field].value);
-                if (!inputs[field].value || errors[field].textContent) {
-                    hasError = true;
+                if (field !== 'referralCode') {
+                    validateField(field, inputs[field].value);
+                    if (!inputs[field].value || errors[field].textContent) {
+                        hasError = true;
+                    }
                 }
             });
 
@@ -275,6 +273,14 @@
             } else {
                 console.log('Form submitted');
             }
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const toastElList = [].slice.call(document.querySelectorAll('.toast'));
+        toastElList.forEach(function (toastEl) {
+            const toast = new bootstrap.Toast(toastEl, { delay: 4000 });
+            toast.show();
         });
     });
 </script>

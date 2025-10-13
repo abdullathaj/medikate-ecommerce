@@ -1,7 +1,7 @@
 from django import forms
 from django.forms import ModelForm,inlineformset_factory,BaseInlineFormSet
 from ecomusers.models import User
-from ecomproducts.models import Categories,Product,ProductVariant,ProductImage
+from ecomproducts.models import Categories,Product,ProductVariant,ProductImage,Offer,Coupon
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 import re
@@ -124,3 +124,52 @@ VariantFormset=inlineformset_factory(Product,ProductVariant,form=VariantAddForm,
 ImageFormset=inlineformset_factory(Product,ProductImage,form=ProductImageForm,
                                     extra=0,can_delete=True,max_num=3,min_num=3,
                                     validate_min=True,validate_max=True)
+
+class OfferForm(forms.ModelForm):
+    class Meta:
+        model= Offer
+        fields= ['name','description','valid_from','valid_to',
+                 'discount_percentage','is_active',
+                 'category','product']
+        
+        widgets={
+            'name':forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'valid_from': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
+            'valid_to': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
+            'discount_percentage': forms.NumberInput(attrs={'class': 'form-control'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'product': forms.Select(attrs={'class': 'form-select'}),
+            'category': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+        def clean(self):
+            cleaned_data= super().clean()
+            category= cleaned_data.get('category')
+            product= cleaned_data.get('product')
+
+            if category and product:
+                raise ValidationError('Offer can only apply either Product or Category, not for both.')
+            elif not category and not product:
+                raise ValidationError('Must select Either product or category.')
+            return cleaned_data
+
+class CouponForm(forms.ModelForm):
+    class Meta:
+        model= Coupon
+        fields=[
+            'coupon_code','description','valid_from','valid_to','is_active',
+            'discount_percentage','minimum_purchase_amount','max_usage_limit'
+        ]
+
+        widgets= {
+            'coupon_code': forms.TextInput(attrs={'class':'form-control'}),
+            'description' : forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'valid_from' : forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
+            'valid_to' : forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
+            'discount_percentage' : forms.NumberInput(attrs={'class':'form-control'}),
+            'minimum_purchase_amount': forms.NumberInput(attrs={'class':'form-control'}),
+            'max_usage_limit': forms.NumberInput(attrs={'class':'form-control'}),
+            'is_active': forms.CheckboxInput(attrs={'class':'form-check-input'}),
+        }
+

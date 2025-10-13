@@ -1,0 +1,67 @@
+{% extends "admin/dashboard.html" %}
+{% block content %}
+<div class="container-fluid">
+  <h3>Sales Report</h3>
+
+  <form method="get" class="mb-3">
+    <select name="filter" class="form-select d-inline w-auto">
+      <option value="daily" {% if filter_type == 'daily' %}selected{% endif %}>Daily</option>
+      <option value="weekly" {% if filter_type == 'weekly' %}selected{% endif %}>Weekly</option>
+      <option value="monthly" {% if filter_type == 'monthly' %}selected{% endif %}>Monthly</option>
+      <option value="yearly" {% if filter_type == 'yearly' %}selected{% endif %}>Yearly</option>
+      <option value="custom" {% if filter_type == 'custom' %}selected{% endif %}>Custom Range</option>
+    </select>
+    <input type="date" name="start_date" value="{{ start_date }}" class="form-control d-inline w-auto">
+    <input type="date" name="end_date" value="{{ end_date }}" class="form-control d-inline w-auto">
+    <button type="submit" class="btn btn-primary">Apply</button>
+  </form>
+
+  <div class="row">
+    <div class="col-md-3">
+      <div class="card p-3 text-center bg-success text-white">
+        <h5>Total Revenue</h5>
+        <h4>₹{{ total_revenue|floatformat:2 }}</h4>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card p-3 text-center bg-info text-white">
+        <h5>Total Orders</h5>
+        <h4>{{ sales_summary.total_orders }}</h4>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card p-3 text-center bg-warning text-white">
+        <h5>Offer Discount</h5>
+        <h4>₹{{ sales_summary.total_offer_discount|default:0|floatformat:2 }}</h4>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card p-3 text-center bg-danger text-white">
+        <h5>Coupon Discount</h5>
+        <h4>₹{{ total_coupon_discount|floatformat:2 }}</h4>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="salesChart" height="120"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const labels = [{% for g in grouped_sales %}"{{ g.period|date:'M d, Y' }}",{% endfor %}];
+const data = [{% for g in grouped_sales %}{{ g.total }},{% endfor %}];
+new Chart(document.getElementById('salesChart'), {
+  type: 'line',
+  data: {
+    labels: labels,
+    datasets: [{
+      label: 'Sales Trend',
+      data: data,
+      borderColor: 'rgb(75, 192, 192)',
+      fill: true,
+      tension: 0.3
+    }]
+  }
+});
+</script>
+{% endblock %}

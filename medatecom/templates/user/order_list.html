@@ -95,6 +95,10 @@
                         <!-- Right side: Price + Status + View -->
                         <div class="text-end" style="min-width: 140px;">
                             <p class="mb-1"><strong>₹{{ item.total_price|floatformat:2 }}</strong></p>
+                            <p class="mb-1">
+                            <strong>Total Paid: 
+                            <span class="text-success">₹{{ order.total_amount|floatformat:2 }}</span></strong>
+                        </p>
                             <span class="badge 
                                 {% if item.display_status == 'Pending' %}bg-warning
                                 {% elif item.display_status == 'Shipped' %}bg-info

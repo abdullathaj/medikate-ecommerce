@@ -22,6 +22,11 @@
                 {% endfor %}
             {% endif %}
         </div>
+                            <!-- Search Bar Section -->
+                            <section class="search-section container my-1">
+                                {% include 'auth/search_bar.html' %}
+                            </section>
+
     <div class="container my-5">
         <div class="row">
             <!-- Sidebar for Filters and Sorting -->
@@ -108,15 +113,12 @@
                                         {% endwith %}
                                     </div>
                                     <div class="product-details">
-                                        <div class="product-catagory-line">
+                                        <div class="product-catagory-line my-1">
                                             <span class="product-catagory">{{ variant.product.category.name }}</span>
                                             <a href="{% url 'add_to_wishlist' variant.id %}" title="Add to Wishlist" class="wishlist-link"><i class="fas fa-heart"></i></a>
                                         </div>
                                         <h4><a href="{% url 'product_details' variant.id %}">{{ variant.product.name|truncatechars:20 }} - {{ variant.variant_name|truncatechars:10 }}</a></h4>
-                                        <p>{{ variant.product.description|truncatewords:10 }}</p>
-                                        {% if variant.size %}
-                                            <p class="variant-size">Size: {{ variant.size }}</p>
-                                        {% endif %}
+                                        
                                         <div class="product-rating">
                                             <span class="star filled">★</span>
                                             <span class="star filled">★</span>
@@ -128,7 +130,7 @@
                                         <div class="product-bottom-details">
                                             <div class="product-price">
                                                 <small class="original-price">₹{{ variant.original_price|floatformat:2 }}</small>
-                                                <span class="current-price">₹{{ variant.price|floatformat:2 }}</span>
+                                                <span class="current-price">₹{{ variant.final_price|floatformat:2 }}</span>
                                             </div>
                                             <div class="product-links">
                                                 <a href="{% url 'add_to_cart' variant.id %}" title="Add to Cart" class="cart-btn"><i class="fas fa-shopping-cart"></i></a>
@@ -196,8 +198,8 @@
         </div>
     </div>
 
-    <style>
-        /* Sidebar Styles */
+<style>
+    /* Sidebar Styles */
         .sidebar {
             background: #ffffff;
             border-radius: 12px;
@@ -243,7 +245,7 @@
             transform: translateY(-1px);
         }
 
-        /* Product Card Styles */
+    /* Product Card Styles */
         .product-listing-section {
             padding: 2rem 0;
         }
@@ -299,7 +301,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 6px;
+            
         }
 
         .product-catagory {
@@ -345,7 +347,7 @@
         .product-details p {
             font-size: 11px;
             line-height: 14px;
-            margin-bottom: 8px;
+            
             color: #5f6c85;
             display: -webkit-box;
             -webkit-line-clamp: 2;
@@ -355,17 +357,13 @@
             height: 28px;
         }
 
-        .variant-size {
-            font-size: 12px;
-            color: #5f6c85;
-            margin-bottom: 10px;
-        }
+        
 
         .product-rating {
-            margin-bottom: 10px;
+            
             display: flex;
             align-items: center;
-            gap: 5px;
+            
             flex-wrap: wrap;
         }
 
@@ -390,7 +388,7 @@
             align-items: center;
             padding-top: 8px;
             padding-bottom: 10px;
-            gap: 15px;
+            
             flex-shrink: 0;
         }
 
@@ -400,7 +398,7 @@
             font-weight: 700;
             display: flex;
             flex-direction: column;
-            gap: 3px;
+            
             align-items: flex-start;
             max-width: 90px;
             overflow: hidden;
@@ -466,7 +464,7 @@
             color: #fff;
         }
 
-        /* Pagination Styles */
+    /* Pagination Styles */
         .pagination .page-link {
             color: #4b6cb7;
         }
@@ -483,7 +481,7 @@
             color: #fff;
         }
 
-        /* Responsive Adjustments for Large Screens */
+    /* Responsive Adjustments for Large Screens */
         @media (min-width: 1200px) {
             .product-card {
                 min-height: 520px;
@@ -533,7 +531,7 @@
             }
         }
 
-        /* Responsive Adjustments */
+    /* Responsive Adjustments */
         @media (max-width: 992px) {
             .product-card {
                 min-height: 460px;
@@ -597,7 +595,7 @@
                 max-width: 120px;
             }
         }
-    </style>
+</style>
 
     <!-- Include Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">

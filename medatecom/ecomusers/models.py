@@ -2,17 +2,23 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from ecomproducts.models import Product,ProductVariant,ProductImage,Categories
 from django.core.exceptions import ValidationError
+import uuid
 
 
 class User(AbstractUser):
     email = models.EmailField(max_length=100,unique=True)
     phone = models.CharField(max_length=15,null=True,blank=True)
     is_superuser=models.BooleanField(default=False)
-
-    
+    referral_code= models.CharField(max_length=10, unique=True, blank=True, null=True)    
 
     def __str__(self):
         return self.username
+    
+    def save(self, *args, **kwargs):
+        if not self.referral_code:
+        # GENERATING A REFERRAL CODE USING UUID
+            self.referral_code=str(uuid.uuid4())[:10].upper()
+        super().save(*args, **kwargs)
 
 # CREATING DELIVERY ADDRESSES FOR USER
 
@@ -76,7 +82,7 @@ class CartProducts(models.Model):
         return f"{self.user.username}'s Cart: {self.variant}: Qty: {self.quantity}"
     @property
     def total_price(self):
-        return self.quantity * self.variant.price
+        return self.quantity * self.variant.final_price
 
 
 # MODEL FOR USER WALLET
@@ -87,8 +93,29 @@ class Wallet(models.Model):
     def __str__(self):
         return f'{self.user.username}s Wallet; Balance- {self.balance}'
 
+# MODEL FOR REFERAL SYSTEM
+class Referral(models.Model):
+    referrer= models.ForeignKey(User, on_delete=models.CASCADE, related_name='referral_made')
+    referee= models.OneToOneField(User, on_delete=models.CASCADE, related_name='referral_used')
+    created_at= models.DateTimeField(auto_now_add=True)
+    rewarded= models.BooleanField(default=False)
+
+    def __str__(self):
+        return f'{self.referrer.username} has referred {self.referee.username}'
+
+    def apply_rewards(self):
+        ''' ADDING 10 RUPEES FOR BOTH THE WALLET OF REFERRER REFEREE '''
+        if not self.rewarded:
+            referrer_wallet,created= Wallet.objects.get_or_create(user=self.referrer)
+            referrer_wallet.balance += 10
+            referrer_wallet.save()
+
+            referee_wallet,created= Wallet.objects.get_or_create(user=self.referee)
+            referee_wallet.balance += 10
+            referee_wallet.save()
+
+            self.rewarded = True
+            self.save()
 
 
-       
-
-    
+   

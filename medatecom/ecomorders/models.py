@@ -10,6 +10,7 @@ class Order(models.Model):
     
     PAYMENT_CHOICES=[
         ('COD','Cash on Delivery'),
+        ('WALLET','Wallet'),
         ('RAZORPAY','Razorpay'),
     ]
 
@@ -48,6 +49,7 @@ class Order(models.Model):
             return 'Pending'
         return 'Pending'
 
+# MODEL FOR ORDER ITEMS
 class OrderItem(models.Model):
     
     STATUS_CHOICES=[
@@ -131,3 +133,21 @@ class OrderItem(models.Model):
             return 'Delivered'
         else:
             return 'Processing'
+
+# MODEL FOR RETURN REQUEST
+class ReturnRequest(models.Model):
+    STATUS_CHOICES=[
+        ('PENDING','Pending'),
+        ('APPROVED','Approved'),
+        ('DENIED','Denied')
+    ]
+    order_item= models.OneToOneField(OrderItem, on_delete=models.CASCADE, related_name='return_request')
+    status=models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    reason= models.CharField(max_length=50, choices=OrderItem.RETURN_REASON_CHOICES, blank=True, null=True)
+    other_reason= models.TextField(blank=True, null=True)
+    created_at= models.DateTimeField(auto_now_add=True)
+    updated_at= models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Return request for # {self.order_item.id} - {self.status}"
+    

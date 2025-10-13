@@ -2,10 +2,7 @@
 {% load static %}
 
 {% block content %}
-<div class="container mt-5">
-    <h2 class="mb-4 text-center fw-bold">Your Wishlist</h2>
-
-    <!-- Toast Container -->
+<!-- Toast Container -->
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
         {% if messages %}
             {% for message in messages %}
@@ -25,7 +22,13 @@
             {% endfor %}
         {% endif %}
     </div>
+                        <!-- Search Bar Section -->
+                            <section class="search-section container my-1">
+                                {% include 'auth/search_bar.html' %}
+                            </section>
 
+<div class="container mt-5">
+    <h2 class="mb-4 text-center fw-bold">Your Wishlist</h2>
     {% if wishlist_items %}
         <div class="row">
             <!-- Wishlist Items -->
@@ -62,10 +65,28 @@
                                         {{ item.variant.variant_name }}
                                     </a>
                                 </p>
-                                <p class="fw-bold text-primary">₹{{ item.variant.price|floatformat:2 }}</p>
+                            {% if item.variant.active_offer %}
+                                <p>
+                                    <small class="text-muted text-decoration-line-through">
+                                        ₹{{ item.variant.price|floatformat:2 }}
+                                    </small>
+                                    <span class="fw-bold text-success">
+                                        ₹{{ item.variant.final_price|floatformat:2 }}
+                                    </span>
+                                </p>
+                            {% else %}
+                                <p  class="fw-bold text-success">₹{{ item.variant.final_price|floatformat:2 }}</p>
+                            {% endif %}
                             </div>
                             <div class="col-md-4 text-end">
-                                <form method="POST" action="{% url 'remove_from_wishlist' %}">
+                                <!-- Add to Cart Button -->
+                                <a href="{% url 'move_to_cart' item.variant.id %}" 
+                                class="btn btn-sm btn-primary me-2">
+                                    Add to Cart
+                                </a>
+
+                                <!-- Remove from Wishlist Button -->
+                                <form method="POST" action="{% url 'remove_from_wishlist' %}" style="display:inline;">
                                     {% csrf_token %}
                                     <input type="hidden" name="variant_id" value="{{ item.variant.id }}">
                                     <button type="submit" class="btn btn-sm btn-danger">Remove</button>

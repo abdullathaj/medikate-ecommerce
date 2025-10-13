@@ -1,0 +1,85 @@
+{% extends 'admin/dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="text-center mb-4 fw-bold">Create New Coupon</h2>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Coupon Code</label>
+                        {{ form.coupon_code }}
+                        <small class="text-muted">{{form.coupon_code.help_text}}</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Discount Percentage (%)</label>
+                        {{ form.discount_percentage }}
+                        <small class="text-muted">{{ form.discount_percentage.help_text }}</small>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Description</label>
+                    {{ form.description }}
+                    <small class="text-muted">Provide an optional description for the coupon.</small>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Valid From</label>
+                        {{ form.valid_from }}
+                        <small class="text-muted">{{form.valid_from.help_text}}</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Valid To</label>
+                        {{ form.valid_to }}
+                        <small class="text-muted">{{form.valid_to.help_text}}</small>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Minimum Purchase Amount (₹)</label>
+                        {{ form.minimum_purchase_amount }}
+                        <small class="text-muted">{{form.minimum_purchase_amount.help_text}}</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Maximum Usage Limit</label>
+                        {{ form.max_usage_limit }}
+                        <small class="text-muted">Set 0 for unlimited usage.</small>
+                    </div>
+                </div>
+
+                <div class="form-check mb-3">
+                    {{ form.is_active }}
+                    <label class="form-check-label fw-semibold ms-1">Active</label>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'admin_coupon_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back
+                    </a>
+                    <button type="submit" class="btn btn-success px-4">
+                        <i class="fas fa-save me-1"></i> Create Coupon
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

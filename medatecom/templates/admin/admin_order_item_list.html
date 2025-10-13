@@ -68,7 +68,7 @@
                                         Select Status
                                     </option>
                                     {% for status, label in item.DELIVERY_STATUS_CHOICES %}
-                                        {% if status != 'CANCELLED' %}
+                                        {% if status != 'CANCELLED' and status != 'RETURNED' %}
                                             <option value="{{ status }}" {% if item.delivery_status == status %}selected{% endif %}>
                                                 {{ label }}
                                             </option>

@@ -1,5 +1,5 @@
 from django.shortcuts import render,redirect,get_object_or_404
-from ecomusers.models import User
+from ecomusers.models import User,Wallet,Referral
 from django.contrib.auth import authenticate,login,logout,get_user_model
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
@@ -29,16 +29,27 @@ def registerview(request):
         phone = request.POST['phone']
         password = request.POST['password']
         confirm_password = request.POST['confirm_password']
-        print(f'name: {name} email: {email} phone: {phone} password: {password}')
+        referral_code=request.POST.get('referral_code')
+        print(f'name: {name} email: {email} phone: {phone} password: {password} referral_code: {referral_code}')
         
+        # VALIDATE PASSWORD
         if password != confirm_password:
             messages.error(request,'Password do not matching.')
             return render(request, 'user/register.html')
         
+        # VALIDATE EMAIL
         if User.objects.filter(email=email).exists():
             messages.error(request,'Email Already Registered.')
             return render(request, 'auth/register.html')
         
+        # VALIDATE REFERRAL CODE
+        if referral_code:
+            try:
+                User.objects.get(referral_code= referral_code)
+            except User.DoesNotExist:
+                messages.error(request,'Invalid Referral code.')
+                return render(request,'auth/register.html')
+
         # CREATION OF OTP
         otp=''.join([str(random.randint(0,9)) for _ in range(6) ])
         # TIME FOR OTP       
@@ -67,6 +78,7 @@ def registerview(request):
         request.session['email']=email
         request.session['phone']=phone
         request.session['password']=password
+        request.session['referral_code']= referral_code
         request.session['otp']=otp
         request.session.modified=True
         print(request.session['name'])
@@ -98,7 +110,8 @@ def otp_verify_view(request):
         email= request.session.get('email')
         phone= request.session.get('phone')
         password= request.session.get('password')
-        print(f'name: {name}, email: {email}, phone: {phone} password: {password}')
+        referral_code= request.session.get('referral_code')
+        print(f'name: {name}, email: {email}, phone: {phone} password: {password} referral_code: {referral_code}')
        
         if not name or not stored_otp or not email:
              messages.error(request,'Session has expired. Please try again.')
@@ -116,13 +129,32 @@ def otp_verify_view(request):
             user.first_name=name
             user.phone=phone
             user.save()
-            # REMOVING SESSION DATA
+
+            # WALLET CREATION
+            Wallet.objects.get_or_create(user=user)
+
+            # REFERRAL HANDLING
+            if referral_code:
+                try:
+                    referrer=User.objects.get(referral_code=referral_code)
+                    if referrer != user:
+                        referral=Referral.objects.create(referrer=referrer, referee=user)
+                        referral.apply_rewards()
+                        messages.success(request,'Referral successfull. You have credited with ₹10 in your wallet.')
+                    else:
+                        messages.error(request,'You cannot self refer to your account.')
+                    
+                except User.DoesNotExist:
+                    messages.error(request, 'Invalid Referral')
             
+            # REMOVING SESSION DATA            
             del request.session['otp']
             del request.session['name']
             del request.session['email']
             del request.session['phone']
             del request.session['password']
+            if 'referral_code' in request.session:
+                del request.session['referral_code']
             request.session.modified =True
             messages.success(request,'OTP verified and Account created successfully.')
             

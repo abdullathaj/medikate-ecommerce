@@ -3,7 +3,7 @@
 <div class="container mt-5">
     <h2>Complete Your Payment</h2>
 
-    <!-- Toast Container (if needed for messages) -->
+    <!-- Toast Container -->
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
         {% if messages %}
             {% for message in messages %}
@@ -24,6 +24,7 @@
         {% endif %}
     </div>
 
+    <!-- Order Summary -->
     <div class="card mb-4">
         <div class="card-body">
             <h5>Order Summary</h5>
@@ -67,6 +68,8 @@
                 </div>
             {% endif %}
             <p><strong>Order Total:</strong> ₹{{ total_amount|floatformat:2 }}</p>
+
+            <!-- Delivery Address -->
             <div class="card mt-3">
                 <div class="card-body">
                     <h6>Delivery Address</h6>
@@ -76,37 +79,59 @@
         </div>
     </div>
 
-    <form action="{% url 'razorpay_success' %}" method="POST">
+    <!-- Razorpay Payment Button -->
+    <button id="rzp-button" class="btn btn-primary">Pay with Razorpay</button>
+
+    <!-- Hidden Form to Post Payment Data -->
+    <form id="razorpay-form" action="{% url 'razorpay_success' %}" method="POST">
         {% csrf_token %}
-        <script 
-            src="https://checkout.razorpay.com/v1/checkout.js"
-            data-key="{{ razorpay_key }}"
-            data-amount="{{ total_amount|floatformat:2|floatformat:'0'|add:'00' }}"
-            data-currency="INR"
-            data-order_id="{{ razorpay_order_id }}"
-            data-buttontext="Pay with Razorpay"
-            data-name="MyShop"
-            data-description="Order Payment"
-            data-prefill.name="{{ request.user.username }}"
-            data-prefill.email="{{ request.user.email }}"
-            data-theme.color="#F37254">
-        </script>
-        <!-- Removed hidden order_id input since Order is created only on success -->
+        <input type="hidden" name="razorpay_payment_id" id="razorpay_payment_id">
+        <input type="hidden" name="razorpay_order_id" id="razorpay_order_id">
+        <input type="hidden" name="razorpay_signature" id="razorpay_signature">
     </form>
 
-    <!-- JavaScript to Initialize Toasts -->
+    <!-- Razorpay Script -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+        document.getElementById('rzp-button').onclick = function(e){
+            var options = {
+                "key": "{{ razorpay_key }}",
+                "amount": "{{ razorpay_amount }}",
+                "currency": "INR",
+                "name": "MyShop",
+                "description": "Order Payment",
+                "order_id": "{{ razorpay_order_id }}",
+                "handler": function (response){
+                    document.getElementById('razorpay_payment_id').value = response.razorpay_payment_id;
+                    document.getElementById('razorpay_order_id').value = response.razorpay_order_id;
+                    document.getElementById('razorpay_signature').value = response.razorpay_signature;
+                    document.getElementById('razorpay-form').submit();
+                },
+                "prefill": {
+                    "name": "{{ request.user.username }}",
+                    "email": "{{ request.user.email }}"
+                },
+                "theme": {
+                    "color": "#F37254"
+                }
+            };
+            var rzp1 = new Razorpay(options);
+            rzp1.open();
+            e.preventDefault();
+        }
+    </script>
+
+    <!-- Toast Auto Init -->
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         var toastElList = [].slice.call(document.querySelectorAll('.toast'));
         var toastList = toastElList.map(function (toastEl) {
             return new bootstrap.Toast(toastEl, {
                 autohide: true,
-                delay: 5000 // Toast auto-hides after 5 seconds
+                delay: 5000
             });
         });
-        toastList.forEach(function (toast) {
-            toast.show();
-        });
+        toastList.forEach(function (toast) { toast.show(); });
     });
     </script>
 </div>

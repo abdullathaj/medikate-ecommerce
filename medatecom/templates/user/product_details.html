@@ -23,6 +23,11 @@
             {% endfor %}
         {% endif %}
     </div>
+                            <!-- Search Bar Section -->
+                                    <section class="search-section container my-3">
+                                        {% include 'auth/search_bar.html' %}
+                                    </section>
+
     <!-- Product Details Section -->
     <section class="product-details-section container my-5">
         <div class="row">
@@ -88,7 +93,7 @@
                         <select class="form-select" id="variantSelect" aria-label="Select Variant">
                             {% for variant in variants %}
                             <option value="{{ variant.id }}"
-                                    data-price="{{ variant.price|floatformat:2 }}"
+                                    data-price="{{ variant.final_price|floatformat:2 }}"
                                     data-original-price="{{ variant.original_price|floatformat:2 }}"
                                     data-stock="{{ variant.stock }}"
                                     {% if variant.id == selected_variant.id %}selected{% endif %}>
@@ -102,22 +107,34 @@
 
                 <!-- Price and Stock Display -->
                 <div class="product-price m-3">
-                    <span class="current-price fs-4 fw-bold" id="currentPrice">
-                        ₹{{ selected_variant.price|floatformat:2 }}
-                    </span>
-                    <small class="original-price text-muted text-decoration-line-through ms-2" id="originalPrice">
-                        ₹{{ selected_variant.original_price|floatformat:2 }}
-                    </small>
+                    {% if selected_variant.final_price < selected_variant.price %}
+                        <span class="current-price fs-4 fw-bold text-primary" id="currentPrice">
+                            ₹{{ selected_variant.final_price|floatformat:2 }}
+                        </span>
+                        <small class="original-price text-muted text-decoration-line-through ms-2" id="originalPrice">
+                            ₹{{ selected_variant.price|floatformat:2 }}
+                        </small>
+                        <span class="badge bg-success ms-2">
+                            {{ selected_variant.active_offer.discount_percentage }}% off
+                        </span>
+                    {% else %}
+                        <span class="current-price fs-4 fw-bold text-primary" id="currentPrice">
+                            ₹{{ selected_variant.price|floatformat:2 }}
+                        </span>
+                    {% endif %}
+
+                    <!-- Stock Status -->
                     <span class="d-block mt-2" id="stockStatus">
                         {% if selected_variant.stock == 0 %}
-                        <span class="text-danger">Out of Stock</span>
+                            <span class="text-danger">Out of Stock</span>
                         {% elif selected_variant.stock < 5 %}
-                        <span class="text-warning">Limited Stock ({{ selected_variant.stock }} available)</span>
+                            <span class="text-warning">Limited Stock ({{ selected_variant.stock }} available)</span>
                         {% else %}
-                        <span class="text-success">In Stock ({{ selected_variant.stock }} available)</span>
+                            <span class="text-success">In Stock ({{ selected_variant.stock }} available)</span>
                         {% endif %}
                     </span>
                 </div>
+
 
                 <!-- Action Buttons -->
                 <div class="product-actions">
@@ -166,7 +183,7 @@
                                 <h4>{{ related_product.name|truncatechars:30 }}</h4>
                             {% endif %}
                         {% endwith %}
-                        <p>{{ related_product.description|truncatewords:10 }}</p>
+                        
                         <div class="product-rating">
                             <span class="star filled">★</span>
                             <span class="star filled">★</span>
@@ -180,7 +197,7 @@
                                 {% if variant %}
                                     <div class="product-price">
                                         <small class="original-price">₹{{ variant.original_price|floatformat:2 }}</small>
-                                        <span class="current-price">₹{{ variant.price|floatformat:2 }}</span>
+                                        <span class="current-price">₹{{ variant.final_price|floatformat:2 }}</span>
                                     </div>
                                      <div class="product-links">
                                         <a href="{% url 'add_to_cart' variant.id %}" title="Add to Cart" class="cart-btn"><i class="fas fa-shopping-cart"></i></a>

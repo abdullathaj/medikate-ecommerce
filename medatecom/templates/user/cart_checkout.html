@@ -51,7 +51,7 @@
                             </td>
                             <td>{{ item.quantity }}</td>
                             <td>₹{{ item.variant.original_price|floatformat:2 }}</td>
-                            <td>₹{{ item.variant.price|floatformat:2 }}</td>
+                            <td>₹{{ item.variant.final_price|floatformat:2 }}</td>
                             <td>₹{{ item.item_discount|floatformat:2 }}</td>
                             <td>₹{{ item.item_total|floatformat:2 }}</td>
                         </tr>

@@ -1,0 +1,79 @@
+{% extends 'admin/dashboard.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <h2 class="mb-4 text-center fw-bold">Return Requests</h2>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle">
+            <thead class="table-success">
+                <tr>
+                    <th class="px-3 py-2 text-uppercase text-secondary">Request ID</th>
+                    <th class="px-3 py-2 text-uppercase text-secondary">Order ID</th>
+                    <th class="px-3 py-2 text-uppercase text-secondary">Item ID</th>
+                    <th class="px-3 py-2 text-uppercase text-secondary">Product & Variant</th>
+                    <th class="px-3 py-2 text-uppercase text-secondary">Return Reason</th>
+                    <th class="px-3 py-2 text-uppercase text-secondary">Status</th>
+                    <th class="px-3 py-2 text-uppercase text-secondary">Created At</th>
+                    <th class="px-3 py-2 text-uppercase text-secondary">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for request in return_requests %}
+                <tr>
+                    <td class="px-3 py-2 fw-medium text-dark">#{{ request.id }}</td>
+                    <td class="px-3 py-2 text-muted">#{{ request.order_item.order.id }}</td>
+                    <td class="px-3 py-2 text-muted">#{{ request.order_item.id }}</td>
+                    <td class="px-3 py-2 text-muted">{{ request.order_item.variant.product.name }} - {{ request.order_item.variant.variant_name }}</td>
+                    <td class="px-3 py-2 text-muted">
+                        {{ request.get_reason_display }}
+                        {% if request.reason == "OTHER" and request.other_reason %}
+                            - {{ request.other_reason }}
+                        {% endif %}
+                    </td>
+                    <td class="px-3 py-2 text-muted">
+                        {% if request.status == 'PENDING' %}
+                            <span class="badge bg-warning text-dark">{{ request.status }}</span>
+                        {% elif request.status == 'APPROVED' %}
+                            <span class="badge bg-success">{{ request.status }}</span>
+                        {% elif request.status == 'DENIED' %}
+                            <span class="badge bg-danger">{{ request.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-3 py-2 text-muted">{{ request.created_at|date:"M d, Y H:i" }}</td>
+                    <td class="px-3 py-2">
+                        {% if request.status == 'PENDING' %}
+                            <a href="{% url 'admin_return_approval' request.id %}" class="btn btn-outline-primary btn-sm">Process</a>
+                        {% else %}
+                            <span class="text-muted small">Processed</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="px-3 py-2 text-center text-muted">
+                        No return requests found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-3">
+        <a href="{% url 'admin_order_list' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i> Back to Orders
+        </a>
+    </div>
+</div>
+
+<style>
+thead.table-success th {
+    position: sticky;
+    top: 0;
+    background-color: #d4edda !important;
+    z-index: 1;
+}
+</style>
+{% endblock %}

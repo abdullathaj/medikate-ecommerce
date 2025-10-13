@@ -22,8 +22,21 @@ urlpatterns = [
     # ADMIN ORDER MANAGEMENT
     path('admin_order_list/',views.admin_order_list,name='admin_order_list'),
     path('admin_order_item_list/<int:order_id>/',views.admin_order_item_list,name='admin_order_item_list'),
-    path('admin_edit_order_status/<int:item_id>/', views.admin_edit_order_status, name='admin_edit_order_status'),   
+    path('admin_edit_order_status/<int:item_id>/', views.admin_edit_order_status, name='admin_edit_order_status'),  
+    path('admin_return_approval/<int:request_id>/',views.admin_return_approval, name='admin_return_approval'), 
+    path('admin_request_list/', views.admin_request_list, name='admin_request_list'),
 
     # ADMIN COUPON MANAGEMENT
     path('admin_coupon_list/',views.admin_coupon_list, name='admin_coupon_list'),
+    path('admin_add_coupon', views.admin_coupon_creation, name='admin_coupon_creation'),
+    path('admin_delete_coupon/<int:coupon_id>/', views.admin_coupon_delete, name='admin_coupon_delete'),
+
+    # ADMIN OFFER MANAGEMENT
+    path('admin_offer_list/', views.admin_offer_list, name='admin_offer_list'),
+    path('admin_add_offer/', views.admin_offer_creation, name='admin_add_offer'),
+    path('admin_delete_offer/<int:offer_id>/', views.admin_offer_delete, name='admin_offer_delete'),
+
+    path('admin_sales_report/', views.admin_sales_report, name='admin_sales_report'),
+
+
 ]

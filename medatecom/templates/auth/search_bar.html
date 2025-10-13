@@ -1,0 +1,51 @@
+{% load static %}
+<div class="search-container my-1">
+    <form action="{% url 'product_listing' %}" method="GET">
+        <input type="text" class="search-box" placeholder="Search products..." name="q" value="{{ query|default:'' }}">
+        <button type="submit" class="search-btn">
+            <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+        </button>
+    </form>
+</div>
+<style>
+     /* Search Bar Styles */
+    .search-container {
+        width: 100%;
+        max-width: 400px;
+        margin: 0 auto; /* Center the search bar */
+        position: relative;
+    }
+
+    .search-box {
+        width: 100%;
+        padding: 10px 45px 10px 15px;
+        border: 2px solid #0d6efd;
+        border-radius: 25px;
+        outline: none;
+        font-size: 14px;
+    }
+
+    .search-btn {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        padding: 0;
+        color: #0d6efd;
+        cursor: pointer;
+    }
+
+    .search-btn:hover {
+        color: #084298;
+    }
+
+    .search-icon {
+        width: 20px;
+        height: 20px;
+    }
+</style>

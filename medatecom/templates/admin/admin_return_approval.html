@@ -1,0 +1,46 @@
+{%extends 'admin/dashboard.html' %}
+{%load humanize %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+    <h2 class="mb-4 text-center fw-bold">Process Return Request #{{ return_request.id }}</h2>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Return Request Details</h5>
+            <p><strong>Order ID:</strong> #{{ order.id }}</p>
+            <p><strong>Item ID:</strong> #{{ item.id }}</p>
+            <p><strong>Product:</strong> {{ item.variant.product.name }} - {{ item.variant.variant_name }}</p>
+            <p><strong>Quantity:</strong> {{ item.quantity }}</p>
+            <p><strong>Price:</strong> ₹{{ item.price|intcomma }}</p>
+            <p><strong>Total:</strong> ₹{{ item.total_price|intcomma }}</p>
+            <p><strong>Return Reason:</strong> {{ return_request.get_reason_display }}
+                {% if return_request.reason == "OTHER" and return_request.other_reason %}
+                    - {{ return_request.other_reason }}
+                {% endif %}
+            </p>
+            <p><strong>Status:</strong> {{ return_request.status }}</p>
+            <p><strong>Submitted At:</strong> {{ return_request.created_at|date:"M d, Y H:i" }}</p>
+        </div>
+    </div>
+    {% if return_request.status == 'PENDING' %}
+        <form method="POST" action="{% url 'admin_return_approval' return_request.id %}">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label fw-bold">Action:</label>
+                <select name="action" class="form-select" required>
+                    <option value="" disabled selected>Select an action</option>
+                    <option value="APPROVE">Approve</option>
+                    <option value="DENY">Deny</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+            <a href="{% url 'admin_request_list' %}" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+        {% else %}
+            <p class="text-muted">This return request has already been processed ({{ return_request.status }}).</p>
+            <a href="{% url 'admin_request_list' %}" class="btn btn-outline-secondary">Back to Return Requests</a>
+    {% endif %}
+
+{% endblock %}

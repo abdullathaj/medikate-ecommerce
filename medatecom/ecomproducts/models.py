@@ -2,6 +2,7 @@ from django.db import models
 from django.db.models.functions import Lower
 from decimal import Decimal,ROUND_HALF_UP
 from django.core.validators import MinValueValidator,MaxValueValidator
+from django.core.exceptions import ValidationError
 from django.utils.text import slugify
 import uuid
 from django.utils import timezone
@@ -31,7 +32,8 @@ class Product(models.Model):
     
     def __str__(self):
         return self.name
-    
+
+# MODEL FOR PRODUCT VARIANT  
 class ProductVariant(models.Model):
 
     class Meta:
@@ -43,20 +45,43 @@ class ProductVariant(models.Model):
     stock=models.PositiveIntegerField(default=0)
     size=models.CharField(max_length=50,blank=True,null=True)
     is_active=models.BooleanField(default=True)
-    discount = models.PositiveIntegerField(default=10, editable=False) 
+    
 
 
     def __str__(self):
         return f'{self.product.name} {self.variant_name}'
     
     @property
+    def active_offer(self):
+        """Return the highest active offer (product or category)."""
+        
+        now = timezone.now()
+        offers = []
+        # ADDING PRODUCT OFFER
+        offers += list(self.product.offers.filter(is_active=True, valid_from__lte=now, valid_to__gte=now))
+        # ADDING CATEGORY OFFER
+        offers += list(self.product.category.offers.filter(is_active= True, valid_from__lte=now, valid_to__gte=now))
+
+        if not offers:
+            return None
+        
+        return max(offers, key=lambda x: x.discount_percentage)
+
+    @property
+    def final_price(self):
+        """Apply the largest valid offer if available."""
+        offer = self.active_offer
+        if offer:
+            discount = Decimal(offer.discount_percentage) / Decimal(100)
+            discounted_price = self.price * (Decimal(1) - discount)
+            return discounted_price.quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+        return self.price
+
+    @property
     def original_price(self):
-        """Calculate original price based on discount percentage."""
-        discount_factor = Decimal(1) - Decimal(self.discount) / Decimal(100)
-        if discount_factor <= 0:
-            return self.price  # Avoid division by zero or negative logic
-        original = self.price / discount_factor
-        return original.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        """For display the striked original price if no offer is availavle """
+        return self.price
+           
 
 class ProductImage(models.Model): # related_name SHOULD HAVE TO CHANGE TO product_image
     product=models.ForeignKey(Product,on_delete=models.CASCADE,related_name='product_image')
@@ -65,6 +90,7 @@ class ProductImage(models.Model): # related_name SHOULD HAVE TO CHANGE TO produc
     def __str__(self):
         return f'Image for {self.product.name}'
 
+# MODEL FOR COUPON MANAGEMENT
 class Coupon(models.Model):
     coupon_code=models.CharField(max_length=50, unique= True, help_text='Unique code for each coupon')
     is_active=models.BooleanField(default=True, help_text='Whether the coupon is active or not')
@@ -93,10 +119,10 @@ class Coupon(models.Model):
         return self.coupon_code
     
     def save(self, *args, **kwargs):
-        """Generate a unique coupon code if not provided."""
         if not self.coupon_code:
             self.coupon_code = slugify(f"COUPON-{uuid.uuid4().hex[:10]}").upper()
         super().save(*args, **kwargs)
+
 
     @property
     def is_valid(self):
@@ -109,5 +135,36 @@ class Coupon(models.Model):
         if self.max_usage_limit > 0 and self.total_usage >= self.max_usage_limit:
             return False
         return True
+    
 
+class Offer(models.Model):
+    name = models.CharField(max_length=100, help_text='Name of the offer for admin reference')
+    is_active = models.BooleanField(default=True, help_text='Whether the offer is active or not')
+    description = models.TextField(blank=True, help_text='Optional description for the offer')
+    created_at = models.DateTimeField(auto_now_add=True, help_text='When the offer is created')
+    valid_from = models.DateTimeField(help_text='Start date of offer validity')
+    valid_to = models.DateTimeField(help_text='End date for offer validity')
+    discount_percentage = models.PositiveIntegerField(
+        validators=[
+            MinValueValidator(5, message='The discount must be at least 5 percent'),
+            MaxValueValidator(70, message='The discount must not exceed 70 percent')
+        ],
+        help_text='Discount percentage for this offer, between 5 and 70'
+    )
+# WHILE CREATING AN OFFER ADMIN SHOULD ONLY SELECT EITHER PRODUCT OR CATEGORY.....
+    product= models.ForeignKey(Product, on_delete=models.CASCADE, blank=True, null=True, related_name='offers')
+    category= models.ForeignKey(Categories, on_delete=models.CASCADE, blank=True, null=True, related_name='offers')
 
+    def __str__(self):
+        if self.product:
+            return f"{self.name} - {self.discount_percentage}% (Product: {self.product.name})"
+        elif self.category:
+            return f"{self.name} - {self.discount_percentage}% (Category: {self.category.name})"
+        
+        return f'{self.name} - {self.discount_percentage}%'
+    
+    def clean(self):
+        if self.product and self.category:
+            raise ValidationError('Offer can only apply on either Product or Category')
+        if not self.product and not self.category:
+            raise ValidationError('A product or Category must be selected')

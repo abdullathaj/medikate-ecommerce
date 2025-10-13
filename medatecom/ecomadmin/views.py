@@ -1,16 +1,22 @@
 from django.shortcuts import render,redirect,get_object_or_404
-from ecomusers.models import User
-from ecomproducts.models import Categories,Product,ProductVariant,ProductImage,Coupon
-from ecomorders.models import Order,OrderItem
+from ecomusers.models import User,Wallet
+from ecomproducts.models import Categories,Product,ProductVariant,ProductImage,Coupon,Offer
+from ecomorders.models import Order,OrderItem,ReturnRequest
 from django.contrib.admin.views.decorators import staff_member_required
 from django.views.decorators.cache import never_cache
 from .forms import Useraddform,CategoryAddForm,ProductAddForm,ProductImageForm,VariantAddForm,VariantFormset,ImageFormset
-from django.db.models import Q
+from .forms import CouponForm,OfferForm
+from django.db import transaction
 from django.contrib import messages
 from django.forms import inlineformset_factory
 from django.db import IntegrityError
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
+from decimal import Decimal
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models import Q,Sum, Count, F, DecimalField, ExpressionWrapper
+from django.db.models.functions import TruncDay, TruncWeek, TruncMonth, TruncYear
 
 
 
@@ -413,7 +419,7 @@ def admin_edit_order_status(request, item_id):
         new_status = request.POST.get('delivery_status')
         
         # Validate the new status
-        valid_statuses = [status for status, _ in OrderItem.DELIVERY_STATUS_CHOICES if status != 'CANCELLED']
+        valid_statuses = [status for status, _ in OrderItem.DELIVERY_STATUS_CHOICES if status not in ('CANCELLED','RETURNED') ]
         if new_status in valid_statuses:
             item.delivery_status = new_status
             item.save()
@@ -426,6 +432,70 @@ def admin_edit_order_status(request, item_id):
     # If not POST, redirect to the order items list
     item = get_object_or_404(OrderItem, id=item_id)
     return redirect('admin/admin_order_item_list', order_id=item.order.id)
+
+@staff_member_required(login_url='admin_login')
+def admin_request_list(request):
+    
+    return_requests= ReturnRequest.objects.all().select_related('order_item__order','order_item__variant')
+    context= {'return_requests':return_requests}
+    return render(request,'admin/admin_return_request_list.html',context)
+
+@staff_member_required(login_url='admin_login')
+def admin_return_approval(request,request_id):
+    return_request=get_object_or_404(ReturnRequest,id=request_id)
+    item=return_request.order_item
+    order= item.order
+
+    if request.method=='POST':
+        action= request.POST.get('action')
+        try:
+            with transaction.atomic():
+                if action=='APPROVE':
+                    # Update return request
+                    return_request.status = 'APPROVED'
+                    return_request.save()
+
+                    # Update Order item
+                    item.status = 'RETURNED'
+                    item.delivery_status = 'RETURNED'
+                    item.return_reason = return_request.reason
+                    item.return_other_reason = return_request.other_reason
+                    item.save()
+
+                    # Restore stock
+                    item.variant.stock += item.quantity
+                    item.variant.save()
+
+                    # SHARING PRICE OF EACH ITEM IN THE ORDER
+                    item_total = item.quantity * item.price
+                    actual_order_total= sum(it.price * it.quantity for it in order.items.all()) # BEFORE COUPON APPLIED
+                    paid_order_total= order.total_amount  # AFTER ANY COUPON APPLIED
+                # PAID AMOUNT OF EACH ITEM IF COUPON IS APPLIED
+                    refund_amount= (item_total/actual_order_total)* paid_order_total if actual_order_total > 0 else 0
+                    refund_amount = Decimal(refund_amount).quantize(Decimal("0.01"))
+
+                    order.total_amount = max(0, order.total_amount - refund_amount)
+                    order.save()
+
+                    # Credit refund to Users Wallet
+                    wallet,created= Wallet.objects.get_or_create(user=order.user)
+                    wallet.balance += Decimal(refund_amount).quantize(Decimal("0.01"))
+                    wallet.save()
+
+                    messages.success(request, f'The return request for # {item.id} is approved. Amount of {refund_amount} is added to the users wallet')
+                elif action == 'DENY':
+                    return_request.status = 'DENIED'
+                    return_request.save()
+                    messages.warning(request, f'The request for item # {item.id} is denied.')
+
+                return redirect('admin_request_list')
+        except Exception as e:
+            messages.error(request, f'Error occured in Return request: {str(e)}')
+            return redirect('admin_request_list')     
+        
+           
+    
+    return render(request,'admin/admin_return_approval.html',{'return_request':return_request, 'item':item, 'order':order} )
 
 #################################################################################################################################
 
@@ -458,4 +528,170 @@ def admin_coupon_list(request):
     }
     
     return render(request, 'admin/admin_coupon_list.html', context)
+
+
+@staff_member_required(login_url='admin_login')
+def admin_coupon_creation(request):
+    if request.method == 'POST':
+        form= CouponForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request,'Coupon created successfully.')
+            return redirect('admin_coupon_list')
+        else:
+            messages.warning(request,'Please fill the form correctly.')
+    else:
+        form= CouponForm()
+    return render(request,'admin/admin_coupon_creation.html',{'form': form})
+
+@staff_member_required(login_url='admin_login')
+def admin_coupon_delete(request, coupon_id):
+    coupon = get_object_or_404(Coupon, id=coupon_id)
     
+    if request.method == 'POST':
+        coupon.delete()
+        messages.success(request, f"Coupon '{coupon.coupon_code}' deleted successfully.")
+        return redirect('admin_coupon_list')
+    
+    messages.warning(request, "Invalid request method.")
+    return redirect('admin_coupon_list')
+
+
+#################################################################################################################################
+
+# ADMIN OFFER MANAGEMENT
+
+
+@staff_member_required(login_url='admin_login')
+def admin_offer_list(request):
+    """Display all product and category offers with pagination and search."""
+    offers = Offer.objects.select_related('product', 'category').order_by('-created_at')
+
+    query = request.GET.get('q', '')
+    if query:
+        offers = offers.filter(
+            Q(name__icontains=query) |
+            Q(description__icontains=query) |
+            Q(product__name__icontains=query) |
+            Q(category__name__icontains=query)
+        )
+
+    paginator = Paginator(offers, 5)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'offers': page_obj,
+        'offer_count': paginator.count,
+        'query': query,
+    }
+
+    return render(request, 'admin/admin_offer_list.html', context)
+
+@staff_member_required(login_url='admin_login')
+def admin_offer_creation(request):
+    if request.method == 'POST':
+        form = OfferForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Offer created successfully!')
+            return redirect('admin_offer_list')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = OfferForm()
+
+    return render(request, 'admin/admin_offer_creation.html', {'form': form})
+
+@staff_member_required(login_url='admin_login')
+def admin_offer_delete(request,offer_id):
+    offer= get_object_or_404(Offer, id=offer_id)
+    if request.method == 'POST':
+        offer.delete()
+        messages.success(request,f'Offer {offer.name} deleted successfully.')
+        return redirect('admin_offer_list')
+    messages.error(request,'Invalid request method.')
+    return redirect('admin_offer_list')
+
+
+# SALES REPORT OF THE WEBSITE
+@staff_member_required(login_url='admin_login')
+def admin_sales_report(request):
+    # ---------------- FILTER RANGE ---------------- #
+    filter_type = request.GET.get('filter', 'daily')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+
+    now = timezone.now()
+    orders = Order.objects.filter(is_paid=True)
+
+    # ---------------- DATE FILTER LOGIC ---------------- #
+    if filter_type == 'daily':
+        start = now - timedelta(days=1)
+        orders = orders.filter(created_at__gte=start)
+        group_by = TruncDay('created_at')
+    elif filter_type == 'weekly':
+        start = now - timedelta(weeks=1)
+        orders = orders.filter(created_at__gte=start)
+        group_by = TruncWeek('created_at')
+    elif filter_type == 'monthly':
+        start = now - timedelta(days=30)
+        orders = orders.filter(created_at__gte=start)
+        group_by = TruncMonth('created_at')
+    elif filter_type == 'yearly':
+        start = now - timedelta(days=365)
+        orders = orders.filter(created_at__gte=start)
+        group_by = TruncYear('created_at')
+    elif filter_type == 'custom' and start_date and end_date:
+        orders = orders.filter(created_at__date__range=[start_date, end_date])
+        group_by = TruncDay('created_at')
+    else:
+        group_by = TruncDay('created_at')
+
+    # ---------------- AGGREGATION ---------------- #
+    # JOIN OrderItem to calculate offer-based discounts
+    order_items = OrderItem.objects.filter(order__in=orders)
+
+    # OFFER discount = (variant.original_price - variant.final_price)
+    offer_discount_expr = ExpressionWrapper(
+        (F('variant__price') - F('price')) * F('quantity'),
+        output_field=DecimalField(max_digits=10, decimal_places=2)
+    )
+
+    sales_summary = order_items.aggregate(
+        total_sales=Sum(F('price') * F('quantity')),
+        total_offer_discount=Sum(offer_discount_expr),
+        total_orders=Count('order', distinct=True),
+        total_items_sold=Sum('quantity')
+    )
+
+    total_coupon_discount = Decimal('0.00')
+    # If you store coupon info per order in session, use it to adjust here if needed
+    # (We assume total_amount already includes coupon deduction)
+    # You can track approximate coupon discount as (selling price before coupon - total_amount)
+    # If you later add a coupon_discount field to Order, replace this logic directly.
+    # For now, we’ll just compute order_total from Order.total_amount
+    total_revenue = orders.aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
+
+    # ---------------- GROUPED DATA FOR CHART ---------------- #
+    grouped_sales = (
+        orders.annotate(period=group_by)
+        .values('period')
+        .annotate(total=Sum('total_amount'))
+        .order_by('period')
+    )
+
+    context = {
+        'filter_type': filter_type,
+        'orders': orders.select_related('user'),
+        'sales_summary': sales_summary,
+        'total_revenue': total_revenue,
+        'total_coupon_discount': total_coupon_discount,
+        'grouped_sales': grouped_sales,
+        'start_date': start_date,
+        'end_date': end_date,
+    }
+
+    return render(request, 'admin/admin_sales_report.html', context)
+
+

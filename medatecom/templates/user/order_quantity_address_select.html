@@ -47,9 +47,21 @@
                 <!-- Right Section: Price Details -->
                 <div class="col-md-6">
                     <h5>Price Details</h5>
-                    <p>Unit Price: ₹<span id="unitPrice">{{ variant.price|floatformat:2 }}</span></p>
-                    <p>Discount: {{ variant.discount }}%</p>
-                    <p>Original Price: ₹{{ variant.original_price|floatformat:2 }}</p>
+                   {% if active_offer %}
+                    <p class="mb-1">
+                        <span class="text-muted text-decoration-line-through">
+                            ₹{{ variant.price|floatformat:2 }}
+                        </span>
+                        <span class="ms-2 text-success fw-bold">
+                            ₹{{ variant.final_price|floatformat:2 }}
+                        </span>
+                    </p>
+                    <p>Discount: <span class="text-success mb-1"> {{ active_offer.discount_percentage }}% OFF </span> </p>
+                    
+                {% else %}
+                    <p>Price: ₹{{ variant.price|floatformat:2 }}</p>
+                    <p class="text-muted">No active offer</p>
+                {% endif %}
                     <p>Total: ₹<span id="totalPrice" style="color:green">{{ total_price|floatformat:2 }}</span></p>
                 </div>
             </div>
@@ -82,7 +94,7 @@
 <script>
 document.getElementById('quantity').addEventListener('input', function() {
     const quantity = parseInt(this.value) || 1;
-    const unitPrice = parseFloat('{{ variant.price }}');
+    const unitPrice = parseFloat('{{ variant.final_price }}');
     const totalPrice = (quantity * unitPrice).toFixed(2);
     document.getElementById('totalPrice').textContent = totalPrice;
 });

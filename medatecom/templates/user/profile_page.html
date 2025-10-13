@@ -28,7 +28,7 @@
         <div class="col-md-10">
             <!-- Personal Info Box -->
             <div class="card shadow mb-4">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header bg-success text-white">
                     <h4 class="mb-0">Personal Information</h4>
                 </div>
                 <div class="card-body">
@@ -46,9 +46,30 @@
                     </div>
                 </div>
             </div>
-            <!-- Address Info Box -->
+            <!-- Referral Info Box -->
             <div class="card shadow mb-4">
                 <div class="card-header bg-secondary text-white">
+                    <h4 class="mb-0">Refer Your Friends</h4>
+                </div>
+                <div class="card-body">
+                    <p><strong>Your Referral Code:</strong> {{ user.referral_code }}</p>
+                    <p><strong>Share this code with friends to earn $10 in wallet credits for each successful referral!</strong></p>
+                    <p><strong>Total Referrals:</strong> {{ referral_count }}</p>
+                    {% if referrals %}
+                        <h5>Referred Users:</h5>
+                        <ul class="list-group">
+                            {% for referral in referrals %}
+                                <li class="list-group-item">{{ referral.referee.username }} (Rewarded: {{ referral.rewarded|yesno:"Yes,No" }})</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">No referrals yet. Start sharing your code!</p>
+                    {% endif %}
+                </div>
+            </div>
+            <!-- Address Info Box -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-success text-white">
                     <h4 class="mb-0">Delivery Addresses</h4>
                 </div>
                 <div class="card-body">

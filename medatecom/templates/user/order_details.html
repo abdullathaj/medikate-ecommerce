@@ -66,11 +66,14 @@
                             {% endif %}
                         </p>
                     {% endif %}
-                    {% if order_item.delivery_status == 'DELIVERED' and order_item.status != 'RETURNED' %}
+                    {% if order_item.delivery_status == 'DELIVERED' and order_item.status != 'RETURNED' and not order_item.return_request.status == 'DENIED' %}
                         <a href="{% url 'return_order_item' order_id=order_item.order.id item_id=order_item.id %}" 
                            class="btn btn-warning btn-sm">
                             Return Item
                         </a>
+                    
+                    {% elif order_item.return_request.status == 'DENIED'%}
+                        <p class="mb-1 text-danger"><strong>You cannot return this product.</strong></p>
                     {% endif %}
                 </div>
             </div>
@@ -79,7 +82,13 @@
             <p><strong>Expected Delivery Date:</strong> {{ order_item.order.expected_delivery_date|date:"F d, Y" }}</p>
             <p><strong>Payment Method:</strong> {{ order_item.order.payment_method }}</p>
             <p><strong>Delivery Address:</strong> {{ order_item.order.address.addressline_1 }}{% if order_item.order.address.addressline_2 %}, {{ order_item.order.address.addressline_2 }}{% endif %}, {{ order_item.order.address.city }}, {{ order_item.order.address.state }}, {{ order_item.order.address.nation }} - {{ order_item.order.address.postal_code }}</p>
-            <p><strong>Order Total:</strong> ₹{{ order_item.order.total_amount|floatformat:2 }} (Including taxes, adjusted for cancellations)</p>
+           <p><strong>Paid Order Total:</strong> 
+            <span style="color: #0b9637ff; font-weight: bold; font-size: 1.1em;">
+                ₹{{ order_item.order.total_amount|floatformat:2 }}
+            </span> 
+            (Including taxes, applied)
+            </p>
+
         </div>
     </div>
     <a href="{% url 'order_list' %}" class="btn btn-secondary mb-1">Back to Orders</a>

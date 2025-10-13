@@ -5,7 +5,7 @@
 <div class="container mt-5">
     <h2 class="mb-4">Your Cart</h2>
 
-   <!-- Toast Container -->
+    <!-- Toast Container -->
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
         {% if messages %}
             {% for message in messages %}
@@ -25,8 +25,6 @@
             {% endfor %}
         {% endif %}
     </div>
-
-   
 
     {% if cart_items %}
     <div class="row">
@@ -54,7 +52,14 @@
                                         {{ item.variant.variant_name }}
                                     </a>
                                 </p>
-                                <p>Unit Price: ₹{{ item.variant.price|floatformat:2 }}</p>
+                            {% if item.variant.final_price < item.variant.original_price %}
+                                <p>Unit Price: 
+                                    <span class="text-decoration-line-through text-muted">₹{{ item.variant.original_price|floatformat:2 }}</span>
+                                    <span class="fw-semibold text-success">₹{{ item.variant.final_price|floatformat:2 }}</span>
+                            {% else %}
+                                 <p >Unit Price: 
+                                    <span class="fw-semibold text-success">₹{{ item.variant.price|floatformat:2 }} </span> </p>
+                            {% endif %}
                             </div>
                             <div class="col-md-3">
                                 <div class="d-flex align-items-center">
@@ -93,11 +98,44 @@
                 <p>Original Price: ₹{{ original_total_price|floatformat:2 }}</p>
                 <p>Discount: <span class="text-success text-decoration-line-through">-₹{{ discount_total|floatformat:2 }}</span></p>
                 <p>Subtotal: ₹{{ selling_total_price|floatformat:2 }}</p>
+           {% if coupon_applied %}
+                <p>After Coupon: ₹{{ payable_amount|floatformat:2 }}</p>
+            {% endif %}
+
+
                 <p>Taxes (5%): <span class="text-danger">₹{{ taxes|floatformat:2 }}</span></p>
                 <hr>
                 <h5>Payable Amount: ₹{{ payable_amount|floatformat:2 }}</h5>
                 <p class="text-muted">Estimated Delivery: {{ estimated_delivery_date }}</p>
-                <a href="{% url 'cart_checkout' %}" class="btn btn-primary w-100 mt-3">Proceed to Checkout</a>
+        <!-- Coupon Section -->
+            {% if coupon_applied %}
+                <p>Coupon Discount ({{ coupon_applied.coupon_code }}) 
+                    <a href="{% url 'remove_coupon' %}" class="text-danger text-decoration-none">Remove</a>: 
+                    <span class="text-success text-decoration-line-through">-₹{{ coupon_discount|floatformat:2 }}</span>
+                </p>
+            {% else %}
+                {% if valid_coupons %}
+                    <h6 class="my-3">Available Coupons:</h6>
+                    <form method="POST" action="{% url 'apply_coupon' %}">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            <select class="form-select" name="coupon_code" required>
+                                <option value="">-- Select Coupon --</option>
+                                {% for coupon in valid_coupons %}
+                                    <option value="{{ coupon.coupon_code }}">
+                                        {{ coupon.coupon_code }} - {{ coupon.discount_percentage }}% OFF 
+                                        (Min ₹{{ coupon.minimum_purchase_amount|floatformat:2 }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <button class="btn btn-outline-success" type="submit">Apply</button>
+                        </div>
+                    </form>
+                {% else %}
+                    <p class="text-muted">No valid coupons available for this order.</p>
+                {% endif %}
+            {% endif %}
+                <a href="{% url 'cart_checkout' %}" class="btn btn-primary w-100 my-3">Proceed to Checkout</a>
             </div>
         </div>
     </div>
@@ -111,19 +149,17 @@
 
 <script>
 // JavaScript to Initialize Toasts 
-
 document.addEventListener('DOMContentLoaded', function () {
     var toastElList = [].slice.call(document.querySelectorAll('.toast'));
     var toastList = toastElList.map(function (toastEl) {
         return new bootstrap.Toast(toastEl, {
             autohide: true,
-            delay: 3000 // Toast auto-hides after 5 seconds
+            delay: 3000 // Toast auto-hides after 3 seconds
         });
     });
     toastList.forEach(function (toast) {
         toast.show();
     });
 });
-
 </script>
 {% endblock %}

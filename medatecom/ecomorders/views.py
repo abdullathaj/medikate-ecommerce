@@ -4,8 +4,8 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from django.db import transaction,IntegrityError
 from django.db.models import Q
-from .models import Order, OrderItem
-from ecomproducts.models import Categories, Product, ProductImage, ProductVariant
+from .models import Order, OrderItem,ReturnRequest
+from ecomproducts.models import Categories, Product, ProductImage, ProductVariant,Coupon
 from ecomusers.models import User, UserAddress, CartProducts,Wallet
 from decimal import Decimal
 from datetime import datetime, timedelta
@@ -46,7 +46,7 @@ def buy_now(request, variant_id):
             request.session['order_data'] = {
                 'variant_id': variant.id,
                 'quantity': quantity,
-                'price': str(variant.price),
+                'price': str(variant.final_price),
                 'address_id': address_id,
                 'is_cart_checkout': False,
             }
@@ -57,7 +57,8 @@ def buy_now(request, variant_id):
             'variant': variant,
             'max_quantity': min(variant.stock, 5),
             'addresses': addresses,
-            'total_price': variant.price
+            'total_price': variant.final_price,
+            'active_offer': variant.active_offer,
         }
         return render(request, 'user/order_quantity_address_select.html', context)
     except IntegrityError:
@@ -162,34 +163,39 @@ def cart_checkout(request):
 @never_cache
 @login_required(login_url='login')
 def payment_method(request):
-    ''' SELECT PAYMENT METHOD FOR PURCHASE. CASH ON DELIVERY AND ONLINE PAYMENT USING RAZORPAY.'''
-
     if 'order_data' not in request.session:
         messages.error(request, "No order data found. Please start over.")
         return redirect('product_listing')
     
     order_data = request.session['order_data']
     is_cart_checkout = order_data.get('is_cart_checkout', False)
-    
+
+    cart_price_data = request.session.get('cart_price_data', {})
+    cart_item_details = cart_price_data.get('cart_item_details', [])
+
     if is_cart_checkout:
         cart_items = order_data['cart_items']
-        cart_price_data = request.session.get('cart_price_data', {})
-        cart_item_details = cart_price_data.get('cart_item_details', [])
-        variants = [
-            {
-                'variant': get_object_or_404(ProductVariant, id=item['variant_id']),
-                'quantity': item['quantity'],
-                'price': Decimal(item['price']),
-                'item_total': next(
-                    (Decimal(detail['item_total']) for detail in cart_item_details 
-                     if detail['variant_id'] == item['variant_id'] and detail['quantity'] == item['quantity']),
-                    Decimal(item['price']) * item['quantity']
-                )
-            } for item in cart_items
-        ]
+        variants = []
+        for item in cart_items:
+            variant = get_object_or_404(ProductVariant, id=item['variant_id'])
+            quantity = item['quantity']
+
+            # match with cart_item_details for unit_price
+            detail = next((d for d in cart_item_details if d['variant_id'] == item['variant_id']), None)
+            unit_price = Decimal(detail['unit_price']) if detail else Decimal(item['price'])
+            item_total = Decimal(detail['item_total']) if detail else unit_price * quantity
+
+            variants.append({
+                'variant': variant,
+                'quantity': quantity,
+                'price': unit_price,
+                'item_total': item_total
+            })
+
         total_amount = Decimal(order_data['total_amount'])
         address = get_object_or_404(UserAddress, id=order_data['address_id'], user=request.user)
-    else:
+
+    else:  # Buy Now case
         variant = get_object_or_404(ProductVariant, id=order_data['variant_id'])
         quantity = order_data['quantity']
         price = Decimal(order_data['price'])
@@ -201,88 +207,103 @@ def payment_method(request):
         }]
         total_amount = price * quantity
         address = get_object_or_404(UserAddress, id=order_data['address_id'], user=request.user)
-    
+
     if request.method == 'POST':
         payment_method = request.POST.get('payment_method', 'COD')
-        if payment_method == 'COD':                    
+
+        if payment_method in ['COD', 'WALLET']:
             try:
                 with transaction.atomic():
+                    # stock check
                     for item in variants:
                         if item['variant'].stock < item['quantity']:
                             messages.error(request, f"Insufficient stock for {item['variant']}.")
                             return redirect('cart_checkout' if is_cart_checkout else 'buy_now', variant_id=item['variant'].id)
-                    
+
+                    if payment_method == 'WALLET':
+                        wallet, _ = Wallet.objects.get_or_create(user=request.user)
+                        if wallet.balance < total_amount:
+                            messages.error(request, 'Insufficient wallet balance.')
+                            return redirect('user_wallet_page')
+                        wallet.balance -= total_amount
+                        wallet.save()
+
+                    # create order
                     order = Order.objects.create(
                         user=request.user,
                         address=address,
                         total_amount=total_amount,
-                        payment_method='COD',
-                        # status='PENDING',
-                        is_paid=False
+                        payment_method=payment_method,
+                        is_paid=(payment_method == 'WALLET')
                     )
-                    print(f'order {order} created with {order.payment_method} toral payment is {total_amount}')                
-                    
+
+                    # create order items
+                    # Create separate order items for each quantity purchased
                     for item in variants:
-                        for _ in range(item['quantity']):  # Create one OrderItem per unit of quantity
+                        for _ in range(item['quantity']):
                             OrderItem.objects.create(
                                 order=order,
                                 variant=item['variant'],
-                                quantity=1,  # Set quantity to 1 for each OrderItem
-                                price=item['price'],
+                                quantity=1,  # Each record represents one item
+                                price=item['price'],  # Per-unit price (after discount/offer)
                                 status='ACTIVE',
                                 delivery_status='PENDING'
                             )
+                        # Deduct stock for the total quantity purchased
                         item['variant'].stock -= item['quantity']
                         item['variant'].save()
 
-                    for item in OrderItem.objects.filter(order=order):
-                        print(f'ordered items are: {item.variant} x {item.quantity} @ {item.total_price} with {item.delivery_status}')
-                    
+
                     if is_cart_checkout:
                         CartProducts.objects.filter(user=request.user).delete()
-                    
+
+                    # increment coupon usage
+                    applied_coupon_code = cart_price_data.get('applied_coupon')
+                    if applied_coupon_code:
+                        try:
+                            coupon = Coupon.objects.get(coupon_code=applied_coupon_code, is_active=True)
+                            coupon.total_usage += 1
+                            coupon.save()
+                            if 'applied_coupon' in request.session:
+                                del request.session['applied_coupon']
+                        except Coupon.DoesNotExist:
+                            pass
+
                     del request.session['order_data']
-                    
                     return redirect('order_success', order_id=order.id)
-                    
+
             except Exception as e:
                 messages.error(request, f"Error processing order: {str(e)}")
                 return redirect('cart_checkout' if is_cart_checkout else 'buy_now', variant_id=variants[0]['variant'].id)
 
         elif payment_method == 'RAZORPAY':
-            client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
-
-            # Create Razorpay order first (external API call)
-            razorpay_order = client.order.create({
-                'amount': int(total_amount * 100),  # paise
+            razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+            razorpay_order = razorpay_client.order.create({
+                'amount': int(total_amount * 100),
                 'currency': 'INR',
                 'payment_capture': '1'
             })
-
-            # Store order data in session keyed by razorpay_order_id for later use on success
             order_data_with_total = order_data.copy()
             order_data_with_total['total_amount'] = str(total_amount)
-
             request.session[f'razorpay_pending_{razorpay_order["id"]}'] = order_data_with_total
-
-            # Send order details to Razorpay checkout page
-            context = {
+            return render(request, 'user/razorpay_checkout.html', {
                 'variants': variants,
                 'total_amount': total_amount,
                 'address': address,
                 'is_cart_checkout': is_cart_checkout,
                 'razorpay_order_id': razorpay_order['id'],
                 'razorpay_key': settings.RAZORPAY_KEY_ID,
-            }
-            return render(request, 'user/razorpay_checkout.html', context)
-   
-    context = {
+                'razorpay_amount': int(total_amount * 100),
+            })
+
+    return render(request, 'user/payment_method.html', {
         'variants': variants,
         'total_amount': total_amount,
         'address': address,
         'is_cart_checkout': is_cart_checkout
-    }
-    return render(request, 'user/payment_method.html', context)
+    })
+
+
 
 @csrf_exempt
 def razorpay_success(request):
@@ -291,10 +312,6 @@ def razorpay_success(request):
         razorpay_order_id = data.get('razorpay_order_id')
         payment_id = data.get('razorpay_payment_id')
         signature = data.get('razorpay_signature')
-
-        if not razorpay_order_id:
-            messages.error(request, "Invalid payment data.")
-            return redirect('product_listing')
 
         pending_key = f'razorpay_pending_{razorpay_order_id}'
         pending_data = request.session.get(pending_key)
@@ -314,9 +331,10 @@ def razorpay_success(request):
             is_cart_checkout = order_data.get('is_cart_checkout', False)
             total_amount = Decimal(order_data['total_amount'])
             address = get_object_or_404(UserAddress, id=order_data['address_id'], user=request.user)
+            cart_price_data = request.session.get('cart_price_data', {})
+            cart_item_details = cart_price_data.get('cart_item_details', [])
 
             with transaction.atomic():
-                # Create Order only after successful payment verification
                 order = Order.objects.create(
                     user=request.user,
                     address=address,
@@ -329,19 +347,20 @@ def razorpay_success(request):
                 )
 
                 if is_cart_checkout:
-                    cart_items = order_data['cart_items']
-                    for item in cart_items:
+                    for item in order_data['cart_items']:
                         variant = get_object_or_404(ProductVariant, id=item['variant_id'])
                         quantity = item['quantity']
-                        price = Decimal(item['price'])
+                        detail = next((d for d in cart_item_details if d['variant_id'] == item['variant_id']), None)
+                        unit_price = Decimal(detail['unit_price']) if detail else Decimal(item['price'])
+
                         if variant.stock < quantity:
                             raise Exception(f"Insufficient stock for {variant}.")
-                        for _ in range(quantity):  # Create one OrderItem per unit of quantity
+                        for _ in range(quantity):
                             OrderItem.objects.create(
                                 order=order,
                                 variant=variant,
-                                quantity=1,  # Set quantity to 1 for each OrderItem
-                                price=price,
+                                quantity=1,
+                                price=unit_price,  # ✅ per-unit final price
                                 status='ACTIVE',
                                 delivery_status='PENDING'
                             )
@@ -354,24 +373,31 @@ def razorpay_success(request):
                     price = Decimal(order_data['price'])
                     if variant.stock < quantity:
                         raise Exception(f"Insufficient stock for {variant}.")
-                    for _ in range(quantity):  # Create one OrderItem per unit of quantity
+                    for _ in range(quantity):
                         OrderItem.objects.create(
                             order=order,
                             variant=variant,
-                            quantity=1,  # Set quantity to 1 for each OrderItem
+                            quantity=1,
                             price=price,
                             status='ACTIVE',
                             delivery_status='PENDING'
                         )
-                    variant.stock -= quantity
-                    variant.save()
+                        variant.stock -= quantity
+                        variant.save()
 
-                # Print order details (optional, for debugging)
-                print(f'order {order} created with {order.payment_method} total payment is {total_amount}')
-                for item in OrderItem.objects.filter(order=order):
-                    print(f'ordered items are: {item.variant} x {item.quantity} @ {item.total_price} with {item.delivery_status}')
+                # increment coupon usage
+                applied_coupon_code = cart_price_data.get('applied_coupon')
+                if applied_coupon_code:
+                    try:
+                        coupon = Coupon.objects.get(coupon_code=applied_coupon_code, is_active=True)
+                        coupon.total_usage += 1
+                        coupon.save()
+                        if 'applied_coupon' in request.session:
+                            del request.session['applied_coupon']
+                    except Coupon.DoesNotExist:
+                        pass
 
-                # Clean up session data
+                # cleanup
                 if 'order_data' in request.session:
                     del request.session['order_data']
                 del request.session[pending_key]
@@ -380,16 +406,15 @@ def razorpay_success(request):
 
         except razorpay.errors.SignatureVerificationError:
             messages.error(request, "Payment verification failed.")
-            # Clean up pending data on failure
             if pending_key in request.session:
                 del request.session[pending_key]
             return redirect('order_error')
         except Exception as e:
             messages.error(request, f"Error processing payment: {str(e)}")
-            # Clean up pending data on any error
             if pending_key in request.session:
                 del request.session[pending_key]
             return redirect('order_error')
+
 
 @never_cache
 @login_required(login_url='login')
@@ -467,6 +492,7 @@ def orderlist(request):
 @login_required(login_url='login')
 def order_details(request, order_id, item_id):
     order_item = get_object_or_404(OrderItem, id=item_id, order__user=request.user, order__id=order_id)
+    
     context = {
         'order_item': order_item,
     }
@@ -477,6 +503,7 @@ def order_details(request, order_id, item_id):
 def cancel_order_item(request, order_id, item_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
     item = get_object_or_404(OrderItem, id=item_id, order=order)
+    wallet,created= Wallet.objects.get_or_create(user= request.user)
 
     if request.method == 'POST':
         selected_reason = request.POST.get("reason")
@@ -488,9 +515,15 @@ def cancel_order_item(request, order_id, item_id):
                 item.variant.stock += item.quantity
                 item.variant.save()
 
-                # Update order total
+                # SHARING PRICE OF EACH ITEM IN THE ORDER
                 item_total = item.quantity * item.price
-                order.total_amount = max(0, order.total_amount - item_total)
+                actual_order_total= sum(it.price * it.quantity for it in order.items.all()) # BEFORE COUPON APPLIED
+                paid_order_total= order.total_amount  # AFTER ANY COUPON APPLIED
+            # PAID AMOUNT OF EACH ITEM IF COUPON IS APPLIED
+                refund_amount= (item_total/actual_order_total)* paid_order_total if actual_order_total > 0 else 0
+                refund_amount = Decimal(refund_amount).quantize(Decimal("0.01"))
+
+                order.total_amount = max(0, order.total_amount - refund_amount)
 
                 # Mark as cancelled
                 item.status = 'CANCELLED'
@@ -499,14 +532,17 @@ def cancel_order_item(request, order_id, item_id):
                 if selected_reason == "OTHER":
                     item.other_reason = other_reason_text
                 item.save()
-
+        # WALLET REFUND IF THE PAYMENT VIA WALLET OR RAZORPAY
+                if order.payment_method in ['WALLET', 'RAZORPAY']:
+                    wallet.balance += Decimal(refund_amount).quantize(Decimal("0.01"))
+                    wallet.save()
                 # Cancel entire order if all items are cancelled
                 if not order.items.filter(status='ACTIVE').exists():
                     order.status = 'CANCELLED'
                     order.total_amount = Decimal('0.00')
                     order.save()
                     messages.success(request, "Order cancelled as all items were removed.")
-                    return redirect('order_list')
+                    return redirect('order_list')                
 
                 order.save()
                 messages.success(request, f"Item {item.variant} cancelled successfully.")
@@ -536,29 +572,18 @@ def return_order_item(request, order_id, item_id):
         other_reason= request.POST.get('other_reason')
         try:
             with transaction.atomic():
-
-                item.return_reason= reason
-                if reason == 'OTHER':
-                    item.return_other_reason = other_reason
-                # Mark the item as returned
-                item.status = 'RETURNED'
-                item.delivery_status = 'RETURNED'
-                item.save()
-
-                # Optionally, restore stock if required
-                item.variant.stock += item.quantity
-                item.variant.save()
-
-                # Optionally adjust the order total amount (e.g., by subtracting the item total)
-                item_total = item.quantity * item.price
-                order.total_amount = max(0, order.total_amount - item_total)  # Ensure total_amount doesn't go negative
-                order.save()
-
-                wallet,create= Wallet.objects.get_or_create(user=request.user)
-                wallet.balance += item_total
-                wallet.save()
-
-                messages.success(request, f"Item {item.variant} returned successfully.\n Refund of {item_total} has credited to your wallet. ")
+            # CHECK IF A RETURN REQUEST IS ALREADY THERE
+                if ReturnRequest.objects.filter(order_item=item).exists():
+                    messages.warning(request,'The return request for the same product is already made.')
+                    return redirect('order_details', order_id=order.id, item_id=item.id)
+                # CREATE A RETURN REQUEST
+                ReturnRequest.objects.create(
+                    order_item= item,
+                    reason= reason,
+                    other_reason= other_reason,
+                    status='PENDING'
+                )
+                messages.success(request, f'The return request for {item.variant} is submitted and waiting for the Admin approval')
                 return redirect('order_details', order_id=order.id, item_id=item.id)
         
         except Exception as e:
