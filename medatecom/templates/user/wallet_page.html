@@ -2,52 +2,84 @@
 {% load static %}
 
 {% block content %}
- <!-- Toast Container -->
-    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="toast align-items-center text-white 
-                    {% if message.tags == 'error' %}bg-danger
-                    {% elif message.tags == 'success' %}bg-success
-                    {% elif message.tags == 'info' %}bg-info
-                    {% elif message.tags == 'warning' %}bg-warning
-                    {% else %}bg-primary{% endif %} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                    <div class="d-flex">
-                        <div class="toast-body">
-                            {{ message }}
-                        </div>
-                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="toast align-items-center text-white 
+                {% if message.tags == 'error' %}bg-danger
+                {% elif message.tags == 'success' %}bg-success
+                {% elif message.tags == 'info' %}bg-info
+                {% elif message.tags == 'warning' %}bg-warning
+                {% else %}bg-primary{% endif %} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">{{ message }}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+<!-- WALLET PAGE LAYOUT -->
+<div class="container my-5">
+    <div class="row g-4 justify-content-center align-items-start">
+        
+        <!-- LEFT: Wallet Balance -->
+        <div class="col-md-4 col-12">
+            <div class="card shadow-lg border-0 rounded-4">
+                <div class="card-body text-center p-4">
+                    <h2 class="mb-4 text-primary fw-bold">Wallet</h2>
+                    <div class="bg-light p-4 rounded-3">
+                        <h5 class="mb-2">Current Balance</h5>
+                        <p class="display-6 fw-bold text-success">₹{{ wallet.balance }}</p>
                     </div>
                 </div>
-            {% endfor %}
-        {% endif %}
-    </div>
+            </div>
+        </div>
 
-<div class="container mt-5 d-flex justify-content-center">
-    <div class="card shadow-lg border-0 rounded-4" style="max-width: 400px; width: 100%;">
-        <div class="card-body text-center p-4">
-            <h2 class="mb-4 text-primary fw-bold">Wallet</h2>
-            
-            <div class="bg-light p-4 rounded-3">
-                <h5 class="mb-2">Current Balance</h5>
-                <p class="display-6 fw-bold text-success">₹{{ wallet.balance }}</p>
+        <!-- RIGHT: Transaction History -->
+        <div class="col-md-6 col-12">
+            <div class="card shadow border-0 rounded-4">
+                <div class="card-body p-4">
+                    <h4 class="fw-bold text-secondary mb-3 text-center">Transaction History</h4>
+
+                    {% if transactions %}
+                        <div class="list-group" style="max-height: 400px; overflow-y: auto;">
+                            {% for t in transactions %}
+                                <div class="pb-2 mb-2 border-bottom">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <p class="mb-1 fw-semibold">{{ t.description }}</p>
+                                            <small class="text-muted">{{ t.created_at|date:"M d, Y, h:i A" }}</small>
+                                        </div>
+                                        <div>
+                                            <p class="mb-0 fw-bold 
+                                                {% if t.transaction_type == 'CREDIT' %}text-success
+                                                {% else %}text-warning{% endif %}">
+                                                {% if t.transaction_type == 'CREDIT' %}+{% else %}-{% endif %}₹{{ t.amount }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center mt-3">No transactions yet.</p>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- JavaScript to Initialize Toasts -->
+<!-- Toast Initialization -->
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     var toastElList = [].slice.call(document.querySelectorAll('.toast'));
-    var toastList = toastElList.map(function (toastEl) {
-        return new bootstrap.Toast(toastEl, {
-            autohide: true,
-            delay: 5000 // Toast auto-hides after 5 seconds
-        });
-    });
-    toastList.forEach(function (toast) {
-        toast.show();
+    toastElList.map(function (toastEl) {
+        var t = new bootstrap.Toast(toastEl, { autohide: true, delay: 5000 });
+        t.show();
     });
 });
 </script>

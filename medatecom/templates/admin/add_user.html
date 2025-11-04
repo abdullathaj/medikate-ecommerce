@@ -1,9 +1,9 @@
-{% extends "admin/dashboard.html" %}
+{% extends "admin/base_admin.html" %}
 {% load static %}
 
 {% block content %}
 <div class="container">
-    <h2 class="mb-4">Add New User</h2>
+    <h2 class="mb-4 text-center">Add New User</h2>
     
     <form method="POST" novalidate>
         {% csrf_token %}

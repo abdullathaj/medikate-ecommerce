@@ -1,9 +1,9 @@
-{% extends 'admin/dashboard.html' %}
+{% extends 'admin/base_admin.html' %}
 {% load static %}
 
 {% block content %}
 <div class="container py-4">
-    <h2 class="text-center mb-4 fw-bold">Create New Offer</h2>
+    <h2 class="text-center mb-4">Create New Offer</h2>
 
     {% if messages %}
         {% for message in messages %}

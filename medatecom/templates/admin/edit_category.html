@@ -1,9 +1,9 @@
-{% extends "admin/dashboard.html" %}
+{% extends "admin/base_admin.html" %}
 {% load static %}
 
 {% block content %}
 <div class="container">
-    <h2 class="mb-4">Edit Category: {{ category.name }}</h2>
+    <h2 class="mb-4 text-center">Edit Category: {{ category.name }}</h2>
 
     <form method="POST" novalidate>
         {% csrf_token %}

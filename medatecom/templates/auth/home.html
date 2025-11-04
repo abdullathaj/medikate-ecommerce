@@ -22,7 +22,7 @@
             {% endfor %}
         {% endif %}
     </div>
-    <!-- Search Bar Section -->
+                <!-- Search Bar Section -->
                             <section class="search-section container my-3">
                                 {% include 'auth/search_bar.html' %}
                             </section>
@@ -40,7 +40,7 @@
                 <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="3" aria-label="Slide 4"></button>
             </div>
 
-            <!-- Carousel Items -->
+            <!-- Carousel Images with sliding -->
             <div class="carousel-inner">
                 <div class="carousel-item active">
                     <div class="carousel-overlay"></div>
@@ -60,7 +60,7 @@
                 </div>
             </div>
 
-            <!-- Carousel Controls -->
+            
             <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
                 <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                 <span class="visually-hidden">Previous</span>
@@ -75,7 +75,7 @@
     <!-- Product Listing Section -->
     <section id='product-listing' class="product-listing-section container my-1">
          <h2 class="text-center mb-4">Latest Products</h2>
-        <div class="row row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+        <div class="row row-cols-3 row-cols-md-3 row-cols-lg-4 g-3 mx-1">
             {% for product in products %}
                 <!-- Product Card -->
                 <div class="col">
@@ -90,19 +90,9 @@
                             {% endwith %}
                         </div>
                         <div class="product-details">
-                            <div class="product-catagory-line d-flex justify-content-between align-items-center">
-                                <span class="product-catagory">{{ product.category.name }}</span>
-                                {% with variant=product.product_variant.first %}
-                                    {% if variant %}
-                                        <a href="{% url 'add_to_wishlist' variant.id %}" title="Add to Wishlist" class="wishlist-link">
-                                            <i class="fas fa-heart"></i>
-                                        </a>
-                                    {% endif %}
-                                {% endwith %}
-                            </div>
                             {% with variant=product.product_variant.first %}
                                 {% if variant %}
-                                    <h4><a href="{% url 'product_details' variant.id %}">{{ product.name|truncatechars:30 }}</a></h4>
+                                    <h5><a href="{% url 'product_details' variant.id %}">{{ product.name|truncatechars:30 }}</a></h5>
                                 {% else %}
                                     <h4>{{ product.name|truncatechars:30 }}</h4>
                                 {% endif %}
@@ -113,18 +103,17 @@
                                 {% with variant=product.product_variant.first %}
                                     {% if variant %}
                                         <div class="product-price">
-                                            <small class="original-price">₹{{ variant.original_price|floatformat:2 }}</small>
                                             <span class="current-price">₹{{ variant.final_price|floatformat:2 }}</span>
                                         </div>
                                         <div class="product-links">
-                                            <a href="{% url 'add_to_cart' variant.id %}" title="Add to Cart" class="cart-btn"><i class="fas fa-shopping-cart"></i></a>
-                                            <a href="{% url "buy_now" variant.id %}" class="buy-now-btn">Buy Now</a>
+                                            <a href="{% url 'add_to_cart' variant.id %}" title="Add to Cart" class="cart-btn"> <i class="fas fa-shopping-cart"></i></a>
+                                            <a href="{% url 'add_to_wishlist' variant.id %}" title="Add to Wishlist" class="wishlist-btn"> <i class="fas fa-heart"></i> </a>
                                         </div> 
                                     {% else %}
                                         <div class="product-price">N/A</div>
                                          <div class="product-links">
                                             <button class="cart-btn" disabled><i class="fas fa-shopping-cart"></i></button>
-                                            <button class="buy-now-btn" disabled>Buy Now</button>
+                                            <button class="wishlist-btn" disabled><i class="fas fa-shopping-heart"></i></button>
                                         </div> 
                                     {% endif %}
                                 {% endwith %}
@@ -141,13 +130,7 @@
 
     </section>
 
-    <!-- Single Banner Section -->
-    <section class="single-banner-section container my-1">
-        <div class="single-banner">
-            <div class="banner-overlay"></div>
-            <img src="{% static 'home/images/supplementbanner.jpg' %}" class="d-block w-100" alt="Promotional Banner">
-        </div>
-    </section>
+   
 
     <!-- Brands Section -->
     <section class="brands-section container my-1">
@@ -179,22 +162,95 @@
             </div>
         </div>
     </section>
+
+     <!-- Single Banner Section -->
+    <section class="single-banner-section container my-1">
+        <div class="single-banner">
+            <div class="banner-overlay"></div>
+            <img src="{% static 'home/images/supplementbanner.jpg' %}" class="d-block w-100" alt="Promotional Banner">
+        </div>
+    </section>
+
+    <!-- Category Section-->
+    <section class="category-section container my-1">
+        <h2 class="text-center mb-4">Product Categories</h2>
+        <div class="categories-container d-flex justify-content-center align-items-center flex-wrap gap-5">
+            
+            <div class="category-card text-center">
+                <div class="category-logo">
+                    <img src="{% static 'home/images/skin care logo.webp' %}" alt="Ctgry 1" class="ctgry-img">
+                </div>
+                <h6 class="ctgry-name mt-2">Skin Care</h6>
+            </div>
+
+            <div class="category-card text-center">
+                <div class="category-logo">
+                    <img src="{% static "home/images/hair care logo.jpg" %}" alt="Ctgry 2" class="ctgry-img">
+                </div>
+                <h6 class="ctgry-name mt-2">Hair Care</h6>
+            </div>
+
+            <div class="category-card text-center">
+                <div class="category-logo">
+                    <img src="{% static "home/images/face care logo.jpg" %}" alt="Ctgry 3" class="ctgry-img">
+                </div>
+                <h6 class="ctgry-name mt-2">Face Care</h6>
+            </div>
+
+             <div class="category-card text-center">
+                <div class="category-logo">
+                    <img src="{% static "home/images/health supplement logo.jpg" %}" alt="Ctgry 4" class="ctgry-img">
+                </div>
+                <h6 class="ctgry-name mt-2">Supplements</h6>
+            </div>
+
+             <div class="category-card text-center">
+                <div class="category-logo">
+                    <img src="{% static "home/images/baby care logo.webp" %}" alt="Ctgry 5" class="ctgry-img">
+                </div>
+                <h6 class="ctgry-name mt-2">Baby Care</h6>
+            </div>
+
+             <div class="category-card text-center">
+                <div class="category-logo">
+                    <img src="{% static "home/images/health devices logo.webp" %}" alt="Ctgry 6" class="ctgry-img">
+                </div>
+                <h6 class="ctgry-name mt-2">Health devices</h6>
+            </div>
+            <div class="category-card text-center">
+            <div class="category-logo">
+                <img src="{% static 'home/images/oral care logo.jpg' %}" alt="Ctgry 7" class="ctgry-img">
+            </div>
+            <h6 class="ctgry-name mt-2">Oral Care</h6>
+        </div>
+        <div class="category-card text-center">
+            <div class="category-logo">
+                <img src="{% static "home/images/pain relief logo.webp" %}" alt="Ctgry 8" class="ctgry-img">
+            </div>
+            <h6 class="ctgry-name mt-2">Pain Relief</h6>
+        </div>
+        </div>
+    <section>
 </div>
 
 
 <style>
-    /* Ensure the main content fills the available space */
-    .main-content {
-        flex-grow: 1;
-        display: flex;
-        flex-direction: column;
-    }
+   /* =============================
+   GLOBAL LAYOUT STYLES
+============================= */
+.main-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
 
-    body {
-        background-color: #f0eeeebe; /* Light grey background */
-    }
+body {
+    background-color: #edececee;
+}
 
-    /* Hero Section Styles */
+/* =============================
+   HERO SECTION
+============================= */
         .hero-section {
             margin-bottom: 2rem;
             margin-left: 1rem;
@@ -259,7 +315,29 @@
             background-color: #26A69A;
         }
 
-    /* Brands Section Styles */
+        /* Responsive */
+        @media (max-width: 768px) {
+            .carousel {
+                max-height: 300px;
+                min-height: 150px;
+            }
+            .carousel-item img {
+                max-height: 300px;
+            }
+        }
+        @media (max-width: 480px) {
+            .carousel {
+                max-height: 250px;
+                min-height: 120px;
+            }
+            .carousel-item img {
+                max-height: 250px;
+            }
+        }
+
+/* =============================
+   BRANDS SECTION
+============================= */
         .brands-section {
             padding: 2rem 0;
         }
@@ -307,7 +385,136 @@
             padding: 10px;
         }
 
-    /* Single Banner Section Styles */
+        /* Responsive */
+        @media (max-width: 768px) {
+            .brand-logo {
+                width: 80px;
+                height: 80px;
+            }
+        }
+        @media (max-width: 480px) {
+            .brand-logo {
+                width: 60px;
+                height: 60px;
+            }
+        }
+
+/* =============================
+   CATEGORY SECTION
+============================= */
+        .category-section {
+            padding: 2rem 0;
+        }
+
+        .categories-container {
+            overflow-x: auto;
+            white-space: nowrap;
+            padding: 1rem 0;
+            scrollbar-width: thin;
+            scrollbar-color: #26a69a #f6faff;
+        }
+
+        .categories-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        .categories-container::-webkit-scrollbar-track {
+            background: #f6faff;
+        }
+        .categories-container::-webkit-scrollbar-thumb {
+            background: #26a69a;
+            border-radius: 4px;
+        }
+
+        .category-card {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            width: 160px;
+            height: 190px;
+            background: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .category-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 6px 16px rgba(38, 166, 154, 0.35);
+        }
+
+        .category-logo {
+            width: 120px;
+            height: 120px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #e8f5f3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ctgry-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .category-card:hover .ctgry-img {
+            transform: scale(1.07);
+        }
+
+        .ctgry-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #00675c;
+            margin-top: 10px;
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .category-card {
+                width: 140px;
+                height: 170px;
+            }
+            .category-logo {
+                width: 100px;
+                height: 100px;
+            }
+        }
+        @media (max-width: 768px) {
+            .category-card {
+                width: 120px;
+                height: 150px;
+            }
+            .category-logo {
+                width: 90px;
+                height: 90px;
+            }
+            .ctgry-name {
+                font-size: 13px;
+            }
+        }
+        @media (max-width: 480px) {
+            .category-card {
+                width: 100px;
+                height: 130px;
+            }
+            .category-logo {
+                width: 80px;
+                height: 80px;
+            }
+            .ctgry-name {
+                font-size: 12px;
+            }
+        }
+
+/* =============================
+   SINGLE BANNER SECTION
+============================= */
         .single-banner-section {
             padding: 2rem 0;
         }
@@ -339,40 +546,61 @@
             z-index: 1;
         }
 
-    /* Product Card Styles */
+        /* Responsive */
+        @media (max-width: 768px) {
+            .single-banner {
+                max-height: 300px;
+                min-height: 150px;
+            }
+            .single-banner img {
+                max-height: 300px;
+            }
+        }
+        @media (max-width: 480px) {
+            .single-banner {
+                max-height: 250px;
+                min-height: 120px;
+            }
+            .single-banner img {
+                max-height: 250px;
+            }
+        }
 
+/* =============================
+   PRODUCT LISTING SECTION
+============================= */
         .product-listing-section {
-            padding: 1.5rem 0;
+            padding: 1rem 0;
         }
 
         .product-card {
-            width: 100%;
-            height: auto;
-            background: #ffffff;
+            background: #fff;
             border-radius: 10px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
             transition: transform 0.25s ease, box-shadow 0.25s ease;
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            height: auto;
+            width: auto;
         }
 
         .product-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
         }
 
         .product-thumb {
-            height: 150px;
-            background: #ffffffff;
+            height: 110px;
+            background: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 10px;
+            padding: 6px;
         }
 
         .product-thumb img {
-            max-width: 100%;
+            max-width: 95%;
             max-height: 100%;
             object-fit: contain;
             transition: transform 0.3s ease;
@@ -383,249 +611,134 @@
         }
 
         .product-details {
-            padding: 12px 14px;
+            padding: 8px 10px;
             flex-grow: 1;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
         }
 
-        .product-catagory-line {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 6px;
-        }
-
-        .product-catagory {
-            font-size: 11px;
+        .product-details h5 a {
             font-weight: 600;
-            text-transform: uppercase;
-            color: #4b6cb7;
-        }
-
-        .wishlist-link {
-            color: #6b7280;
-            font-size: 14px;
-            transition: color 0.3s ease;
-            
-        }
-
-        .wishlist-link:hover {
-            color: #4b6cb7;
-        }
-
-        .product-details h4 a {
-            font-weight: 700;
-            font-size: 15px;
+            font-size: 16px;
             color: #182848;
             text-decoration: none;
-            line-height: 1.3;
+            line-height: 1.2;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            height: 38px;
+            height: 36px;
         }
 
-        .product-details h4 a:hover {
+        .product-details h5 a:hover {
             color: #4b6cb7;
         }
-
 
         .product-bottom-details {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 10px;
+            gap: 6px;
             flex-wrap: wrap;
-            margin-top: 8px;
+            margin-top: 4px;
         }
 
         .product-price {
-            
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-            align-items: flex-start;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .original-price {
-            font-size: 12px;   
-            text-decoration: line-through;
-            color: #5f6c85;
-        }
-
-        .current-price {
-            font-size: 15px;
+            font-size: 13px;
             color: #4b6cb7;
             font-weight: 700;
         }
 
         .product-links {
             display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
+            gap: 4px;
         }
 
-        .cart-btn {
+        .cart-btn, .wishlist-btn {
             color: #6b7280;
             font-size: 13px;
-            transition: color 0.3s ease;
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             width: 28px;
             height: 28px;
-            border: 1px solid #6b7280;
             border-radius: 50%;
+            background: #f5f6f8;
+            border: none;
+            margin-right: 1px;
         }
 
-        .cart-btn:hover {
-            color: #4b6cb7;
-            border-color: #4b6cb7;
-        }
-
-        .buy-now-btn {
-            background: rgb(17, 16, 8);
-            color: white;
-            font-size: 12px;
-            font-weight: 500;
-            padding: 5px 10px;
-            border-radius: 15px;
-            transition: background 0.3s ease, transform 0.2s ease;
-            text-decoration: none;       
-            text-align: center;
-        }
-
-        .buy-now-btn:hover {
-            background: rgb(244, 221, 15);
-            transform: translateY(-1px);
+        .cart-btn:hover, .wishlist-btn:hover {
+            background: #4b6cb7;
             color: #fff;
         }
 
-    /* Pagination Styles */
-        .pagination .page-link {
-            color: #4b6cb7;
-        }
-
-        .pagination .page-item.active .page-link {
-            background-color: #4b6cb7;
-            border-color: #4b6cb7;
-            color: #fff;
-        }
-
-        .pagination .page-link:hover {
-            background-color: #3b82f6;
-            border-color: #3b82f6;
-            color: #fff;
-        }
-
-    /* Responsive adjustments */
-   
-
+        /* Responsive */
         @media (max-width: 768px) {
-            .carousel,
-            .single-banner {
-                max-height: 300px;
-                min-height: 150px;
+            .product-card {
+                height: auto;
             }
-
-            .carousel-item img,
-            .single-banner img {
-                max-height: 300px;
-            }
-
             .product-thumb {
-                height: 130px;
-            }
-            
-            .product-details {
-                padding: 10px;
-            }
-
-            .product-bottom-details {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }
-
-            .product-links {
-                width: 100%;
-                justify-content: flex-start;
-            }
-
-            .buy-now-btn {
-                width: auto;
-                padding: 6px 10px;
-                font-size: 12px;
-            }
-
-            .brand-logo {
-                width: 80px;
                 height: 80px;
             }
+            .product-details {
+                padding: 6px 8px;
+            }
+            .product-details h5 a {
+                font-size: 12px;
+                height: 28px;
+            }
+            .cart-btn, .wishlist-btn {
+                width: 24px;
+                height: 24px;
+                font-size: 12px;
+            }
         }
-
         @media (max-width: 480px) {
-            .carousel,
-            .single-banner {
-                max-height: 250px;
-                min-height: 120px;
+            .product-card {
+                height: auto;
             }
-
-            .carousel-item img,
-            .single-banner img {
-                    max-height: 250px;
-                }
-
             .product-thumb {
-                height: 100px;
+                height: 70px;
             }
-
-
-            .product-details h4 a {
-                font-size: 13px;
+            .product-details h5 a {
+                font-size: 11.5px;
             }
-
             .current-price {
-                font-size: 13px;
+                font-size: 11.5px;
             }
-            
-            .cart-btn {
+            .cart-btn, .wishlist-btn {
                 width: 26px;
                 height: 26px;
                 font-size: 12px;
             }
-
-            .buy-now-btn {
-                width: auto;
-                padding: 5px 8px;
-                font-size: 11px;
-            }
-
-            .wishlist-link {
-                width: 24px;
-                height: 24px;
-                font-size: 11px;
-            }
-
-            .product-price {
-                max-width: 80px;
-            }
-
-        .product-links {
+            .product-links {
                 width: 100%;
                 justify-content: flex-start;
             }
-
-            .brand-logo {
-                width: 60px;
-                height: 60px;
-            }
         }
+
+/* =============================
+   PAGINATION STYLES
+============================= */
+    .pagination .page-link {
+        color: #4b6cb7;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #4b6cb7;
+        border-color: #4b6cb7;
+        color: #fff;
+    }
+
+    .pagination .page-link:hover {
+        background-color: #3b82f6;
+        border-color: #3b82f6;
+        color: #fff;
+    }
+
 </style>
 <!-- Include Font Awesome for icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">

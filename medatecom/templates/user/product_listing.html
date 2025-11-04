@@ -27,7 +27,7 @@
                                 {% include 'auth/search_bar.html' %}
                             </section>
 
-    <div class="container my-5">
+    <div class="container-fluid my-3">
         <div class="row">
             <!-- Sidebar for Filters and Sorting -->
             <div class="col-lg-2 col-md-3">
@@ -47,32 +47,38 @@
 
                         <!-- Filter by Category -->
                         <div class="filter-section">
-                            <h4>Categories</h4>
-                            {% for category in categories %}
-                                <div class="form-check">
-                                    <input type="checkbox" class="form-check-input" name="category" value="{{ category.id }}"
-                                           {% if category.id|stringformat:"s" in selected_categories %}checked{% endif %}
-                                           onchange="this.form.submit()">
-                                    <label class="form-check-label">{{ category.name }}</label>
-                                </div>
-                            {% empty %}
-                                <p>No categories available.</p>
-                            {% endfor %}
+                             <button class="filter-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#categoryCollapse" aria-expanded="false">
+                                Categories <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="collapse mt-1" id="categoryCollapse">
+                                {% for category in categories %}
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" name="category" value="{{ category.id }}"
+                                            {% if category.id|stringformat:"s" in selected_categories %}checked{% endif %} >
+                                        <label class="form-check-label">{{ category.name }}</label>
+                                    </div>
+                                {% empty %}
+                                    <p class="text-muted small">No categories</p>
+                                {% endfor %}
+                            </div>
                         </div>
 
                         <!-- Filter by Brand -->
                         <div class="filter-section">
-                            <h4>Brands</h4>
-                            {% for brand in brands %}
-                                <div class="form-check">
-                                    <input type="checkbox" class="form-check-input" name="brand" value="{{ brand }}"
-                                           {% if brand in selected_brands %}checked{% endif %}
-                                           onchange="this.form.submit()">
-                                    <label class="form-check-label">{{ brand }}</label>
-                                </div>
-                            {% empty %}
-                                <p>No brands available.</p>
-                            {% endfor %}
+                            <button class="filter-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#brandCollapse" aria-expanded="false">
+                                Brands <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="collapse mt-1" id="brandCollapse">
+                                {% for brand in brands %}
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" name="brand" value="{{ brand }}"
+                                            {% if brand in selected_brands %}checked{% endif %} >
+                                        <label class="form-check-label">{{ brand }}</label>
+                                    </div>
+                                {% empty %}
+                                    <p class="text-muted small">No brands</p>
+                                {% endfor %}
+                            </div>
                         </div>
 
                         <!-- Filter by Price Range -->
@@ -88,17 +94,20 @@
                                 <input type="number" class="form-control" name="price_max" placeholder="Max"
                                        value="{{ price_max|default_if_none:'' }}" min="0" step="1">
                             </div>
-                            <button type="submit" class="btn btn-primary w-100">Apply Price Filter</button>
                         </div>
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-success w-100">Apply Filters</button>
+                                <a href="{% url 'product_listing' %}" class="btn btn-warning w-100">Clear Filters</a>
+                            </div>
                     </form>
                 </div>
             </div>
 
             <!-- Product Listing Section -->
-            <div class="col-lg-10 col-md-9">
+            <div class="col-lg-10 col-md-9 col-12">
                 <section id="product-listing" class="product-listing-section">
                     <h2 class="text-center mb-4">Latest Products</h2>
-                    <div class="row row-cols-1 row-cols-md-3 g-4">
+                    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3">
                         {% for variant in variants %}
                             <!-- Variant Card -->
                             <div class="col">
@@ -113,9 +122,8 @@
                                         {% endwith %}
                                     </div>
                                     <div class="product-details">
-                                        <div class="product-catagory-line my-1">
+                                        <div class="product-catagory-line">
                                             <span class="product-catagory">{{ variant.product.category.name }}</span>
-                                            <a href="{% url 'add_to_wishlist' variant.id %}" title="Add to Wishlist" class="wishlist-link"><i class="fas fa-heart"></i></a>
                                         </div>
                                         <h4><a href="{% url 'product_details' variant.id %}">{{ variant.product.name|truncatechars:20 }} - {{ variant.variant_name|truncatechars:10 }}</a></h4>
                                         
@@ -133,8 +141,8 @@
                                                 <span class="current-price">₹{{ variant.final_price|floatformat:2 }}</span>
                                             </div>
                                             <div class="product-links">
+                                                <a href="{% url 'add_to_wishlist' variant.id %}" title="Add to Wishlist" class="wishlist-btn"><i class="fas fa-heart"></i></a>
                                                 <a href="{% url 'add_to_cart' variant.id %}" title="Add to Cart" class="cart-btn"><i class="fas fa-shopping-cart"></i></a>
-                                                <a href="{% url 'buy_now' variant.id %}" class="buy-now-btn">Buy Now</a>
                                             </div>
                                         </div>
                                     </div>
@@ -199,27 +207,67 @@
     </div>
 
 <style>
-    /* Sidebar Styles */
+    body{
+        background-color: rgb(248, 248, 248);
+    }
+    /*  SIDEBAR  */
+
         .sidebar {
             background: #ffffff;
-            border-radius: 12px;
-            padding: 15px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+            position:sticky;
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             height: fit-content;
+            width: auto;
         }
 
-        .filter-section, .sort-section {
-            margin-bottom: 20px;
+        .filter-section,
+        .sort-section {
+            margin-bottom: 16px;
         }
 
-        .filter-section h4, .sort-section h4 {
-            font-size: 16px;
+        .filter-section h4,
+        .sort-section h4 {
+            font-size: 15px;
+            font-weight: 600;
             color: #182848;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
+        }
+
+        .filter-toggle {
+            width: 100%;
+            background: #f9fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 14px;
+            color: #182848;
+            font-weight: 500;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+        .filter-toggle:hover {
+            background: #eef2ff;
+            transform: translateY(-1px);
+        }
+        .filter-toggle i {
+            font-size: 12px;
+            transition: transform 0.3s ease;
+        }
+        .filter-toggle[aria-expanded="true"] i {
+            transform: rotate(180deg);
+        }
+
+        .collapse {
+            margin-top: 6px;
         }
 
         .form-check {
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .form-check-label {
@@ -227,55 +275,83 @@
             color: #5f6c85;
         }
 
-        .form-select, .form-control {
+        .form-select,
+        .form-control {
             font-size: 14px;
             border-radius: 8px;
         }
 
-        .btn-primary {
-            background-color: #4b6cb7;
-            border-color: #4b6cb7;
+        .btn-success,
+        .btn-warning {
+           
             border-radius: 8px;
+            font-size: 13px;
+            padding: 6px 0;
             transition: background-color 0.3s ease, transform 0.2s ease;
         }
 
-        .btn-primary:hover {
-            background-color: #3b82f6;
-            border-color: #3b82f6;
+        .btn-success:hover,
+        .btn-warning:hover {
+            background-color: #8c9d8d;
+            border-color: #000000;
             transform: translateY(-1px);
         }
 
-    /* Product Card Styles */
+        @media (max-width: 992px) {
+            .sidebar {
+                margin-bottom: 20px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .sidebar {
+                padding: 10px;
+            }
+
+            .filter-section h4,
+            .sort-section h4 {
+                font-size: 14px;
+                padding: 5px 8px;
+            }
+
+            .form-check-label,
+            .form-select,
+            .form-control {
+                font-size: 13px;
+            }
+        }
+
+    /* PRODUCT CARD */
         .product-listing-section {
-            padding: 2rem 0;
+            padding: 1.5rem 0; /* Reduced section padding */
         }
 
         .product-card {
-            width: 100%;
-            min-height: 500px;
+            width: auto;
+            min-height: 330px;
             margin: 0;
-            
             background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            padding: 8px; /* Slight internal padding to balance layout */
         }
 
         .product-card:hover {
             transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
         }
 
         .product-thumb {
-            height: 180px;
-            background: #ffffffff;
+            height: 160px; /* Reduced height */
+            background: #ffffff;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 10px;
+            padding: 5px; /* Less padding */
         }
 
         .product-thumb img {
@@ -286,11 +362,11 @@
         }
 
         .product-card:hover .product-thumb img {
-            transform: scale(1.08);
+            transform: scale(1.05);
         }
 
         .product-details {
-            padding: 12px;
+            padding: 8px 8px; /* Less padding */
             flex-grow: 1;
             display: flex;
             flex-direction: column;
@@ -301,35 +377,19 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            
+            margin-bottom: 4px; /* Reduced vertical gap */
         }
 
         .product-catagory {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 500;
             text-transform: uppercase;
             color: #4b6cb7;
         }
 
-        .wishlist-link {
-            color: #6b7280;
-            font-size: 14px;
-            transition: color 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-        }
-
-        .wishlist-link:hover {
-            color: #4b6cb7;
-        }
-
         .product-details h4 a {
             font-weight: 700;
-            font-size: 15px;
+            font-size: 14px;
             color: #182848;
             transition: color 0.3s ease;
             display: -webkit-box;
@@ -337,40 +397,26 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
             text-overflow: ellipsis;
-            height: 36px;
+            height: auto;
+            line-height: 1.2;
+            margin-bottom: 4px; /* Reduced spacing */
         }
 
         .product-details h4 a:hover {
             color: #4b6cb7;
         }
 
-        .product-details p {
-            font-size: 11px;
-            line-height: 14px;
-            
-            color: #5f6c85;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            height: 28px;
-        }
-
-        
-
         .product-rating {
-            
             display: flex;
             align-items: center;
-            
             flex-wrap: wrap;
+            margin-bottom: 6px; /* Slight gap before price */
         }
 
         .star {
-            font-size: 12px;
+            font-size: 11px;
             color: #d1d9e6;
-            margin-right: 3px;
+            margin-right: 2px;
         }
 
         .star.filled {
@@ -378,7 +424,7 @@
         }
 
         .rating-text {
-            font-size: 12px;
+            font-size: 11px;
             color: #5f6c85;
         }
 
@@ -386,34 +432,32 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-top: 8px;
-            padding-bottom: 10px;
-            
-            flex-shrink: 0;
+            padding-top: 4px;
+            padding-bottom: 6px;
         }
 
         .product-price {
-            font-size: 15px;
+            font-size: 14px;
             color: #4b6cb7;
             font-weight: 700;
             display: flex;
             flex-direction: column;
-            
             align-items: flex-start;
-            max-width: 90px;
+            max-width: 85px;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
         .original-price {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 400;
             text-decoration: line-through;
             color: #5f6c85;
+            margin-bottom: 2px;
         }
 
         .current-price {
-            font-size: 16px;
+            font-size: 15px;
             color: #4b6cb7;
             font-weight: 700;
         }
@@ -421,50 +465,68 @@
         .product-links {
             display: flex;
             align-items: center;
-            gap: 8px;
-            max-width: 140px;
+            gap: 6px;
             justify-content: flex-end;
         }
+        .wishlist-btn {
+            color: #6b7280;
+            transition: color 0.3s ease;
+            width: 28px;
+            height: 28px;
+        }
 
-        .cart-btn, .buy-now-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: 500;
-            text-align: center;
-            transition: all 0.3s ease;
+        .wishlist-btn:hover {
+            color: #4b6cb7;
         }
 
         .cart-btn {
-            width: 30px;
-            height: 30px;
+            width: 28px;
+            height: 28px;
             color: #6b7280;
-            border: 1px solid #6b7280;
-            border-radius: 50%;
+            transition: color 0.3s ease;
+
         }
 
         .cart-btn:hover {
             color: #4b6cb7;
-            border-color: #4b6cb7;
         }
 
-        .buy-now-btn {
-            width: 80px;
-            height: 30px;
-            background: rgb(17, 16, 8);
-            color: white;
-            border-radius: 15px;
-            text-decoration: none;
+
+        @media (min-width: 1200px) {
+            .product-card {
+                min-height: 330px;
+            }
         }
 
-        .buy-now-btn:hover {
-            background: rgb(244, 221, 15);
-            transform: translateY(-1px);
-            color: #fff;
+        @media (max-width: 992px) {
+            .product-card {
+                min-height: 330px;
+            }
+
+            .product-thumb {
+                height: 140px;
+            }
         }
 
-    /* Pagination Styles */
+        @media (max-width: 768px) {
+            .product-card {
+                min-height: 330px;
+            }
+
+            .product-thumb {
+                height: 130px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .product-card {
+                min-height: 330px;
+               
+            }
+        }
+
+
+    /* PAGINATION STYLES */
         .pagination .page-link {
             color: #4b6cb7;
         }
@@ -480,122 +542,8 @@
             border-color: #3b82f6;
             color: #fff;
         }
-
-    /* Responsive Adjustments for Large Screens */
-        @media (min-width: 1200px) {
-            .product-card {
-                min-height: 520px;
-            }
-
-            .product-bottom-details {
-                gap: 12px;
-                padding-top: 10px;
-                padding-bottom: 10px;
-            }
-
-            .product-price {
-                gap: 6px;
-                font-size: 18px;
-                max-width: 100px;
-            }
-
-            .original-price {
-                font-size: 13px;
-            }
-
-            .current-price {
-                font-size: 18px;
-            }
-
-            .product-links {
-                gap: 10px;
-                max-width: 160px;
-            }
-
-            .cart-btn {
-                width: 36px;
-                height: 36px;
-                font-size: 13px;
-            }
-
-            .buy-now-btn {
-                width: 100px;
-                height: 36px;
-                font-size: 13px;
-            }
-
-            .wishlist-link {
-                width: 32px;
-                height: 32px;
-                font-size: 15px;
-            }
-        }
-
-    /* Responsive Adjustments */
-        @media (max-width: 992px) {
-            .product-card {
-                min-height: 460px;
-            }
-
-            .product-thumb {
-                height: 160px;
-            }
-
-            .sidebar {
-                margin-bottom: 20px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .product-card {
-                min-height: 440px;
-            }
-
-            .product-thumb {
-                height: 140px;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .sidebar {
-                padding: 10px;
-            }
-
-            .filter-section h4, .sort-section h4 {
-                font-size: 14px;
-            }
-
-            .form-check-label, .form-select, .form-control {
-                font-size: 13px;
-            }
-
-            .cart-btn {
-                width: 28px;
-                height: 28px;
-                font-size: 10px;
-            }
-
-            .buy-now-btn {
-                width: 70px;
-                height: 28px;
-                font-size: 10px;
-            }
-
-            .wishlist-link {
-                width: 26px;
-                height: 26px;
-                font-size: 12px;
-            }
-
-            .product-price {
-                max-width: 80px;
-            }
-
-            .product-links {
-                max-width: 120px;
-            }
-        }
 </style>
+
 
     <!-- Include Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">

@@ -1,10 +1,10 @@
-{% extends 'admin/dashboard.html' %}
+{% extends 'admin/base_admin.html' %}
 {% load humanize %}
 {% load static %}
 
 {% block content %}
 <div class="container-fluid py-4">
-    <h2 class="mb-4 text-center fw-bold">Order #{{ order.id }} Items</h2>
+    <h2 class="mb-4 text-center">Order #{{ order.id }} Items</h2>
 
     <!-- Order Items Table -->
     <div class="table-responsive">

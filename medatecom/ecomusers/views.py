@@ -4,7 +4,7 @@ import json
 from django.db import IntegrityError,transaction
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
-from .models import UserAddress,User,WishlistProducts,CartProducts,Wallet,Referral
+from .models import UserAddress,User,WishlistProducts,CartProducts,Wallet,Referral,WalletTransaction
 from ecomproducts.models import Product,ProductVariant,ProductImage,Categories,Coupon
 from django.core.paginator import Paginator
 from django.db import models
@@ -21,23 +21,24 @@ from django.contrib.auth import update_session_auth_hash
 import random
 
 # Create your views here.
-# home page for User BEFORE LOGIN
+# -------------------------------------------------------------------------
+# HOME PAGE BEFORE AND AFTER LOGIN AND PRODUCT LIST AND PRODUCT DETAILS
+# -------------------------------------------------------------------------
 
 def userhomeview(request):
      # Fetch active products with related category and filter active variants
     products = Product.objects.filter(
         product_variant__is_active=True,
         category__is_active=True
-    ).select_related('category').order_by('-created_at').distinct()[:4]
+    ).select_related('category').order_by('-created_at').distinct()[:8]
     print(products)
 
-    trending_products=products[:4]
+    trending_products=products[:8]
 
     
     return render(request, 'auth/home.html',{'products': products, 'trending_products':trending_products})
 
-
-@login_required(login_url='login') # REDIRECT TO LOGIN PAGE FOR UNAUTHENTICATED USERS.
+@login_required(login_url='login') 
 @never_cache
 def home_after_login(request):
 
@@ -48,15 +49,9 @@ def home_after_login(request):
     ).select_related('category').order_by('-created_at').distinct()[:4]
     print(products)
     trending_products=products[:4]
-
-    
    
-
-   
-
     return render(request,'auth/home.html',{'products':products,'trending products':trending_products})
 
-# PRODUCT DETAILING PAGE
 def product_details(request, variant_id):
     # Fetch the product
     variant = get_object_or_404(ProductVariant, id=variant_id, is_active=True, product__category__is_active=True)
@@ -71,7 +66,7 @@ def product_details(request, variant_id):
         category=product.category,
         product_variant__is_active=True,
         category__is_active=True
-    ).exclude(id=product.id).distinct()[:4]
+    ).exclude(id=product.id).distinct()[:6]
 
     # Context for template
     context = {
@@ -82,8 +77,6 @@ def product_details(request, variant_id):
     }
 
     return render(request, 'user/product_details.html', context)
-
-# PRODUCT LISTING VIEW
 
 def user_product_listing(request):
     # Base queryset for active variants
@@ -153,7 +146,7 @@ def user_product_listing(request):
         variants = variants.order_by('-product__name', '-variant_name')
 
     # Pagination
-    paginator = Paginator(variants, 9)
+    paginator = Paginator(variants, 12)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -180,9 +173,9 @@ def user_product_listing(request):
     return render(request, 'user/product_listing.html', context)
 
 
-
+# -----------------------------------------------------------------
 # USER PROFILE DETAILS, ADDRESS MANAGEMENT ADD EDIT AND DELETE
-
+# -----------------------------------------------------------------
 @login_required(login_url='login') 
 def users_profile_page(request):
     ''' RENDERING USERS PROFILE PAGE CONTAIN USER DETAILS AND ADDRESSES, REFERRALS ETC.'''
@@ -265,7 +258,7 @@ def users_profile_update_page(request):
                 print(f'generated otp is {otp}.')
 
                 subject='OTP for Email Change.'
-                message=f'The OTP for Email verification is {otp} \n Please enter the otp and confirm.'
+                message=f'Dear {user},\n\n OTP for email verification for email change is {otp}.\n\n Best Regards,\n\n Team MediKate.'
                 from_mail=settings.DEFAULT_FROM_EMAIL
                 recipient_list=[new_email]
 
@@ -345,8 +338,9 @@ def user_edit_address(request, address_id):
         'address_id': address_id
     })
 
+#--------------------------------------------------------------------------------------------------
 # WISHLIST MANAGEMENT FOR AUTHENTICATED USER ADDING AND REMOVING PRODUCTS, ADDING TO CART
-
+# ------------------------------------------------------------------------------------------------
 @never_cache
 @login_required(login_url='login') 
 def add_to_wishlist(request, variant_id):
@@ -394,7 +388,6 @@ def move_to_cart(request,variant_id):
         messages.warning(request, f'{variant.product.name} {variant.variant_name} is already in your cart.')
     return redirect('user_wishlist_page')
 
-
 @never_cache
 @login_required(login_url='login') 
 def remove_from_wishlist(request):
@@ -407,8 +400,9 @@ def remove_from_wishlist(request):
     return redirect('user_wishlist_page')
 
 
-
+# --------------------------------------------------------------------
 # USER CART MANAGEMENT , ADDING PRODUCTS FOR AUTHENTICATED USERS
+# ---------------------------------------------------------------------
 @never_cache
 @login_required(login_url='login')
 def add_to_cart(request, variant_id):
@@ -515,8 +509,7 @@ def users_cart_page(request):
         except Coupon.DoesNotExist:
             del request.session['applied_coupon']
 
-    taxes = Decimal('0.00')  # apply GST later if required
-    amount_payable = selling_total_price - coupon_discount + taxes
+    amount_payable = selling_total_price - coupon_discount 
 
     # Fetch valid coupons
     valid_coupons = Coupon.objects.filter(
@@ -533,7 +526,6 @@ def users_cart_page(request):
         'selling_total_price': str(selling_total_price),
         'discount_total': str(discount_total),
         'coupon_discount': str(coupon_discount),
-        'taxes': str(taxes),
         'amount_payable': str(amount_payable),
         'cart_item_details': cart_item_details,
         'applied_coupon': coupon_applied.coupon_code if coupon_applied else None
@@ -545,15 +537,12 @@ def users_cart_page(request):
         'original_total_price': original_total_price,
         'discount_total': discount_total,
         'selling_total_price': selling_total_price,
-        'taxes': taxes,
         'coupon_discount': coupon_discount,
         'coupon_applied': coupon_applied,
         'valid_coupons': valid_coupons,
         'estimated_delivery_date': (datetime.now() + timedelta(days=7)).strftime('%B %d, %Y'),
     }
     return render(request, 'user/cart_page.html', context)
-
-
 
 @never_cache
 @login_required(login_url='login')
@@ -600,7 +589,6 @@ def remove_cart_item(request,cart_item_id):
     messages.success(request, f"{cart_item.variant} removed from your cart.")
 
     return redirect('user_cart_page')
-
 
 @never_cache
 @login_required(login_url='login') 
@@ -651,12 +639,14 @@ def remove_coupon(request):
         messages.success(request, 'Coupon removed successfully!')
     return redirect('user_cart_page')
 
-
+# ----------------------------------------------------------------------------
 # USER WALLET PAGE
+# ----------------------------------------------------------------------------
 @login_required(login_url='login')
 @never_cache
 def users_wallet_page(request):
 
     wallet,created=Wallet.objects.get_or_create(user=request.user)
+    transactions= wallet.transactions.all().order_by('created_at')
 
-    return render(request,'user/wallet_page.html',{'wallet':wallet})
+    return render(request,'user/wallet_page.html',{'wallet':wallet, 'transactions':transactions})

@@ -1,10 +1,11 @@
 from django.shortcuts import render,redirect,get_object_or_404
-from ecomusers.models import User,Wallet,Referral
+from ecomusers.models import User,Wallet,Referral,WalletTransaction
 from django.contrib.auth import authenticate,login,logout,get_user_model
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from django.core.mail import send_mail
 from django.conf import settings
+from decimal import Decimal
 import random
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
@@ -35,7 +36,8 @@ def registerview(request):
         # VALIDATE PASSWORD
         if password != confirm_password:
             messages.error(request,'Password do not matching.')
-            return render(request, 'user/register.html')
+            return render(request, 'auth/register.html')
+    
         
         # VALIDATE EMAIL
         if User.objects.filter(email=email).exists():
@@ -60,7 +62,11 @@ def registerview(request):
         
         # SENDING EMAIL
         subject='OTP for MediKate Email Verification'
-        message=f'The OTP for the MediKate verification: {otp} \n Enter this for the successful verification. '
+        message=(f'Hello {name}, \n Thank You for visiting MediKate.\n\n'
+                 f'Your generated OTP for the verification of  your email is {otp}. \n The OTP expires in 2 minutes.\n\n '
+                 f'Please enter the OTP for your MediKate registration.\n'
+                 f'If You didnt initiate the process, Please ignore the message.\n\n'
+                 f'Best Regards,\n Team MediKate.')
         from_email=settings.DEFAULT_FROM_EMAIL
         recipient_list=[email]
 
@@ -140,6 +146,19 @@ def otp_verify_view(request):
                     if referrer != user:
                         referral=Referral.objects.create(referrer=referrer, referee=user)
                         referral.apply_rewards()
+
+                        WalletTransaction.objects.create(
+                            wallet= user.wallet,
+                            transaction_type= 'CREDIT',
+                            amount= Decimal('10.00'),
+                            description= 'Referral Reward'
+                        )
+                        WalletTransaction.objects.create(
+                            wallet= referrer.wallet,
+                            transaction_type= 'CREDIT',
+                            amount= Decimal('10.00'),
+                            description= 'Referral Reward'
+                        )
                         messages.success(request,'Referral successfull. You have credited with ₹10 in your wallet.')
                     else:
                         messages.error(request,'You cannot self refer to your account.')
@@ -191,7 +210,9 @@ def resend_otp_view(request):
 
         # EMAIL SENDING
         subject=f'OTP for MediKate (Resend).'
-        message=f'New OTP for MediKate verification is {otp}.\n Please enter the otp for verification. '
+        message=(f'Dear {name},\n Your regenerated OTP for email verification is {otp}.\n '
+                 f'Please enter the OTP for the successfull registration.\n\n'
+                 f'Best Regards,\n Team MediKate')
         from_email=settings.DEFAULT_FROM_EMAIL
         recipient_list=[email]
 

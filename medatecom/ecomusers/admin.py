@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import User,UserAddress,WishlistProducts,CartProducts,Wallet,Referral
+from .models import User,UserAddress,WishlistProducts,CartProducts,Wallet,Referral,WalletTransaction
 
 # Register your models here.
 
@@ -10,3 +10,4 @@ admin.site.register(WishlistProducts)
 admin.site.register(CartProducts)
 admin.site.register(Wallet)
 admin.site.register(Referral)
+admin.site.register(WalletTransaction)

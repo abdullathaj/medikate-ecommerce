@@ -1,10 +1,10 @@
-{%extends 'admin/dashboard.html' %}
+{%extends 'admin/base_admin.html' %}
 {%load humanize %}
 
 {% block content %}
 
 <div class="container-fluid py-4">
-    <h2 class="mb-4 text-center fw-bold">Process Return Request #{{ return_request.id }}</h2>
+    <h2 class="mb-4 text-center">Process Return Request #{{ return_request.id }}</h2>
 
     <div class="card shadow-sm mb-4">
         <div class="card-body">

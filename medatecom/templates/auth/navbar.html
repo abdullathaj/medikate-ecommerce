@@ -11,218 +11,230 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        /* navbar */
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
 
-        body {
-            font-family: Arial, sans-serif;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            padding-top: 80px; /* Added to account for fixed navbar height */
-        }
+            body {
+                font-family: Arial, sans-serif;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                padding-top: 80px; /* Added to account for fixed navbar height */
+            }
 
-        .navbar {
-            background-color: #26A69A;
-            padding: 10px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: fixed; /* Changed from relative to fixed */
-            top: 0; /* Ensure navbar stays at the top */
-            width: 100%; /* Full width */
-            z-index: 1000; /* Ensure navbar stays above other content */
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
+            .navbar {
+                background-color: #00675cff;
+                padding: 10px 20px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                position: fixed; /* Changed from relative to fixed */
+                top: 0; /* Ensure navbar stays at the top */
+                width: 100%; /* Full width */
+                z-index: 1000; /* Ensure navbar stays above other content */
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            }
 
-        .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
-        }
+            .nav-container {
+                max-width: 1200px;
+                margin: 0 auto;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                width: 100%;
+            }
 
-        .logo {
-            flex: 0 0 auto;
-        }
+            .logo {
+                flex: 0 0 auto;
+            }
 
-        .logo img {
-            height: 50px;
-            width: auto;
+            .logo img {
+                height: 50px;
+                width: auto;
+                
+            }
+            .search-container {
+                width: 100%;
+                max-width: 400px;
+                margin: 0 auto;
+                position: relative;
+            }
+
+            .search-box {
+                width: 100%;
+                padding: 10px 45px 10px 15px; /* padding-right for icon space */
+                border: 2px solid #0d6efd;
+                border-radius: 25px;
+                outline: none;
+            }
+
+            .search-btn {
+                position: absolute;
+                right: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+                background: none;
+                border: none;
+                padding: 0;
+                color: #0d6efd;
+                cursor: pointer;
+            }
+
+            .search-btn:hover {
+                color: #084298;
+            }
+
+            .search-icon {
+                width: 20px;
+                height: 20px;
+            }
+
+            .nav-links {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+
+            .nav-item {
+                color: white;
+                text-decoration: none;
+                font-size: 16px;
+                font-weight: 500;
+                padding: 10px 20px;
+                border-radius: 5px;
+                transition: all 0.3s ease;
+            }
+
+            .nav-item:hover {
+                background-color: rgba(255, 255, 255, 0.2);
+                transform: translateY(-2px);
+            }
+
+            .search-container {
+                flex: 0 0 300px;
+                margin: 0 20px;
+                position: relative;
+            }
+
+            .search-box {
+                width: 100%;
+                padding: 10px 40px 10px 15px;
+                border: none;
+                border-radius: 25px;
+                outline: none;
+                font-size: 14px;
+            }
+
+            .search-icon {
+                position: absolute;
+                right: 15px;
+                top: 50%;
+                transform: translateY(-50%);
+                cursor: pointer;
+                width: 18px;
+                height: 18px;
+                color: #333;
+            }
+
+            .cart-icon,.wishlist-icon {
+                margin: 0 15px;
+                cursor: pointer;
+                font-size: 18px;
+                color: white;
+            }
             
-        }
-        .search-container {
-            width: 100%;
-            max-width: 400px;
-            margin: 0 auto;
-            position: relative;
-        }
 
-        .search-box {
-            width: 100%;
-            padding: 10px 45px 10px 15px; /* padding-right for icon space */
-            border: 2px solid #0d6efd;
-            border-radius: 25px;
-            outline: none;
-        }
+            .profile-section {
+                flex: 0 0 auto;
+                position: relative;
+                align-items: center;
+            }
 
-        .search-btn {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            padding: 0;
-            color: #0d6efd;
-            cursor: pointer;
-        }
+            .profile-icon {
+                width: 40px;
+                height: 40px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 18px;
+            }
 
-        .search-btn:hover {
-            color: #084298;
-        }
+            .dropdown {
+                display: none;
+                position: absolute;
+                top: 45px;
+                right: 0;
+                background-color:  #ffffff;
+                min-width: 150px;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+                border-radius: 10px;          
+                z-index: 1000;            
+            }
+            .dropdown :hover{
+                border-radius: 10px;
+            }
 
-        .search-icon {
-            width: 20px;
-            height: 20px;
-        }
+            .dropdown.show {
+                display: block;
+            }
 
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
+            .dropdown ul {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
 
-        .nav-item {
-            color: white;
-            text-decoration: none;
-            font-size: 16px;
-            font-weight: 500;
-            padding: 10px 20px;
-            border-radius: 5px;
-            transition: all 0.3s ease;
-        }
+            .dropdown li {
+                padding: 10px 15px;
+                font-size: 15px;
+                cursor: pointer;
+                transition: background-color 0.2s,color 0.2s ease;
+                display: flex;
+                align-items: center;
+                gap: 8px;      
+            }
+            
 
-        .nav-item:hover {
-            background-color: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-        }
+            .dropdown li:hover {
+                background-color: #f1f5f9;     
+            }
+            
+            .dropdown-item.login:hover {
+                background-color: #e6ffed;  
+                color: #036416ff;
+                font-weight: 500;             
+            }
+            .dropdown-item.logout:hover {
+                background-color: #ffe6e6;  
+                color: #dc3545;
+                font-weight: 500;
+            }
 
-        .nav-item.login, .nav-item.logout {
-            color: #ffffffff;
-            font-weight: 600;
-        }
+            .footer {
+                background-color: #e1ecebff;
+                color: #1a7a71;
+                padding: 20px 0;
+                text-align: center;
+                margin-top: auto;
+            }
 
-        .nav-item.login:hover, .nav-item.logout:hover {
-            background-color: white;
-            color: #1a7a71;
-        }
+            .footer a {
+                color: #1a7a71;
+                text-decoration: none;
+                margin: 0 15px;
+                transition: color 0.3s;
+            }
 
-        .search-container {
-            flex: 0 0 300px;
-            margin: 0 20px;
-            position: relative;
-        }
-
-        .search-box {
-            width: 100%;
-            padding: 10px 40px 10px 15px;
-            border: none;
-            border-radius: 25px;
-            outline: none;
-            font-size: 14px;
-        }
-
-        .search-icon {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            width: 18px;
-            height: 18px;
-            color: #333;
-        }
-
-        .cart-icon {
-            margin: 0 15px;
-            cursor: pointer;
-            font-size: 18px;
-            color: white;
-        }
-
-        .profile-section {
-            flex: 0 0 auto;
-            position: relative;
-        }
-
-        .profile-icon {
-            width: 40px;
-            height: 40px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 18px;
-        }
-
-        .dropdown {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            background-color: white;
-            min-width: 150px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            border-radius: 5px;
-            display: none;
-            z-index: 1000;
-            margin-top: 5px;
-        }
-
-        .dropdown.show {
-            display: block;
-        }
-
-        .dropdown ul {
-            list-style: none;
-            padding: 10px 0;
-        }
-
-        .dropdown li {
-            padding: 10px 20px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .dropdown li:hover {
-            background-color: #f5f5f5;
-        }
-
-        .footer {
-            background-color: #e1ecebff;
-            color: #1a7a71;
-            padding: 20px 0;
-            text-align: center;
-            margin-top: auto;
-        }
-
-        .footer a {
-            color: #1a7a71;
-            text-decoration: none;
-            margin: 0 15px;
-            transition: color 0.3s;
-        }
-
-        .footer a:hover {
-            color: #015048ff;
-            text-decoration: underline;
-        }
+            .footer a:hover {
+                color: #015048ff;
+                text-decoration: underline;
+            }
 
     /* Responsive Design */
         @media (max-width: 768px) {
@@ -259,7 +271,7 @@
                 font-size: 16px;
             }
 
-            .cart-icon {
+            .cart-icon,.wishlist-icon {
                 font-size: 16px;
                 margin: 0 10px;
             }
@@ -292,7 +304,7 @@
                 font-size: 14px;
             }
 
-            .cart-icon {
+            .cart-icon,.wishlist-icon {
                 font-size: 14px;
                 margin: 0 8px;
             }
@@ -301,6 +313,72 @@
                 padding-top: 100px; /* Adjusted for smaller screens */
             }
         }
+.footer {
+    background-color: #f8fbfb;
+    color: #00675c;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    border-top: 1px solid #dee2e6;
+}
+
+.footer-title {
+    font-size: 16px;
+    color: #00675c;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.footer-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.footer-list li {
+    margin-bottom: 8px;
+}
+
+.footer-list a {
+    text-decoration: none;
+    color: #495057;
+    font-size: 14px;
+    transition: color 0.3s ease, padding-left 0.2s ease;
+}
+
+.footer-list a:hover {
+    color: #00675c;
+    padding-left: 4px;
+}
+
+.social-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #e8f3f2;
+    color: #00675c;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.social-icon:hover {
+    background: #00675c;
+    color: #fff;
+    transform: translateY(-3px);
+}
+
+@media (max-width: 768px) {
+    .footer-title {
+        font-size: 15px;
+    }
+    .footer-list a {
+        font-size: 13px;
+    }
+}
+
+
+    
     </style>
 </head>
 <body>
@@ -308,7 +386,7 @@
         <div class="nav-container">
             <!-- Logo Section -->
             <div class="logo">
-                <img src="{% static 'home/images/medikate_logo1-removebg-preview.png' %}" alt="MediKate Logo" width="100" height="50">
+                <img src="{% static 'home/images/logo croped4.png' %}" alt="MediKate Logo" width="100" height="50">
             </div>
 
             <!-- Navigation Links (Home, Product) -->
@@ -326,25 +404,26 @@
             <!-- Cart, Login/Logout, and Profile Section -->
             <div class="nav-links">
                 <i class="fas fa-shopping-cart cart-icon" onclick="handleCartClick()"></i>
-                {% if not request.user.is_authenticated %}
-                <a href="{% url 'login' %}" class="nav-item login">Login</a>
-                {% else %}
-                <a href="{% url 'logout' %}" class="nav-item logout">Logout</a>
-                {% endif %}
+                 <i class="fas fa-heart wishlist-icon" onclick="handleWishlistClick()"></i>
+                
                 <div class="profile-section">
                     <div class="profile-icon" onclick="toggleDropdown()">
                         <i class="fas fa-user"></i>
                     </div>
-                    {% if request.user.is_authenticated %}
+                    
                     <div class="dropdown" id="profileDropdown">
                         <ul>
+                            {% if request.user.is_authenticated %}
                             <li onclick="handleMenuClick('profile')">Profile</li>
-                            <li onclick="handleMenuClick('orders')">Orders</li>
-                            <li onclick="handleMenuClick('wishlist')">Wishlist</li>
+                            <li onclick="handleMenuClick('orders')">Orders</li>                    
                             <li onclick="handleMenuClick('wallet')">Wallet</li>
+                            <li class="dropdown-item logout" onclick="handleMenuClick('logout')">Logout</li>
+                            {% else %}
+                            <li class="dropdown-item login" onclick="handleMenuClick('login')">Login</li>
+                            {% endif %}
                         </ul>
                     </div>
-                    {% endif %}
+                    
                 </div>
             </div>
         </div>
@@ -353,30 +432,90 @@
     {% block content %}
     {% endblock %}
 
-    <footer class="footer">
-        <div class="container">
-            <p>© 2025 MedAT. All rights reserved.</p>
-            <p>
-                <a href="">About</a> |
-                <a href="">Contact</a> |
-                <a href="">Privacy Policy</a>
+   <footer class="footer mt-auto">
+    <div class="container py-5">
+        <div class="row gy-4">
+            <!-- Logo & About -->
+            <div class="col-lg-3 col-md-6">
+                <div class="footer-logo mb-3">
+                    <img src="{% static 'home/images/logo croped4.png' %}" alt="MediKate Logo" width="130">
+                </div>
+                <p style="font-size:14px; color:#495057; line-height:1.7;">
+                    MediKate is your trusted online pharmacy, delivering genuine healthcare products and wellness essentials at your doorstep.
+                </p>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="col-lg-2 col-md-6">
+                <h5 class="footer-title">Quick Links</h5>
+                <ul class="footer-list">
+                    <li><a href="{% url 'userhome' %}">Home</a></li>
+                    <li><a href="{% url 'product_listing' %}">Products</a></li>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Contact</a></li>
+                </ul>
+            </div>
+
+            <!-- Customer Support -->
+            <div class="col-lg-3 col-md-6">
+                <h5 class="footer-title">Customer Support</h5>
+                <ul class="footer-list">
+                    <li><a href="#">FAQs</a></li>
+                    <li><a href="#">Shipping & Delivery</a></li>
+                    <li><a href="#">Returns & Refunds</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                </ul>
+            </div>
+
+            <!-- Contact & Social -->
+            <div class="col-lg-4 col-md-6">
+                <h5 class="footer-title">Stay Connected</h5>
+                <p style="font-size:14px; color:#495057;">Have questions? We’re here to help!</p>
+                <p style="font-size:14px; color:#495057;">
+                    <i class="fas fa-envelope me-2"></i> support@medikate.com
+                </p>
+                <div class="d-flex gap-3 mt-3">
+                    <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-icon"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Divider -->
+        <hr class="my-4" style="border-color:#d1d8dc;">
+
+        <!-- Footer Bottom -->
+        <div class="text-center">
+            <p style="margin:0; font-size:13px; color:#6c757d;">
+                &copy; 2025 <strong style="color:#00675c;">MediKate</strong>. All rights reserved.
             </p>
         </div>
-    </footer>
+    </div>
+</footer>
+
+
 
     <script>
         function toggleDropdown() {
-            {% if request.user.is_authenticated %}
+           
             const dropdown = document.getElementById('profileDropdown');
-            dropdown.classList.toggle('show');
-            {% else %}
-            window.location.href = "{% url 'login' %}";
-            {% endif %}
+            if (dropdown) dropdown.classList.toggle('show');
+           
+           
         }
 
         function handleCartClick() {
             {% if request.user.is_authenticated %}
             window.location.href = "{% url 'user_cart_page' %}";
+            {% else %}
+            window.location.href = "{% url 'login' %}";
+            {% endif %}
+        }
+        function handleWishlistClick(){
+            {% if request.user.is_authenticated %}
+            window.location.href = "{% url 'user_wishlist_page' %}";
             {% else %}
             window.location.href = "{% url 'login' %}";
             {% endif %}
@@ -391,12 +530,16 @@
                 case 'orders':
                     window.location.href = "{% url 'order_list' %}";
                     break;
-                case 'wishlist':
-                    window.location.href = "{% url 'user_wishlist_page' %}";
-                    break;
                 case 'wallet':
                     window.location.href = "{% url 'user_wallet_page' %}";
                     break;
+                case 'login':
+                    window.location.href = '{% url "login" %}';
+                    break;
+                case 'logout':
+                    window.location.href = '{% url "logout" %}';
+                    break;
+
             }
             document.getElementById('profileDropdown').classList.remove('show');
         }
@@ -410,6 +553,7 @@
                 }
             }
         });
+        
     </script>
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

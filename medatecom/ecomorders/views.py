@@ -6,13 +6,38 @@ from django.db import transaction,IntegrityError
 from django.db.models import Q
 from .models import Order, OrderItem,ReturnRequest
 from ecomproducts.models import Categories, Product, ProductImage, ProductVariant,Coupon
-from ecomusers.models import User, UserAddress, CartProducts,Wallet
+from ecomusers.models import User, UserAddress, CartProducts,Wallet,WalletTransaction
 from decimal import Decimal
 from datetime import datetime, timedelta
 from django.core.paginator import Paginator
 from django.conf import settings
 import razorpay
 from django.views.decorators.csrf import csrf_exempt
+
+def create_razorpay_order(amount, user_id, checkout_type='cart'):
+    """
+    Create a Razorpay order with comprehensive configuration
+    """
+    razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+    
+    order_data = {
+        'amount': int(amount * 100),  # Convert to paise
+        'currency': 'INR',
+        'payment_capture': '1',  # Auto capture payment
+        'notes': {
+            'order_type': 'ecommerce',
+            'user_id': str(user_id),
+            'checkout_type': checkout_type,
+            'platform': 'web'
+        }
+    }
+    
+    try:
+        razorpay_order = razorpay_client.order.create(order_data)
+        return razorpay_order
+    except Exception as e:
+        print(f"Error creating Razorpay order: {str(e)}")
+        raise e
 
 @login_required(login_url='login')
 def buy_now(request, variant_id):
@@ -92,7 +117,6 @@ def cart_checkout(request):
     original_total_price = Decimal(cart_price_data.get('original_total_price', '0'))
     selling_total_price = Decimal(cart_price_data.get('selling_total_price', '0'))
     discount_total = Decimal(cart_price_data.get('discount_total', '0'))
-    taxes = Decimal(cart_price_data.get('taxes', '0'))
     amount_payable = Decimal(cart_price_data.get('amount_payable', '0'))
     
     # Attach per-item calculations to cart items
@@ -151,7 +175,6 @@ def cart_checkout(request):
         'original_total_price': original_total_price,
         'selling_total_price': selling_total_price,
         'discount_total': discount_total,
-        'taxes': taxes,
         'amount_payable': amount_payable,
         'estimated_delivery_date': estimated_delivery_date,
         'addresses': addresses,
@@ -227,6 +250,13 @@ def payment_method(request):
                             return redirect('user_wallet_page')
                         wallet.balance -= total_amount
                         wallet.save()
+                        WalletTransaction.objects.create(
+                            wallet= wallet,
+                            transaction_type= 'DEBIT',
+                            amount= total_amount,
+                            description= 'Wallet Payment '
+                        )
+
 
                     # create order
                     order = Order.objects.create(
@@ -277,12 +307,15 @@ def payment_method(request):
                 return redirect('cart_checkout' if is_cart_checkout else 'buy_now', variant_id=variants[0]['variant'].id)
 
         elif payment_method == 'RAZORPAY':
-            razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
-            razorpay_order = razorpay_client.order.create({
-                'amount': int(total_amount * 100),
-                'currency': 'INR',
-                'payment_capture': '1'
-            })
+            try:
+                razorpay_order = create_razorpay_order(
+                    total_amount, 
+                    request.user.id, 
+                    'cart' if is_cart_checkout else 'buy_now'
+                )
+            except Exception as e:
+                messages.error(request, f"Failed to create payment order: {str(e)}")
+                return redirect('cart_checkout' if is_cart_checkout else 'buy_now', variant_id=variants[0]['variant'].id)
             order_data_with_total = order_data.copy()
             order_data_with_total['total_amount'] = str(total_amount)
             request.session[f'razorpay_pending_{razorpay_order["id"]}'] = order_data_with_total
@@ -321,11 +354,18 @@ def razorpay_success(request):
 
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
         try:
+            # Verify payment signature
             client.utility.verify_payment_signature({
                 'razorpay_order_id': razorpay_order_id,
                 'razorpay_payment_id': payment_id,
                 'razorpay_signature': signature
             })
+            
+            # Fetch payment details to get payment method used
+            payment_details = client.payment.fetch(payment_id)
+            payment_method_used = payment_details.get('method', 'unknown')
+            
+            print(f"Payment successful - Method: {payment_method_used}, Order ID: {razorpay_order_id}")
 
             order_data = pending_data
             is_cart_checkout = order_data.get('is_cart_checkout', False)
@@ -404,16 +444,24 @@ def razorpay_success(request):
 
                 return redirect('order_success', order_id=order.id)
 
-        except razorpay.errors.SignatureVerificationError:
-            messages.error(request, "Payment verification failed.")
+        except razorpay.errors.SignatureVerificationError as e:
+            print(f"Signature verification failed: {str(e)}")
+            messages.error(request, "Payment verification failed. Please try again.")
             if pending_key in request.session:
                 del request.session[pending_key]
-            return redirect('order_error')
+            return redirect('product_listing')
+        except razorpay.errors.BadRequestError as e:
+            print(f"Razorpay bad request error: {str(e)}")
+            messages.error(request, "Payment request failed. Please try again.")
+            if pending_key in request.session:
+                del request.session[pending_key]
+            return redirect('product_listing')
         except Exception as e:
-            messages.error(request, f"Error processing payment: {str(e)}")
+            print(f"Unexpected error during payment processing: {str(e)}")
+            messages.error(request, f"Payment processing failed: {str(e)}")
             if pending_key in request.session:
                 del request.session[pending_key]
-            return redirect('order_error')
+            return redirect('product_listing')
 
 
 @never_cache
@@ -536,6 +584,13 @@ def cancel_order_item(request, order_id, item_id):
                 if order.payment_method in ['WALLET', 'RAZORPAY']:
                     wallet.balance += Decimal(refund_amount).quantize(Decimal("0.01"))
                     wallet.save()
+
+                    WalletTransaction.objects.create(
+                        wallet= wallet,
+                        transaction_type= 'CREDIT',
+                        amount= Decimal(refund_amount),
+                        description= 'Order Cancel Refund'
+                    )
                 # Cancel entire order if all items are cancelled
                 if not order.items.filter(status='ACTIVE').exists():
                     order.status = 'CANCELLED'

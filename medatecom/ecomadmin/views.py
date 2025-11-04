@@ -1,5 +1,5 @@
 from django.shortcuts import render,redirect,get_object_or_404
-from ecomusers.models import User,Wallet
+from ecomusers.models import User,Wallet,WalletTransaction
 from ecomproducts.models import Categories,Product,ProductVariant,ProductImage,Coupon,Offer
 from ecomorders.models import Order,OrderItem,ReturnRequest
 from django.contrib.admin.views.decorators import staff_member_required
@@ -28,13 +28,12 @@ from django.db.models.functions import TruncDay, TruncWeek, TruncMonth, TruncYea
 @staff_member_required
 @never_cache
 def admin_dashboard(request):
+    ''' DASHBOARD OF ADMIN PAGE WHICH CONTAINS THE LINK FOR OTHER PAGES AND IT IS MIGRATING TO ALL THE PAGES.'''
+    return render(request,'admin/dashboard_admin.html')
 
-    
-    
-    return render(request,'admin/dashboard.html')
-
-
+# ---------------------------------------------------------------------------------------------------
 # USER MANAGEMENT FOR ADMIN
+# ---------------------------------------------------------------------------------------------------
 @staff_member_required(login_url='admin_login')
 @never_cache
 def admin_customer_details(request):
@@ -53,8 +52,6 @@ def admin_customer_details(request):
 
     return render(request,'admin/customer_details.html',{'users':users,'page_obj':page_obj,'query':query})
 
-
-# ADD NEW USER
 @staff_member_required(login_url='admin_login')
 @never_cache
 def admin_add_user(request):
@@ -71,13 +68,11 @@ def admin_add_user(request):
        form=Useraddform()       
    return render(request, 'admin/add_user.html', {'form': form}) 
 
-
-
-# ADMIN BLOCK AND UNBLOCK USER
-
 @staff_member_required(login_url='admin_login')
 @never_cache
 def admin_block_user(request,user_id):
+    ''' ADMIN BLOCKING AND UNBLOCKING THE EXISTING USERS.'''
+
     user=get_object_or_404(User,id=user_id)
     if request.method=='POST' and not user.is_superuser:
         user.is_active=not user.is_active
@@ -86,12 +81,11 @@ def admin_block_user(request,user_id):
         messages.success(request,f'User {user.username} has been {status}...')
     return redirect(admin_customer_details)
 
-################################################################################################################################
 
+# -----------------------------------------------------------------------------------------------------------
 # ADMIN CATEGORY MANAGEMENT
+# -------------------------------------------------------------------------------------------------------------
 
-
-# CATEGORY TABLE
 @staff_member_required(login_url='admin_login')
 # @never_cache
 def admin_category_list(request):
@@ -110,7 +104,6 @@ def admin_category_list(request):
     return render(request,'admin/category_list.html',{'page_obj':page_obj,'query':query})
 
 
-# ADMIN ADDING NEW CATEGORY
 @staff_member_required(login_url='admin_login')
 @never_cache
 def admin_add_category(request):
@@ -129,10 +122,11 @@ def admin_add_category(request):
     return render(request,'admin/category_add.html',{'form':form})
 
 
-# ADMIN HIDE AND SHOWING CATEGORIES
 @staff_member_required(login_url='admin_login')
 @never_cache
 def admin_hide_category(request, category_id):
+    ''' ADMIN HIDES AND UNHIDES THE EXISTING CATEGORIES.'''
+
     category = get_object_or_404(Categories, id=category_id)
 
     if request.method == "POST":
@@ -143,10 +137,10 @@ def admin_hide_category(request, category_id):
     return redirect('admin_categories')
 
 
-# ADMIN EDITING CATEGORIES
 @staff_member_required(login_url='admin_login')
 @never_cache
 def admin_edit_category(request, category_id):
+    ''' ADMIN CAN EDIT THE EXISTING CATEGORY DETAILS.'''
     category = get_object_or_404(Categories, id=category_id)
 
     if request.method == 'POST':
@@ -164,7 +158,9 @@ def admin_edit_category(request, category_id):
     
 ###############################################################################################################################
 
+# --------------------------------------------------------------------------------------------------------
 # ADMIN PRODUCT MANAGEMENT
+# ----------------------------------------------------------------------------------------------------------
 
 # PRODUCT TABLE
 @staff_member_required(login_url='admin_login')
@@ -206,10 +202,12 @@ def admin_product_details(request):
                    'sort':sort,'selected_category':category_id})
 
 
-# ADMIN ADDING NEW PRODUCT,VATIENT AND IMAGES
 @staff_member_required(login_url='admin_login')
 @never_cache
 def admin_add_product(request):
+    ''' ADMIN CAN ADD NEW PRODUCT IN THE EXISTING CATEGORIES. ADDING NAME, IMAGE, DESCRIPTION, STOCK, VARIANT NAME,
+        PRICE, SIZE, ETC.'''
+
     variant_formset = VariantFormset
     image_formset = ImageFormset
 
@@ -271,10 +269,11 @@ def admin_add_product(request):
         'form_errors': form_errors  
     })
 
-# ADMIN EDITING THE PRODUCT,Variant AND IMAGES
+
 @staff_member_required(login_url='admin_login')
 @never_cache
 def admin_edit_product(request,product_id):
+    ''' ADMIN EDITS PRODUCT NAME, CATEGORY, IMAGES AND OTHER PRODUCT DETAILS.'''
     
     product = get_object_or_404(Product, id=product_id)
     variant_formset = VariantFormset
@@ -354,10 +353,11 @@ def admin_edit_product(request,product_id):
     })
 
 
-# ADMIN HIDING AND SHOWING EXISTING PRODUCTS
 @staff_member_required(login_url='admin_login')
 @never_cache
 def admin_hide_product(request, variant_id):
+    ''' HIDE AND SHOWING THE PRODUCTS VARIANTS IF NEEDED. '''
+
     variant = get_object_or_404(ProductVariant, id=variant_id)
 
     if request.method == "POST":
@@ -369,9 +369,14 @@ def admin_hide_product(request, variant_id):
 
 #################################################################################################################################
 
+# ---------------------------------------------------------------------------------------------
 # ADMIN ORDER MANAGEMENT
+# ----------------------------------------------------------------------------------------------
+
 @staff_member_required(login_url='admin_login')
 def admin_order_list(request):
+    
+    ''' TABLE LISTING OF ORDERS'''
     query = request.GET.get('q', '').strip()
     orders = Order.objects.all().order_by('-created_at')   # ✅ note the ()
     order_count=Order.objects.count()
@@ -401,19 +406,22 @@ def admin_order_list(request):
     }
     return render(request, 'admin/admin_order_list.html', context)
 
-
-
 @staff_member_required(login_url='admin_login')
 def admin_order_item_list(request, order_id):
+    
+    ''' TABLE LISTING OF ORDER ITEMS.'''
+
     order = get_object_or_404(Order, id=order_id)
     items = order.items.all()
     context = {'order': order, 'items': items}
     return render(request, 'admin/admin_order_item_list.html', context)
 
-
 @staff_member_required(login_url='admin_login')
 @never_cache
 def admin_edit_order_status(request, item_id):
+    
+    ''' ADMIN CAN EDIT ORDER STATUS- DELIVERED, SHIPPED, ETC..'''
+
     if request.method == 'POST':
         item = get_object_or_404(OrderItem, id=item_id)
         new_status = request.POST.get('delivery_status')
@@ -436,12 +444,17 @@ def admin_edit_order_status(request, item_id):
 @staff_member_required(login_url='admin_login')
 def admin_request_list(request):
     
+    ''' LIST OF REOUESTS FOR ADMIN APPROVAL FOR RETUTN ORDERS. '''
+
     return_requests= ReturnRequest.objects.all().select_related('order_item__order','order_item__variant')
     context= {'return_requests':return_requests}
     return render(request,'admin/admin_return_request_list.html',context)
 
 @staff_member_required(login_url='admin_login')
 def admin_return_approval(request,request_id):
+    
+    """ ADMIN CAN APPROVE OR DENY THE RETURN REQUESTS. """
+
     return_request=get_object_or_404(ReturnRequest,id=request_id)
     item=return_request.order_item
     order= item.order
@@ -482,6 +495,12 @@ def admin_return_approval(request,request_id):
                     wallet.balance += Decimal(refund_amount).quantize(Decimal("0.01"))
                     wallet.save()
 
+                    WalletTransaction.objects.create(
+                        wallet= wallet,
+                        transaction_type= 'CREDIT',
+                        amount= Decimal(refund_amount),
+                        description= 'Order Return Refund'
+                    )
                     messages.success(request, f'The return request for # {item.id} is approved. Amount of {refund_amount} is added to the users wallet')
                 elif action == 'DENY':
                     return_request.status = 'DENIED'
@@ -499,8 +518,9 @@ def admin_return_approval(request,request_id):
 
 #################################################################################################################################
 
+# ----------------------------------------------------------------------------------------------
 # ADMIN COUPON MANAGEMENT
-
+# ---------------------------------------------------------------------------------------------
 
 @staff_member_required(login_url='admin_login')
 def admin_coupon_list(request):
@@ -529,9 +549,12 @@ def admin_coupon_list(request):
     
     return render(request, 'admin/admin_coupon_list.html', context)
 
-
 @staff_member_required(login_url='admin_login')
 def admin_coupon_creation(request):
+    
+    ''' ADMIN CAN CREATE COUPON WITH THE FIELDS OF 
+    COUPON CODE, PERCENTAGE, DESCRIPTION, VALIDITY, PURCHASE AMOUNT AND USAGE LIMIT.'''
+
     if request.method == 'POST':
         form= CouponForm(request.POST)
         if form.is_valid():
@@ -546,6 +569,9 @@ def admin_coupon_creation(request):
 
 @staff_member_required(login_url='admin_login')
 def admin_coupon_delete(request, coupon_id):
+    
+    ''' ADMIN CAN DELETE A COUPON IF IT IS NOT NEED LONGER.'''
+
     coupon = get_object_or_404(Coupon, id=coupon_id)
     
     if request.method == 'POST':
@@ -559,8 +585,9 @@ def admin_coupon_delete(request, coupon_id):
 
 #################################################################################################################################
 
+# --------------------------------------------------------------------------------
 # ADMIN OFFER MANAGEMENT
-
+# ----------------------------------------------------------------------------------
 
 @staff_member_required(login_url='admin_login')
 def admin_offer_list(request):
