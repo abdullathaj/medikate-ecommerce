@@ -29,10 +29,14 @@ from django.db.models.functions import TruncDay, TruncWeek, TruncMonth, TruncYea
 @never_cache
 def admin_dashboard(request):
     ''' DASHBOARD OF ADMIN PAGE WHICH CONTAINS THE LINK FOR OTHER PAGES AND IT IS MIGRATING TO ALL THE PAGES.'''
-    return render(request,'admin/dashboard_admin.html')
+
+    breadcrumbs=[
+        {'name':'Dashboard','url': ''},
+    ]
+    return render(request,'admin/dashboard_admin.html',{'breadcrumbs': breadcrumbs})
 
 # ---------------------------------------------------------------------------------------------------
-# USER MANAGEMENT FOR ADMIN
+# USER MANAGEMENT FOR ADMIN                                                                          
 # ---------------------------------------------------------------------------------------------------
 @staff_member_required(login_url='admin_login')
 @never_cache
@@ -49,24 +53,34 @@ def admin_customer_details(request):
     paginator=Paginator(users,10)
     page_number=request.GET.get('page')
     page_obj=paginator.get_page(page_number)
+    breadcrumbs=[
+        {'name': 'Dashboard', 'url': 'admin_dashboard'},
+        {'name': 'Customer', 'url':''},
+    ]
 
-    return render(request,'admin/customer_details.html',{'users':users,'page_obj':page_obj,'query':query})
+    return render(request,'admin/customer_details.html',{'users':users,'page_obj':page_obj,
+                                                         'query':query, 'breadcrumbs':breadcrumbs})
 
 @staff_member_required(login_url='admin_login')
 @never_cache
 def admin_add_user(request):
-   if request.method=='POST':
-       form=Useraddform(request.POST)
-       if form.is_valid():
-           user = form.save()
-           print(user)
-           messages.success(request, f'{user.username} has been created.')
-           return redirect('customer_details')
-       else:
-           messages.error(request,'Please add valid credentials.')
-   else:
-       form=Useraddform()       
-   return render(request, 'admin/add_user.html', {'form': form}) 
+    if request.method=='POST':
+        form=Useraddform(request.POST)
+        if form.is_valid():
+            user = form.save()
+            print(user)
+            messages.success(request, f'{user.username} has been created.')
+            return redirect('customer_details')
+        else:
+            messages.error(request,'Please add valid credentials.')
+    else:
+        form=Useraddform()
+    breadcrumbs=[
+        {'name': 'Dashboard', 'url': 'admin_dashboard'},
+        {'name': 'Customer', 'url':'customer_details'},
+        {'name': 'Add user', 'url': ''},
+    ]       
+    return render(request, 'admin/add_user.html', {'form': form, 'breadcrumbs': breadcrumbs}) 
 
 @staff_member_required(login_url='admin_login')
 @never_cache
@@ -101,7 +115,12 @@ def admin_category_list(request):
     page_number=request.GET.get('page')
     page_obj=paginator.get_page(page_number)
 
-    return render(request,'admin/category_list.html',{'page_obj':page_obj,'query':query})
+    breadcrumbs=[
+        {'name': 'Dashboard', 'url': 'admin_dashboard'},
+        {'name': 'Categories', 'url':''},
+    ]
+
+    return render(request,'admin/category_list.html',{'page_obj':page_obj,'query':query, 'breadcrumbs': breadcrumbs})
 
 
 @staff_member_required(login_url='admin_login')
@@ -118,8 +137,12 @@ def admin_add_category(request):
             messages.error(request, 'Please correct the errors below.')
     else:
         form = CategoryAddForm()
-
-    return render(request,'admin/category_add.html',{'form':form})
+    breadcrumbs=[
+        {'name': 'Dashboard', 'url': 'admin_dashboard'},
+        {'name': 'Categories', 'url':'admin_categories'},
+        {'name': 'Add category', 'url': ''}
+    ]
+    return render(request,'admin/category_add.html',{'form':form, 'breadcrumbs':breadcrumbs})
 
 
 @staff_member_required(login_url='admin_login')
@@ -153,8 +176,12 @@ def admin_edit_category(request, category_id):
             messages.error(request, 'Please correct the errors below.')
     else:
         form = CategoryAddForm(instance=category)
-
-    return render(request, 'admin/edit_category.html', {'form': form, 'category': category})
+    breadcrumbs=[
+        {'name': 'Dashboard', 'url': 'admin_dashboard'},
+        {'name': 'Categories', 'url':'admin_categories'},
+        {'name': 'Edit category', 'url': ''}
+    ]
+    return render(request, 'admin/edit_category.html', {'form': form, 'category': category, 'breadcrumbs':breadcrumbs})
     
 ###############################################################################################################################
 
@@ -182,8 +209,6 @@ def admin_product_details(request):
     elif sort=='oldest':
         variants=variants.order_by('product__created_at')
     
-
-
     query = request.GET.get('q')
     if query:
         variants = variants.filter(
@@ -195,11 +220,16 @@ def admin_product_details(request):
     page_number=request.GET.get('page')
     page_obj=paginator.get_page(page_number)
 
+    breadcrumbs=[
+        {'name': 'Dashboard', 'url': 'admin_dashboard'},
+        {'name': 'Products', 'url':''},
+    ]
     return render(request,'admin/product_list.html',
                   {'products':products,
                    'variants':page_obj,'page_obj':page_obj,
                    'query':query,'categories':categories,
-                   'sort':sort,'selected_category':category_id})
+                   'sort':sort,'selected_category':category_id,
+                   'breadcrumbs': breadcrumbs})
 
 
 @staff_member_required(login_url='admin_login')
@@ -262,11 +292,17 @@ def admin_add_product(request):
         variant_form = variant_formset(prefix='variants')
         image_form = image_formset(prefix='images')
 
+    breadcrumbs=[
+        {'name': 'Dashboard', 'url': 'admin_dashboard'},
+        {'name': 'Products', 'url':'admin_product_list'},
+        {'name': 'Add product', 'url': ''}
+    ]
     return render(request, 'admin/product_add.html', {
         'product_form': product_form,
         'variant_form': variant_form,
         'image_form': image_form,
-        'form_errors': form_errors  
+        'form_errors': form_errors,
+        'breadcrumbs': breadcrumbs 
     })
 
 
@@ -344,12 +380,18 @@ def admin_edit_product(request,product_id):
         variant_form = variant_formset(instance=product, prefix='variants')
         image_form = image_formset(instance=product, prefix='images')
 
+    breadcrumbs=[
+        {'name': 'Dashboard', 'url': 'admin_dashboard'},
+        {'name': 'Products', 'url':'admin_product_list'},
+        {'name': 'Edit product', 'url': ''}
+    ]
     return render(request, 'admin/product_edit.html', {
         'product_form': product_form,
         'variant_form': variant_form,
         'image_form': image_form,
         'form_errors': form_errors,
         'product': product,
+        'breadcrumbs': breadcrumbs
     })
 
 
@@ -399,10 +441,15 @@ def admin_order_list(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    breadcrumbs=[
+        {'name': 'Dashboard', 'url': 'admin_dashboard'},
+        {'name': 'Orders', 'url':''},
+    ]
     context = {
         'query': query,
         'orders': page_obj,
         'order_count':order_count,
+        'breadcrumbs': breadcrumbs
     }
     return render(request, 'admin/admin_order_list.html', context)
 
@@ -413,7 +460,13 @@ def admin_order_item_list(request, order_id):
 
     order = get_object_or_404(Order, id=order_id)
     items = order.items.all()
-    context = {'order': order, 'items': items}
+
+    breadcrumbs=[
+        {'name': 'Dashboard', 'url': 'admin_dashboard'},
+        {'name': 'Orders', 'url':'admin_order_list'},
+        {'name': 'Order Item', 'url': ''}
+    ]
+    context = {'order': order, 'items': items, 'breadcrumbs': breadcrumbs}
     return render(request, 'admin/admin_order_item_list.html', context)
 
 @staff_member_required(login_url='admin_login')
@@ -447,7 +500,11 @@ def admin_request_list(request):
     ''' LIST OF REOUESTS FOR ADMIN APPROVAL FOR RETUTN ORDERS. '''
 
     return_requests= ReturnRequest.objects.all().select_related('order_item__order','order_item__variant')
-    context= {'return_requests':return_requests}
+    breadcrumbs=[
+        {'name': 'Dashboard', 'url': 'admin_dashboard'},
+        {'name': 'Requests', 'url':''},
+    ]
+    context= {'return_requests':return_requests, 'breadcrumbs': breadcrumbs}
     return render(request,'admin/admin_return_request_list.html',context)
 
 @staff_member_required(login_url='admin_login')
@@ -540,11 +597,15 @@ def admin_coupon_list(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
-    # Prepare context
+    breadcrumbs=[
+        {'name': 'Dashboard', 'url': 'admin_dashboard'},
+        {'name': 'Coupons', 'url':''},
+    ]
     context = {
         'coupons': page_obj,
         'coupon_count': paginator.count,
         'query': query,
+        'breadcrumbs': breadcrumbs
     }
     
     return render(request, 'admin/admin_coupon_list.html', context)
@@ -565,7 +626,12 @@ def admin_coupon_creation(request):
             messages.warning(request,'Please fill the form correctly.')
     else:
         form= CouponForm()
-    return render(request,'admin/admin_coupon_creation.html',{'form': form})
+    breadcrumbs=[
+        {'name': 'Dashboard', 'url': 'admin_dashboard'},
+        {'name': 'Coupons', 'url':'admin_coupon_list'},
+        {'name': 'Create Coupon', 'url': ''}
+    ]
+    return render(request,'admin/admin_coupon_creation.html',{'form': form, 'breadcrumbs': breadcrumbs})
 
 @staff_member_required(login_url='admin_login')
 def admin_coupon_delete(request, coupon_id):
@@ -607,10 +673,15 @@ def admin_offer_list(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    breadcrumbs=[
+        {'name': 'Dashboard', 'url': 'admin_dashboard'},
+        {'name': 'Offers', 'url':''},
+    ]
     context = {
         'offers': page_obj,
         'offer_count': paginator.count,
         'query': query,
+        'breadcrumbs': breadcrumbs
     }
 
     return render(request, 'admin/admin_offer_list.html', context)
@@ -628,7 +699,12 @@ def admin_offer_creation(request):
     else:
         form = OfferForm()
 
-    return render(request, 'admin/admin_offer_creation.html', {'form': form})
+    breadcrumbs=[
+        {'name': 'Dashboard', 'url': 'admin_dashboard'},
+        {'name': 'Offers', 'url':'admin_offer_list'},
+        {'name': 'Offer Creation', 'url': ''}
+    ]
+    return render(request, 'admin/admin_offer_creation.html', {'form': form, 'breadcrumbs': breadcrumbs})
 
 @staff_member_required(login_url='admin_login')
 def admin_offer_delete(request,offer_id):
@@ -708,6 +784,10 @@ def admin_sales_report(request):
         .order_by('period')
     )
 
+    breadcrumbs=[
+        {'name': 'Dashboard', 'url': 'admin_dashboard'},
+        {'name': 'Sales report', 'url':''},
+    ]
     context = {
         'filter_type': filter_type,
         'orders': orders.select_related('user'),
@@ -717,6 +797,7 @@ def admin_sales_report(request):
         'grouped_sales': grouped_sales,
         'start_date': start_date,
         'end_date': end_date,
+        'breadcrumbs': breadcrumbs
     }
 
     return render(request, 'admin/admin_sales_report.html', context)

@@ -34,21 +34,19 @@ def userhomeview(request):
     print(products)
 
     trending_products=products[:8]
-
-    
+  
     return render(request, 'auth/home.html',{'products': products, 'trending_products':trending_products})
 
 @login_required(login_url='login') 
 @never_cache
 def home_after_login(request):
-
     
     products = Product.objects.filter(
         product_variant__is_active=True,
         category__is_active=True
-    ).select_related('category').order_by('-created_at').distinct()[:4]
+    ).select_related('category').order_by('-created_at').distinct()[:8]
     print(products)
-    trending_products=products[:4]
+    trending_products=products[:8]
    
     return render(request,'auth/home.html',{'products':products,'trending products':trending_products})
 
@@ -68,12 +66,17 @@ def product_details(request, variant_id):
         category__is_active=True
     ).exclude(id=product.id).distinct()[:6]
 
-    # Context for template
+    breadcrumbs=[
+        {'name': 'Home', 'url':'login_home'},
+        {'name': 'Products', 'url': 'product_listing'},
+        {'name': 'Product Details', 'url': ''}
+    ]
     context = {
         'product': product,
         'selected_variant':variant,
         'variants': variants,
         'related_products': related_products,
+        'breadcrumbs': breadcrumbs
     }
 
     return render(request, 'user/product_details.html', context)
@@ -156,7 +159,10 @@ def user_product_listing(request):
         del query_params['page']
     query_string = query_params.urlencode()
 
-    # Context for template
+    breadcrumbs=[
+        {'name': 'Home', 'url':'login_home'},
+        {'name': 'Products', 'url': ''}
+    ]
     context = {
         'variants': page_obj,
         'categories': categories,
@@ -167,7 +173,8 @@ def user_product_listing(request):
         'price_max': price_max,
         'sort': sort,
         'query_string': query_string,
-        'query': query
+        'query': query,
+        'breadcrumbs': breadcrumbs
     }
 
     return render(request, 'user/product_listing.html', context)
@@ -183,12 +190,16 @@ def users_profile_page(request):
         return redirect('login')
     if not request.user.referral_code:
         request.user.save()
+    breadcrumbs=[
+        {'name': 'Home', 'url':'login_home'},
+        {'name': 'Profile', 'url': ''}
+    ]
     context={
         'user': request.user,
         'referrals': request.user.referral_made.all(),
-        'referral_count': request.user.referral_made.count()
-    }
-   
+        'referral_count': request.user.referral_made.count(),
+        'breadcrumbs': breadcrumbs
+    } 
     return render(request,'user/profile_page.html',context)
 
 @never_cache
@@ -272,11 +283,17 @@ def users_profile_update_page(request):
                     messages.error(request,f'Email couldnt sent. Something went wrong.\n Try again.')
                     return redirect('user_profile_update')
 
+    breadcrumbs=[
+        {'name': 'Home', 'url':'login_home'},
+        {'name': 'Profile', 'url': 'user_profile_page'},
+        {'name': 'Profrle updation', 'url': ''}
+    ]
     return render(request, 'user/profile_edit.html', {
         'user_form': user_form,
         'address_form': address_form,
         'password_form':password_form,
         'email_form': email_form,
+        'breadcrumbs': breadcrumbs
     })
 
 @never_cache
@@ -311,9 +328,14 @@ def verify_email_otp(request):
             request.session.pop(i,None)
         messages.success(request,f'The email is updated to {new_email} for {user}')
         return redirect('user_profile_update')
-
+    breadcrumbs=[
+        {'name': 'Home', 'url':'login_home'},
+        {'name': 'Profile', 'url': 'user_profile_page'},
+        {'name': 'Profile updation', 'url': 'user_profile_update'},
+        {'name': 'Emai verification', 'url': ''}
+    ]
         
-    return render(request,'user/verify_email_otp.html')
+    return render(request,'user/verify_email_otp.html',{'breadcrumbs': breadcrumbs})
 
 @never_cache
 @login_required(login_url='login')
@@ -372,8 +394,13 @@ def users_wishlist_page(request):
     ).select_related('variant__product')    
     
     print('wishlist:',wishlist_items)
-    return render(request, 'user/wishlist_page.html', {'wishlist_items': wishlist_items})
+    breadcrumbs=[
+        {'name': 'Home', 'url':'login_home'},
+        {'name': 'Wishlist', 'url': ''}
+    ]
+    return render(request, 'user/wishlist_page.html', {'wishlist_items': wishlist_items, 'breadcrumbs':breadcrumbs})
 
+@login_required(login_url='login')
 def move_to_cart(request,variant_id):
     """ MOVING THE PRODUCT TO CART FROM WISHLIST AND REMOVE IT FROM WISHLIST """
     variant= get_object_or_404(ProductVariant, id=variant_id, is_active=True)
@@ -531,6 +558,10 @@ def users_cart_page(request):
         'applied_coupon': coupon_applied.coupon_code if coupon_applied else None
     }
 
+    breadcrumbs=[
+        {'name': 'Home', 'url':'login_home'},
+        {'name': 'Cart', 'url': ''}
+    ]
     context = {
         'cart_items': cart_items,
         'payable_amount': amount_payable,
@@ -541,6 +572,7 @@ def users_cart_page(request):
         'coupon_applied': coupon_applied,
         'valid_coupons': valid_coupons,
         'estimated_delivery_date': (datetime.now() + timedelta(days=7)).strftime('%B %d, %Y'),
+        'breadcrumbs': breadcrumbs
     }
     return render(request, 'user/cart_page.html', context)
 
@@ -648,5 +680,8 @@ def users_wallet_page(request):
 
     wallet,created=Wallet.objects.get_or_create(user=request.user)
     transactions= wallet.transactions.all().order_by('created_at')
-
-    return render(request,'user/wallet_page.html',{'wallet':wallet, 'transactions':transactions})
+    breadcrumbs=[
+        {'name': 'Home', 'url':'login_home'},
+        {'name': 'Wallet', 'url': ''}
+    ]
+    return render(request,'user/wallet_page.html',{'wallet':wallet, 'transactions':transactions, 'breadcrumbs': breadcrumbs})

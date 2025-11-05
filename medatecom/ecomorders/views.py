@@ -528,12 +528,17 @@ def orderlist(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    breadcrumbs=[
+        {'name': 'Home', 'url':'login_home'},
+        {'name': 'Orders', 'url': ''}
+    ]
     return render(request, 'user/order_list.html', {
         'query': query,
         'status_filter': status_filter,
         'orders': page_obj if not query else None,  # only if query is empty
         'items': page_obj if query else None,       # only if query exists
         'page_obj': page_obj,
+        'breadcrumbs': breadcrumbs
     })
 
 
@@ -541,8 +546,14 @@ def orderlist(request):
 def order_details(request, order_id, item_id):
     order_item = get_object_or_404(OrderItem, id=item_id, order__user=request.user, order__id=order_id)
     
+    breadcrumbs=[
+        {'name': 'Home', 'url':'login_home'},
+        {'name': 'Orders', 'url': 'order_list'},
+        {'name': 'Order details', 'url':''}
+    ]
     context = {
         'order_item': order_item,
+        'breadcrumbs': breadcrumbs
     }
     return render(request, 'user/order_details.html', context)
 
@@ -610,7 +621,7 @@ def cancel_order_item(request, order_id, item_id):
     return render(request, "user/cancel_order_item.html", {"item": item, "order": order})
 
 @never_cache
-@login_required
+@login_required(login_url='login')
 def return_order_item(request, order_id, item_id):
     # Get the order and item based on IDs
     order = get_object_or_404(Order, id=order_id, user=request.user)
