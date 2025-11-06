@@ -37,7 +37,9 @@ def registerview(request):
         if password != confirm_password:
             messages.error(request,'Password do not matching.')
             return render(request, 'auth/register.html')
-    
+        if len(password) <6:
+            messages.error(request,'Password error: Atleast 6 characters needed')
+            return render(request, 'auth/register.html')
         
         # VALIDATE EMAIL
         if User.objects.filter(email=email).exists():

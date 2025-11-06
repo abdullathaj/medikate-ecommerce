@@ -3,7 +3,7 @@
 
 {% block content %}
 <!-- Toast Container -->
-<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055;">
     {% if messages %}
         {% for message in messages %}
             <div class="toast align-items-center text-white 
@@ -23,7 +23,7 @@
     {% endif %}
 </div>
 
-<div class="container mt-5">
+<div class="container mb-5">
     <div class="row justify-content-center">
         <div class="col-lg-8 col-md-10 col-sm-12">
             <div class="card shadow">
@@ -34,16 +34,20 @@
                     <!-- Tabs Navigation -->
                     <ul class="nav nav-tabs" id="profileTabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="personal-tab" data-bs-toggle="tab" data-bs-target="#personal" type="button" role="tab" aria-controls="personal" aria-selected="true">Personal Info</button>
+                            <button class="nav-link active" id="personal-tab" data-bs-toggle="tab" data-bs-target="#personal" 
+                            type="button" role="tab" aria-controls="personal" aria-selected="true">Personal Info</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="address-tab" data-bs-toggle="tab" data-bs-target="#address" type="button" role="tab" aria-controls="address" aria-selected="false">Add New Address</button>
+                            <button class="nav-link" id="address-tab" data-bs-toggle="tab" data-bs-target="#address"
+                            type="button" role="tab" aria-controls="address" aria-selected="false">Add New Address</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="password-tab" data-bs-toggle="tab" data-bs-target="#password" type="button" role="tab" aria-controls="password" aria-selected="false">Change Password</button>
+                            <button class="nav-link" id="password-tab" data-bs-toggle="tab" data-bs-target="#password" 
+                            type="button" role="tab" aria-controls="password" aria-selected="false">Change Password</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="email-tab" data-bs-toggle="tab" data-bs-target="#email" type="button" role="tab" aria-controls="email" aria-selected="false">Change Email</button>
+                            <button class="nav-link" id="email-tab" data-bs-toggle="tab" data-bs-target="#email" 
+                            type="button" role="tab" aria-controls="email" aria-selected="false">Change Email</button>
                         </li>
                     </ul>
 

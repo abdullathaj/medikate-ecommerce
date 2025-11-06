@@ -3,9 +3,11 @@ from django.contrib.auth.forms import UserChangeForm
 from .models import User,UserAddress
 from django.contrib.auth import password_validation
 from django.contrib.auth.hashers import check_password
+from django.core.exceptions import ValidationError
+import re
 
 class UserProfileForm(UserChangeForm):
-    
+      
     password=None
     class Meta:
         model=User
@@ -17,6 +19,27 @@ class UserProfileForm(UserChangeForm):
             'phone':forms.TextInput(attrs={'class':'form-control'}),
 
         }
+    def clean(self):
+        cleaned_data= super().clean()
+        username= cleaned_data.get('username')
+        first_name,last_name= cleaned_data.get('first_name'),cleaned_data.get('last_name')
+        phone= cleaned_data.get('phone')
+
+        if username and not re.match(r'^[a-zA-Z0-9_]+$', username):
+            self.add_error('username', 'Username should only contain letters, digits, and underscores.')
+
+        if first_name and not re.match(r'^[A-Za-z]+$', first_name):
+            self.add_error('first_name', 'First name should only contain letters.')
+
+        if last_name and not re.match(r'^[A-Za-z]+$', last_name):
+            self.add_error('last_name', 'Last name should only contain letters.')
+
+        if phone and not re.match(r'^\d{10}$', phone):
+            self.add_error('phone', 'Phone number must be a valid 10-digit number.')
+        
+        return cleaned_data
+
+
 
 class EmailChangeForm(forms.Form):
 
@@ -57,6 +80,19 @@ class UserAddressForm(forms.ModelForm):
         state = cleaned_data.get('state')
         nation = cleaned_data.get('nation')
         postal_code = cleaned_data.get('postal_code')
+
+        if addressline_1 and not re.match(r'^[A-Za-z0-9 ]+$',addressline_1):
+            self.add_error('addressline_1','Address should not contain symbols')
+        if addressline_2 and not re.match(r'^[A-Za-z0-9 ]+$',addressline_2):
+            self.add_error('addressline_2','Address should not contain symbols')
+        if city and not re.match(r'^[A-Za-z ]+$',city):
+            self.add_error('city','City name must only contain letters.')
+        if state and not re.match(r'^[A-Za-z ]+$',state):
+            self.add_error('state','State name must only contain letters.')
+        if nation and not re.match(r'^[A-Za-z]+$',nation):
+            self.add_error('nation','Nation name must only contain letters.')
+        if postal_code and not re.match(r'^\d{6}$',postal_code):
+            self.add_error('postal_code','Postal code must contain 6 digits only.')
 
         # Check for duplicates
         if user and addressline_1 and city and state and nation and postal_code:

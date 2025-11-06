@@ -227,7 +227,7 @@ def users_profile_update_page(request):
             if user_form.is_valid():
                 user_form.save()
                 messages.success(request, "Profile updated.")
-                return redirect('user_profile_update')
+                return redirect('user_profile_page')
 
         elif 'update_address' in request.POST:
             address_form = UserAddressForm(request.POST)
@@ -237,20 +237,15 @@ def users_profile_update_page(request):
             if address_form.is_valid():
                 address_form.save()
                 messages.success(request, "Address saved.")
-                return redirect('user_profile_update')
-            else:
-                # Show all errors as toast messages
-                for field, error_list in address_form.errors.items():
-                    for error in error_list:
-                        messages.error(request, error)
-
+                return redirect('user_profile_page')
+            
         elif 'update_password' in request.POST:
             password_form = UserPasswordChangeForm(user=user, data=request.POST)
             if password_form.is_valid():
                 password_form.save()
                 update_session_auth_hash(request, user)  # Keep user logged in
                 messages.success(request, "Password updated successfully.")
-                return redirect('user_profile_update')
+                return redirect('user_profile_page')
             else:
                 for field, error_list in password_form.errors.items():
                     for error in error_list:
@@ -327,7 +322,7 @@ def verify_email_otp(request):
         for i in ['change_email','email_otp','email_expiry_time']:
             request.session.pop(i,None)
         messages.success(request,f'The email is updated to {new_email} for {user}')
-        return redirect('user_profile_update')
+        return redirect('user_profile_page')
     breadcrumbs=[
         {'name': 'Home', 'url':'login_home'},
         {'name': 'Profile', 'url': 'user_profile_page'},
