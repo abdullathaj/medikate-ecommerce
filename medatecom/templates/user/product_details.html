@@ -124,7 +124,9 @@
                     <a href="{% url 'add_to_cart' selected_variant.id %}" id="addToCartBtn" class="btn btn-outline-secondary" title="Add to Cart">
                         <i class="fas fa-shopping-cart"></i> Add to Cart
                     </a>
-                    <a href="{% url 'add_to_wishlist' selected_variant.id %}" id="addToWishlistBtn" class="btn btn-outline-secondary mx-2" title="Add to Wishlist">
+                    <a href="{% url 'add_to_wishlist' selected_variant.id %}" id="addToWishlistBtn" 
+                    class="btn btn-outline-secondary mx-2 {% if selected_variant.id in wishlist_variant_ids %}in-wishlist{% endif %}" 
+                    title="Add to Wishlist">
                         <i class="fas fa-heart"></i>
                     </a>
                 </div>
@@ -163,8 +165,10 @@
                                         <span class="current-price">₹{{ variant.final_price|floatformat:2 }}</span>
                                     </div>
                                     <div class="product-links">
-                                        <a href="{% url 'add_to_cart' variant.id %}" title="Add to Cart" class="cart-btn"><i class="fas fa-shopping-cart"></i></a>
-                                        <a href="{% url 'add_to_wishlist' variant.id %}" title="Add to Wishlist" class="wishlist-btn"><i class="fas fa-heart"></i></a>
+                                        <a href="{% url 'add_to_cart' variant.id %}" title="Add to Cart" class="cart-btn">
+                                            <i class="fas fa-shopping-cart"></i></a>
+                                        <a href="{% url 'add_to_wishlist' variant.id %}" title="Add to Wishlist" class="wishlist-btn ">
+                                            <i class="fas fa-heart"></i></a>
                                     </div>
                                 {% else %}
                                     <div class="related-product-price">N/A</div>
@@ -194,7 +198,7 @@
             padding: 2rem 0;
         }
 
-        /* Carousel */
+    /* Carousel */
         .carousel {
             max-height: 400px;
             overflow: hidden;
@@ -213,7 +217,7 @@
             transform: scale(1.2);
         }
 
-        /* Responsive - Carousel */
+        
         @media (max-width: 768px) {
             .carousel {
                 max-height: 300px;
@@ -231,7 +235,7 @@
             }
         }
 
-        /* Product Information */
+    /* Product Information */
         .product-catagory {
             font-size: 14px;
             font-weight: 500;
@@ -245,7 +249,7 @@
             line-height: 1.6;
         }
 
-        /* Responsive - Product Info */
+       
         @media (max-width: 768px) {
             .product-details-section h2 {
                 font-size: 1.5rem;
@@ -263,7 +267,6 @@
             }
         }
 
-        /* Rating */
         .product-rating {
             display: flex;
             align-items: center;
@@ -281,7 +284,6 @@
             color: #5f6c85;
         }
 
-        /* Pricing & Stock */
         .product-price {
             display: flex;
             align-items: center;
@@ -298,7 +300,6 @@
             color: #f59e0b;
         }
 
-        /* Responsive - Price */
         @media (max-width: 768px) {
             .product-price .current-price {
                 font-size: 1.25rem;
@@ -310,7 +311,6 @@
             }
         }
 
-        /* Buttons */
         .btn-primary,
         .buy-now-btn {
             background-color: #4b6cb7;
@@ -337,7 +337,9 @@
             color: #4b6cb7;
             border-color: #4b6cb7;
         }
-        /* Responsive - Buttons */
+        .in-wishlist i {
+            color: red;
+        }
         @media (max-width: 576px) {
             .btn-primary,
             .btn-outline-secondary {
@@ -346,7 +348,7 @@
             }
         }
 
-        /* Dropdown */
+    /* Dropdown */
         .form-select {
             max-width: 300px;
             font-size: 14px;
@@ -376,7 +378,6 @@
             box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
         }
 
-        /* Product Image */
         .product-thumb {
             height: 140px;
             background: #fff;
@@ -397,7 +398,7 @@
             transform: scale(1.05);
         }
 
-        /* Product Details */
+    /* Product Details */
         .product-details {
             padding: 10px 12px;
             display: flex;
@@ -423,7 +424,6 @@
             color: #4b6cb7;
         }
 
-        /* Price & Buttons */
         .product-bottom-details {
             display: flex;
             justify-content: space-between;
@@ -464,7 +464,7 @@
             color: #fff;
         }
 
-        /* Responsive Adjustments */
+    /* Responsive Adjustments */
         @media (max-width: 992px) {
             .product-thumb {
                 height: 120px;

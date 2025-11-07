@@ -45,10 +45,16 @@ def home_after_login(request):
         product_variant__is_active=True,
         category__is_active=True
     ).select_related('category').order_by('-created_at').distinct()[:8]
-    print(products)
+    
+    wishlist_variant_ids= []
+    if request.user.is_authenticated:
+        wishlist_variant_ids= WishlistProducts.objects.filter(
+            user= request.user
+        ).values_list('variant_id', flat= True)
     trending_products=products[:8]
    
-    return render(request,'auth/home.html',{'products':products,'trending products':trending_products})
+    return render(request,'auth/home.html',{'products':products,'trending products':trending_products,
+                                            'wishlist_variant_ids':wishlist_variant_ids})
 
 def product_details(request, variant_id):
     # Fetch the product
@@ -58,6 +64,11 @@ def product_details(request, variant_id):
 
     # Fetch active variants for the product
     variants = product.product_variant.filter(is_active=True)
+    wishlist_variant_ids=[]
+    if request.user.is_authenticated:
+        wishlist_variant_ids= WishlistProducts.objects.filter(
+            user= request.user
+        ).values_list('variant_id',flat=True)
 
     # Fetch related products (same category, excluding current product, up to 4)
     related_products = Product.objects.filter(
@@ -76,19 +87,23 @@ def product_details(request, variant_id):
         'selected_variant':variant,
         'variants': variants,
         'related_products': related_products,
+        'wishlist_variant_ids': wishlist_variant_ids,
         'breadcrumbs': breadcrumbs
     }
 
     return render(request, 'user/product_details.html', context)
 
 def user_product_listing(request):
-    # Base queryset for active variants
+    ''' Product listing page, Pagination added with 12 products in each page, Get all active categories for filter options
+    Get distinct brands for filter options  Apply price range filter Search functionality 
+    Wishlist button glowing '''
+
     variants = ProductVariant.objects.filter(
         is_active=True,
         product__category__is_active=True
     ).select_related('product', 'product__category').prefetch_related('product__product_image').order_by('product__created_at')
 
-    # PRODUCT SEARCH FEATURE
+    
     query=request.GET.get('q','').strip()
     if query:
         variants=variants.filter(
@@ -98,46 +113,51 @@ def user_product_listing(request):
             Q(product__description__icontains=query)|
             Q(product__category__description__icontains=query)
         )
+    wishlist_variant_ids= []
+    if request.user.is_authenticated:
+        wishlist_variant_ids= WishlistProducts.objects.filter(
+            user= request.user
+        ).values_list('variant_id',flat=True)
 
 
-    # Get all active categories for filter options
+    # 
     categories = Categories.objects.filter(is_active=True)
 
-    # Get distinct brands for filter options
+    # 
     brands = Product.objects.filter(
         product_variant__is_active=True,
         category__is_active=True
     ).exclude(brand__isnull=True).values_list('brand', flat=True).distinct().order_by('brand')
 
-    # Filtering
+ 
     selected_categories = request.GET.getlist('category')
     selected_brands = request.GET.getlist('brand')
     price_min = request.GET.get('price_min')
     price_max = request.GET.get('price_max')
 
-    # Apply category filter
+
     if selected_categories:
         variants = variants.filter(product__category__id__in=selected_categories)
 
-    # Apply brand filter
+
     if selected_brands:
         variants = variants.filter(product__brand__in=selected_brands)
 
-    # Apply price range filter
+    #
     if price_min:
         try:
             price_min = float(price_min)
             variants = variants.filter(price__gte=price_min)
         except ValueError:
-            pass  # Ignore invalid price_min
+            pass  
     if price_max:
         try:
             price_max = float(price_max)
             variants = variants.filter(price__lte=price_max)
         except ValueError:
-            pass  # Ignore invalid price_max
+            pass  
 
-    # Sorting
+
     sort = request.GET.get('sort')
     if sort == 'price_low':
         variants = variants.order_by('price')
@@ -148,12 +168,12 @@ def user_product_listing(request):
     elif sort == 'name_desc':
         variants = variants.order_by('-product__name', '-variant_name')
 
-    # Pagination
+
     paginator = Paginator(variants, 12)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    # Build query string for pagination (excluding page parameter)
+
     query_params = request.GET.copy()
     if 'page' in query_params:
         del query_params['page']
@@ -174,7 +194,8 @@ def user_product_listing(request):
         'sort': sort,
         'query_string': query_string,
         'query': query,
-        'breadcrumbs': breadcrumbs
+        'breadcrumbs': breadcrumbs,
+        'wishlist_variant_ids': wishlist_variant_ids,
     }
 
     return render(request, 'user/product_listing.html', context)

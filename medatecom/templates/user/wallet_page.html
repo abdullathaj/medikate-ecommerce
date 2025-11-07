@@ -56,8 +56,8 @@
                                         <div>
                                             <p class="mb-0 fw-bold 
                                                 {% if t.transaction_type == 'CREDIT' %}text-success
-                                                {% else %}text-warning{% endif %}">
-                                                {% if t.transaction_type == 'CREDIT' %}+{% else %}-{% endif %}₹{{ t.amount }}
+                                                {% else %}text-danger{% endif %}">
+                                                {% if t.transaction_type == 'CREDIT' %}+ {% else %}- {% endif %}₹{{ t.amount }}
                                             </p>
                                         </div>
                                     </div>

@@ -39,15 +39,15 @@
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="address-tab" data-bs-toggle="tab" data-bs-target="#address"
-                            type="button" role="tab" aria-controls="address" aria-selected="false">Add New Address</button>
+                            type="button" role="tab" aria-controls="address" aria-selected="false">Add Address</button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="password-tab" data-bs-toggle="tab" data-bs-target="#password" 
-                            type="button" role="tab" aria-controls="password" aria-selected="false">Change Password</button>
+                            type="button" role="tab" aria-controls="password" aria-selected="false">New Password</button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="email-tab" data-bs-toggle="tab" data-bs-target="#email" 
-                            type="button" role="tab" aria-controls="email" aria-selected="false">Change Email</button>
+                            type="button" role="tab" aria-controls="email" aria-selected="false">New Email</button>
                         </li>
                     </ul>
 
@@ -75,7 +75,7 @@
                             <form method="post">
                                 {% csrf_token %}
                                 {% for field in address_form %}
-                                    <div class="mb-3">
+                                    <div class="mb-1">
                                         <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
                                         {{ field }}
                                         {% if field.errors %}

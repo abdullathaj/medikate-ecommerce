@@ -3,7 +3,7 @@
 
 {% block content %}
 <!-- Toast Container -->
-    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055;">
         {% if messages %}
             {% for message in messages %}
                 <div class="toast align-items-center text-white 
@@ -106,8 +106,10 @@
                                             <span class="current-price">₹{{ variant.final_price|floatformat:2 }}</span>
                                         </div>
                                         <div class="product-links">
-                                            <a href="{% url 'add_to_cart' variant.id %}" title="Add to Cart" class="cart-btn"> <i class="fas fa-shopping-cart"></i></a>
-                                            <a href="{% url 'add_to_wishlist' variant.id %}" title="Add to Wishlist" class="wishlist-btn"> <i class="fas fa-heart"></i> </a>
+                                            <a href="{% url 'add_to_wishlist' variant.id %}" title="Add to Wishlist" 
+                                                class="wishlist-btn {% if variant.id in wishlist_variant_ids %}in-wishlist {% endif %}">
+                                                    <i class="fas fa-heart"></i></a>
+                                                <a href="{% url 'add_to_cart' variant.id %}" title="Add to Cart" class="cart-btn"><i class="fas fa-shopping-cart"></i></a>
                                         </div> 
                                     {% else %}
                                         <div class="product-price">N/A</div>
@@ -129,8 +131,6 @@
         </div>
 
     </section>
-
-   
 
     <!-- Brands Section -->
     <section class="brands-section container my-1">
@@ -668,11 +668,15 @@ body {
             background: #f5f6f8;
             border: none;
             margin-right: 1px;
+            text-decoration: none;
         }
 
         .cart-btn:hover, .wishlist-btn:hover {
             background: #4b6cb7;
             color: #fff;
+        }
+        .wishlist-btn.in-wishlist{
+            color: red;
         }
 
         /* Responsive */

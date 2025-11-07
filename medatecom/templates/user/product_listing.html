@@ -3,7 +3,7 @@
 
 {% block content %}
     <!-- Toast Container -->
-        <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
+        <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055;">
             {% if messages %}
                 {% for message in messages %}
                     <div class="toast align-items-center text-white 
@@ -141,7 +141,9 @@
                                                 <span class="current-price">₹{{ variant.final_price|floatformat:2 }}</span>
                                             </div>
                                             <div class="product-links">
-                                                <a href="{% url 'add_to_wishlist' variant.id %}" title="Add to Wishlist" class="wishlist-btn"><i class="fas fa-heart"></i></a>
+                                                <a href="{% url 'add_to_wishlist' variant.id %}" title="Add to Wishlist" 
+                                                class="wishlist-btn {% if variant.id in wishlist_variant_ids %}in-wishlist {% endif %}">
+                                                    <i class="fas fa-heart"></i></a>
                                                 <a href="{% url 'add_to_cart' variant.id %}" title="Add to Cart" class="cart-btn"><i class="fas fa-shopping-cart"></i></a>
                                             </div>
                                         </div>
@@ -468,25 +470,17 @@
             gap: 6px;
             justify-content: flex-end;
         }
-        .wishlist-btn {
+        .wishlist-btn,.cart-btn {
             color: #6b7280;
             transition: color 0.3s ease;
             width: 28px;
             height: 28px;
         }
-
-        .wishlist-btn:hover {
-            color: #4b6cb7;
+        .wishlist-btn.in-wishlist{
+            color: red;
         }
 
-        .cart-btn {
-            width: 28px;
-            height: 28px;
-            color: #6b7280;
-            transition: color 0.3s ease;
-
-        }
-
+        .wishlist-btn:hover,
         .cart-btn:hover {
             color: #4b6cb7;
         }
