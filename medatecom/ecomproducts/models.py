@@ -151,7 +151,7 @@ class Offer(models.Model):
         ],
         help_text='Discount percentage for this offer, between 5 and 70'
     )
-# WHILE CREATING AN OFFER ADMIN SHOULD ONLY SELECT EITHER PRODUCT OR CATEGORY.....
+# WHILE CREATING AN OFFER ADMIN SHOULD SELECT ONLY                                                                                                                                                                                                                                                                                                                                                                                                                                                       EITHER PRODUCT OR CATEGORY.....
     product= models.ForeignKey(Product, on_delete=models.CASCADE, blank=True, null=True, related_name='offers')
     category= models.ForeignKey(Categories, on_delete=models.CASCADE, blank=True, null=True, related_name='offers')
 

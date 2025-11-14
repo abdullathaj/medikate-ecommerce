@@ -1,11 +1,11 @@
 from django.shortcuts import render,redirect,get_object_or_404
-from ecomusers.models import User,Wallet,WalletTransaction
+from ecomusers.models import User,Wallet,WalletTransaction,Referral
 from ecomproducts.models import Categories,Product,ProductVariant,ProductImage,Coupon,Offer
 from ecomorders.models import Order,OrderItem,ReturnRequest
 from django.contrib.admin.views.decorators import staff_member_required
 from django.views.decorators.cache import never_cache
 from .forms import Useraddform,CategoryAddForm,ProductAddForm,ProductImageForm,VariantAddForm,VariantFormset,ImageFormset
-from .forms import CouponForm,OfferForm
+from .forms import CouponForm,OfferForm,CouponEditForm
 from django.db import transaction
 from django.contrib import messages
 from django.forms import inlineformset_factory
@@ -29,11 +29,55 @@ from django.db.models.functions import TruncDay, TruncWeek, TruncMonth, TruncYea
 @never_cache
 def admin_dashboard(request):
     ''' DASHBOARD OF ADMIN PAGE WHICH CONTAINS THE LINK FOR OTHER PAGES AND IT IS MIGRATING TO ALL THE PAGES.'''
+    customers= User.objects.all()
+    customer_count= customers.count()
+    active_users= customers.filter(is_active= True).count()
+    inactive_users= customers.filter(is_active= False).count()
+
+    categories= Categories.objects.all()
+    category_count= categories.count()
+    active_categories= categories.filter(is_active= True).count()
+    inactive_categories= categories.filter(is_active= False).count()
+
+    products= ProductVariant.objects.all()
+    product_count= products.count()
+    active_products= products.filter(is_active= True).count()
+    inactive_products= products.filter(is_active= False).count()
+
+    coupons= Coupon.objects.all()
+    coupon_count= coupons.count()
+    active_coupons= coupons.filter(is_active= True).count()
+    inactive_coupons= coupons.filter(is_active= False).count()
+
+    offers= Offer.objects.all()
+    offer_count= offers.count()
+    active_offers= offers.filter(is_active= True).count()
+    inactive_offers= offers.filter(is_active= False).count()
+    
+    orders= Order.objects.all()
+    order_count= orders.count()
+    cod_count= orders.filter(payment_method='COD').count()
+    wallet_count= orders.filter(payment_method='WALLET').count()
+    online_count= orders.filter(payment_method='RAZORPAY').count()
+
+    referrals= Referral.objects.all()
+    referral_count= referrals.count()
+    referrer_count= referrals.values('referrer').distinct().count()
 
     breadcrumbs=[
         {'name':'Dashboard','url': ''},
-    ]
-    return render(request,'admin/dashboard_admin.html',{'breadcrumbs': breadcrumbs})
+        ]
+    context= {
+        'breadcrumbs':breadcrumbs, 
+        'customer_count':customer_count, 'active_users':active_users, 'inactive_users':inactive_users,
+        'category_count':category_count, 'active_categories':active_categories, 'inactive_categories':inactive_categories,
+        'product_count':product_count, 'active_products':active_products, 'inactive_products':inactive_products,
+        'coupon_count':coupon_count, 'active_coupons':active_coupons, 'inactive_coupons':inactive_coupons,
+        'offer_count':offer_count, 'active_offers':active_offers, 'inactive_offers':inactive_offers,
+        'order_count':order_count, 'cod_count':cod_count, 'wallet_count':wallet_count, 'online_count':online_count,
+        'referral_count':referral_count, 'referrer_count':referrer_count
+        }
+    return render(request,'admin/dashboard_admin.html',context)
 
 # ---------------------------------------------------------------------------------------------------
 # USER MANAGEMENT FOR ADMIN                                                                          
@@ -648,7 +692,24 @@ def admin_coupon_delete(request, coupon_id):
     messages.warning(request, "Invalid request method.")
     return redirect('admin_coupon_list')
 
-
+def admin_coupon_edit(request,coupon_id):
+    coupon= get_object_or_404(Coupon, id=coupon_id)
+    if request.method == 'POST':
+        form= CouponEditForm(request.POST, instance=coupon)
+        if form.is_valid():
+            form.save()
+            messages.success(request,'Coupon modified successfully.')
+            return redirect('admin_coupon_list')
+        else:
+            messages.warning(request,'Please fill the form correctly.')
+    else:
+        form= CouponEditForm(instance=coupon)
+    breadcrumbs=[
+        {'name': 'Dashboard', 'url': 'admin_dashboard'},
+        {'name': 'Coupons', 'url':'admin_coupon_list'},
+        {'name': 'Edit Coupon', 'url': ''}
+    ]
+    return render(request,'admin/admin_coupon_edit.html',{'form':form,'coupon':coupon ,'breadcrumbs':breadcrumbs})
 #################################################################################################################################
 
 # --------------------------------------------------------------------------------
@@ -720,83 +781,13 @@ def admin_offer_delete(request,offer_id):
 # SALES REPORT OF THE WEBSITE
 @staff_member_required(login_url='admin_login')
 def admin_sales_report(request):
-    # ---------------- FILTER RANGE ---------------- #
-    filter_type = request.GET.get('filter', 'daily')
-    start_date = request.GET.get('start_date')
-    end_date = request.GET.get('end_date')
-
-    now = timezone.now()
-    orders = Order.objects.filter(is_paid=True)
-
-    # ---------------- DATE FILTER LOGIC ---------------- #
-    if filter_type == 'daily':
-        start = now - timedelta(days=1)
-        orders = orders.filter(created_at__gte=start)
-        group_by = TruncDay('created_at')
-    elif filter_type == 'weekly':
-        start = now - timedelta(weeks=1)
-        orders = orders.filter(created_at__gte=start)
-        group_by = TruncWeek('created_at')
-    elif filter_type == 'monthly':
-        start = now - timedelta(days=30)
-        orders = orders.filter(created_at__gte=start)
-        group_by = TruncMonth('created_at')
-    elif filter_type == 'yearly':
-        start = now - timedelta(days=365)
-        orders = orders.filter(created_at__gte=start)
-        group_by = TruncYear('created_at')
-    elif filter_type == 'custom' and start_date and end_date:
-        orders = orders.filter(created_at__date__range=[start_date, end_date])
-        group_by = TruncDay('created_at')
-    else:
-        group_by = TruncDay('created_at')
-
-    # ---------------- AGGREGATION ---------------- #
-    # JOIN OrderItem to calculate offer-based discounts
-    order_items = OrderItem.objects.filter(order__in=orders)
-
-    # OFFER discount = (variant.original_price - variant.final_price)
-    offer_discount_expr = ExpressionWrapper(
-        (F('variant__price') - F('price')) * F('quantity'),
-        output_field=DecimalField(max_digits=10, decimal_places=2)
-    )
-
-    sales_summary = order_items.aggregate(
-        total_sales=Sum(F('price') * F('quantity')),
-        total_offer_discount=Sum(offer_discount_expr),
-        total_orders=Count('order', distinct=True),
-        total_items_sold=Sum('quantity')
-    )
-
-    total_coupon_discount = Decimal('0.00')
-    # If you store coupon info per order in session, use it to adjust here if needed
-    # (We assume total_amount already includes coupon deduction)
-    # You can track approximate coupon discount as (selling price before coupon - total_amount)
-    # If you later add a coupon_discount field to Order, replace this logic directly.
-    # For now, we’ll just compute order_total from Order.total_amount
-    total_revenue = orders.aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
-
-    # ---------------- GROUPED DATA FOR CHART ---------------- #
-    grouped_sales = (
-        orders.annotate(period=group_by)
-        .values('period')
-        .annotate(total=Sum('total_amount'))
-        .order_by('period')
-    )
+   
 
     breadcrumbs=[
         {'name': 'Dashboard', 'url': 'admin_dashboard'},
         {'name': 'Sales report', 'url':''},
     ]
     context = {
-        'filter_type': filter_type,
-        'orders': orders.select_related('user'),
-        'sales_summary': sales_summary,
-        'total_revenue': total_revenue,
-        'total_coupon_discount': total_coupon_discount,
-        'grouped_sales': grouped_sales,
-        'start_date': start_date,
-        'end_date': end_date,
         'breadcrumbs': breadcrumbs
     }
 

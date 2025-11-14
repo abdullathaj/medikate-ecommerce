@@ -158,7 +158,7 @@ class CouponForm(forms.ModelForm):
     class Meta:
         model= Coupon
         fields=[
-            'coupon_code','description','valid_from','valid_to','is_active',
+            'coupon_code','description','valid_from','valid_to',
             'discount_percentage','minimum_purchase_amount','max_usage_limit'
         ]
 
@@ -170,6 +170,21 @@ class CouponForm(forms.ModelForm):
             'discount_percentage' : forms.NumberInput(attrs={'class':'form-control'}),
             'minimum_purchase_amount': forms.NumberInput(attrs={'class':'form-control'}),
             'max_usage_limit': forms.NumberInput(attrs={'class':'form-control'}),
-            'is_active': forms.CheckboxInput(attrs={'class':'form-check-input'}),
+            # 'is_active': forms.CheckboxInput(attrs={'class':'form-check-input'}),
+        }
+
+class CouponEditForm(forms.ModelForm):
+    class Meta:
+        model= Coupon
+        fields=['description','discount_percentage','valid_from','valid_to',
+                'minimum_purchase_amount','max_usage_limit',
+                ]
+        widgets={
+            'description':forms.Textarea(attrs={'rows':3,'class':'form-control'}),
+            'discount_percentage':forms.NumberInput(attrs={'class':'form-control'}),           
+            'valid_from':forms.DateTimeInput(attrs={'type':'datetime-local','class':'form-control'}),
+            'valid_to':forms.DateTimeInput(attrs={'type':'datetime-local','class':'form-control'}),
+            'minimum_purchase_amount':forms.NumberInput(attrs={'class':'form-control'}),
+            'max_usage_limit':forms.NumberInput(attrs={'class':'form-control'}),
         }
 

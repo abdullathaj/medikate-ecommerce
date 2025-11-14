@@ -31,6 +31,7 @@ urlpatterns = [
     path('admin_coupon_list/',views.admin_coupon_list, name='admin_coupon_list'),
     path('admin_add_coupon', views.admin_coupon_creation, name='admin_coupon_creation'),
     path('admin_delete_coupon/<int:coupon_id>/', views.admin_coupon_delete, name='admin_coupon_delete'),
+    path('admin_edit_coupon/<int:coupon_id>/', views.admin_coupon_edit, name='admin_coupon_edit'),
 
     # ADMIN OFFER MANAGEMENT
     path('admin_offer_list/', views.admin_offer_list, name='admin_offer_list'),

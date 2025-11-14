@@ -2,28 +2,145 @@
 {% load static %}
 
 {% block content %}
-<div class="container">
-    <h2 class="mb-4 text-center">Admin Dashboard</h2> 
-    <div class="card" style="width: 18rem;">
-  <div class="card-body bg-success">
-    <h5 class="card-title">Customers</h5>
-    <hr>
-    <h6 class="card-subtitle mb-2 text-muted">Total count: 25</h6>
-    <h6 class="card-subtitle mb-2 text-muted">Active: 19</h6>
-    <h6 class="card-subtitle mb-2 text-muted">Inactive: 6</h6>
+<div class="container py-5">
+  <h2 class="mb-5 text-center fw-bold">Admin Dashboard</h2>
+
+  <div class="row g-4 justify-content-center">
+    <!-- Dashboard Cards -->
+    <div class="col-sm-6 col-md-4 col-lg-3">
+      <div class="dashboard-card shadow-sm border-0 text-center">
+        <div class="icon-box bg-primary text-white mx-auto mb-3">
+          <i class="fa-solid fa-users"></i>
+        </div>
+        <h5 class="fw-semibold">Customers</h5>
+        <hr>
+        <p class="text-muted mb-1">Total: <strong>{{customer_count}}</strong></p>
+        <p class="text-success mb-1">Active: <strong>{{active_users}}</strong></p>
+        <p class="text-danger">Inactive: <strong>{{inactive_users}}</strong></p>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-md-4 col-lg-3">
+      <div class="dashboard-card shadow-sm border-0 text-center">
+        <div class="icon-box bg-warning text-white mx-auto mb-3">
+          <i class="fa-solid fa-tags"></i>
+        </div>
+        <h5 class="fw-semibold">Categories</h5>
+        <hr>
+        <p class="text-muted mb-1">Total: <strong>{{category_count}}</strong></p>
+        <p class="text-success mb-1">Active: <strong>{{active_categories}}</strong></p>
+        <p class="text-danger">Inactive: <strong>{{inactive_categories}}</strong></p>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-md-4 col-lg-3">
+      <div class="dashboard-card shadow-sm border-0 text-center">
+        <div class="icon-box bg-success text-white mx-auto mb-3">
+          <i class="fa-solid fa-box"></i>
+        </div>
+        <h5 class="fw-semibold">Products</h5>
+        <hr>
+        <p class="text-muted mb-1">Total: <strong>{{product_count}}</strong></p>
+        <p class="text-success mb-1">Active: <strong>{{active_products}}</strong></p>
+        <p class="text-danger">Inactive: <strong>{{inactive_products}}</strong></p>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-md-4 col-lg-3">
+      <div class="dashboard-card shadow-sm border-0 text-center">
+        <div class="icon-box bg-info text-white mx-auto mb-3">
+          <i class="fa-solid fa-ticket"></i>
+        </div>
+        <h5 class="fw-semibold">Coupons</h5>
+        <hr>
+        <p class="text-muted mb-1">Total: <strong>{{coupon_count}}</strong></p>
+        <p class="text-success mb-1">Active: <strong>{{active_coupons}}</strong></p>
+        <p class="text-danger">Inactive: <strong>{{inactive_coupons}}</strong></p>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-md-4 col-lg-3">
+      <div class="dashboard-card shadow-sm border-0 text-center">
+        <div class="icon-box bg-secondary text-white mx-auto mb-3">
+          <i class="fa-solid fa-tags"></i>
+        </div>
+        <h5 class="fw-semibold">Offers</h5>
+        <hr>
+        <p class="text-muted mb-1">Total: <strong>{{offer_count}}</strong></p>
+        <p class="text-success mb-1">Active: <strong>{{active_offers}}</strong></p>
+        <p class="text-danger">Inactive: <strong>{{inactive_offers}}</strong></p>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-md-4 col-lg-3">
+      <div class="dashboard-card shadow-sm border-0 text-center">
+        <div class="icon-box bg-danger text-white mx-auto mb-3">
+          <i class="fa-solid fa-boxes-packing"></i>
+        </div>
+        <h5 class="fw-semibold">Orders</h5>
+        <hr>
+        <p class="text-muted mb-1">Total: <strong>{{order_count}}</strong></p>
+        <p class="text-success mb-1">COD: <strong>{{cod_count}}</strong></p>
+        <p class="text-success mb-1">Online: <strong>{{online_count}}</strong></p>
+        <p class="text-success mb-1">Wallet: <strong>{{wallet_count}}</strong></p>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-md-4 col-lg-3">
+      <div class="dashboard-card shadow-sm border-0 text-center">
+        <div class="icon-box bg-dark text-white mx-auto mb-3">
+          <i class="fa-solid fa-gift"></i>
+        </div>
+        <h5 class="fw-semibold">Referrals</h5>
+        <hr>
+        <p class="text-muted mb-1">Total: <strong>{{referral_count}}</strong></p>
+        <p class="text-success mb-1">Referrers: <strong>{{referrer_count}}</strong></p>
+        <p class="text-success mb-1">Referrees: <strong>{{referral_count}}</strong></p>
+      </div>
+    </div>
   </div>
-</div> 
-<div class="card" style="width: 18rem;">
-  <div class="card-body bg-success">
-    <h5 class="card-title">Customers</h5>
-    <hr>
-    <h6 class="card-subtitle mb-2 text-muted">Total count: 25</h6>
-    <h6 class="card-subtitle mb-2 text-muted">Active: 19</h6>
-    <h6 class="card-subtitle mb-2 text-muted">Inactive: 6</h6>
-   
-   
-   
-  </div>
-</div>     
 </div>
+
+<!-- Include Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+  .dashboard-card {
+    background: #fff;
+    border-radius: 15px;
+    padding: 1.5rem 1rem;
+    transition: all 0.3s ease;
+  }
+
+  .dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+  }
+
+  .icon-box {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+  }
+
+  hr {
+    margin: 0.75rem 0;
+  }
+
+  .text-success {
+    color: #28a745 !important;
+  }
+
+  .text-danger {
+    color: #dc3545 !important;
+  }
+
+  .text-warning {
+    color: #ffc107 !important;
+  }
+</style>
 {% endblock %}
