@@ -5,7 +5,7 @@ from ecomorders.models import Order,OrderItem,ReturnRequest
 from django.contrib.admin.views.decorators import staff_member_required
 from django.views.decorators.cache import never_cache
 from .forms import Useraddform,CategoryAddForm,ProductAddForm,ProductImageForm,VariantAddForm,VariantFormset,ImageFormset
-from .forms import CouponForm,OfferForm,CouponEditForm
+from .forms import CouponForm,OfferForm,CouponEditForm,OfferEditForm
 from django.db import transaction
 from django.contrib import messages
 from django.forms import inlineformset_factory
@@ -759,7 +759,7 @@ def admin_offer_creation(request):
             messages.success(request, 'Offer created successfully!')
             return redirect('admin_offer_list')
         else:
-            messages.error(request, 'Please correct the errors below.')
+            messages.error(request, 'Please fill the fields carefully.')
     else:
         form = OfferForm()
 
@@ -780,6 +780,26 @@ def admin_offer_delete(request,offer_id):
     messages.error(request,'Invalid request method.')
     return redirect('admin_offer_list')
 
+@staff_member_required(login_url='admin_login')
+def admin_offer_edit(request,offer_id):
+    offer= get_object_or_404(Offer,id=offer_id)
+    if request.method == 'POST':
+        form= OfferEditForm(request.POST, instance=offer)
+        if form.is_valid():
+            form.save()
+            messages.success(request,'Offer modified successfully.')
+            return redirect('admin_offer_list')
+        else:
+            messages.error(request,'Please fill the fields carefully.')
+    else:
+        form= OfferEditForm(instance=offer)
+
+    breadcrumbs=[
+        {'name':'Dashboard', 'url':'admin_dashboard'},
+        {'name':'Offers', 'url':'admin_offer_list'},
+        {'name':'Offer edit', 'url':''}
+    ]
+    return render(request,'admin/offer_edit.html',{'breadcrumbs':breadcrumbs,'offer':offer, 'form':form})
 
 # SALES REPORT OF THE WEBSITE
 @staff_member_required(login_url='admin_login')

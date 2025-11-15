@@ -129,8 +129,7 @@ class OfferForm(forms.ModelForm):
     class Meta:
         model= Offer
         fields= ['name','description','valid_from','valid_to',
-                 'discount_percentage','is_active',
-                 'category','product']
+                 'discount_percentage','category','product']
         
         widgets={
             'name':forms.TextInput(attrs={'class': 'form-control'}),
@@ -138,21 +137,40 @@ class OfferForm(forms.ModelForm):
             'valid_from': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
             'valid_to': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
             'discount_percentage': forms.NumberInput(attrs={'class': 'form-control'}),
-            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'product': forms.Select(attrs={'class': 'form-select'}),
             'category': forms.Select(attrs={'class': 'form-select'}),
         }
 
-        def clean(self):
-            cleaned_data= super().clean()
-            category= cleaned_data.get('category')
-            product= cleaned_data.get('product')
+    def clean(self):
+        cleaned_data= super().clean()
+        category= cleaned_data.get('category')
+        product= cleaned_data.get('product')
+        name= cleaned_data.get('name')
+        
+        if name and not re.match(r'^[a-zA-Z0-9]+$',name):
+            raise ValidationError('The offer name must only contain letters and digits.')
+        elif product and Offer.objects.filter(product=product).exclude(pk=self.instance.pk).exists():
+            raise ValidationError('This product already has an existing offer. Cannot create this offer.')
+        elif category and Offer.objects.filter(category=category).exclude(pk=self.instance.pk).exists():
+            raise ValidationError('This category already has an existing offer. Cannot create the offer.')
+        elif category and product:
+            raise ValidationError('Offer can only apply either Product or Category, not for both.')
+        elif not category and not product:
+            raise ValidationError('Must select Either product or category.')
+        return cleaned_data
+        
+class OfferEditForm(forms.ModelForm):
+    class Meta:
+        model= Offer
+        fields= ['description','valid_from','valid_to','discount_percentage','is_active']
 
-            if category and product:
-                raise ValidationError('Offer can only apply either Product or Category, not for both.')
-            elif not category and not product:
-                raise ValidationError('Must select Either product or category.')
-            return cleaned_data
+        widgets= {
+            'description': forms.Textarea(attrs={'rows': 3, 'class':'form-control'}),
+            'valid_from': forms.DateTimeInput(attrs={'type':'datetime-local', 'class':'form-control'}),
+            'valid_to': forms.DateTimeInput(attrs={'type':'datetime-local', 'class':'form-control'}),
+            'discount_percentage': forms.NumberInput(attrs={'class':'form-control'}),
+            'is_active': forms.CheckboxInput(attrs={'class':'form-check-input'})
+        }
 
 class CouponForm(forms.ModelForm):
     class Meta:

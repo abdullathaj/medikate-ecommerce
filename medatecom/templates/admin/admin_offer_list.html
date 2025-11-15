@@ -22,15 +22,15 @@
         <table class="table table-bordered table-striped align-middle">
             <thead class="table-info">
                 <tr>
-                    <th class="px-3 py-2 text-uppercase text-secondary">Offer Name</th>
-                    <th class="px-3 py-2 text-uppercase text-secondary">Type</th>
-                    <th class="px-3 py-2 text-uppercase text-secondary">Linked Item</th>
-                    <th class="px-3 py-2 text-uppercase text-secondary">Discount (%)</th>
-                    <th class="px-3 py-2 text-uppercase text-secondary">Valid From</th>
-                    <th class="px-3 py-2 text-uppercase text-secondary">Valid To</th>
-                    <th class="px-3 py-2 text-uppercase text-secondary">Active</th>
-                    <th class="px-3 py-2 text-uppercase text-secondary">Created At</th>
-                    <th class="px-3 py-2 text-uppercase text-secondary">Actions</th>
+                    <th class="px-2 py-2 text-uppercase text-secondary">Offer Name</th>
+                    <th class="px-2 py-2 text-uppercase text-secondary">Type</th>
+                    <th class="px-2 py-2 text-uppercase text-secondary">Linked Item</th>
+                    <th class="px-2 py-2 text-uppercase text-secondary">Discount (%)</th>
+                    <th class="px-2 py-2 text-uppercase text-secondary">Valid From</th>
+                    <th class="px-2 py-2 text-uppercase text-secondary">Valid To</th>
+                    <th class="px-2 py-2 text-uppercase text-secondary">Active</th>
+                    <th class="px-2 py-2 text-uppercase text-secondary">Created At</th>
+                    <th class="px-2 py-2 text-uppercase text-secondary">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -66,15 +66,16 @@
                         {% endif %}
                     </td>
                     <td>{{ offer.created_at|date:"M d, Y" }}</td>
-                    <td class="px-3 py-2 text-center">
+                    <td class="px-2 py-2 text-center">
                         <form method="post" action="{% url 'admin_offer_delete' offer.id %}" 
                             onsubmit="return confirm('Are you sure you want to delete this offer?');" 
                             style="display:inline;">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                            <button type="submit" class="btn btn-outline-danger btn-sm mb-1">
                                  Delete
                             </button>
                         </form>
+                        <a href="{% url "admin_edit_offer" offer.id %}" class="btn btn-outline-primary btn-sm">Modify</a>
                     </td>
                 </tr>
                 {% empty %}

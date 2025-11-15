@@ -145,7 +145,7 @@ class Coupon(models.Model):
     
 
 class Offer(models.Model):
-    name = models.CharField(max_length=100, help_text='Name of the offer for admin reference')
+    name = models.CharField(max_length=100, help_text='Name of the offer for admin reference (Only alphanumeric value)')
     is_active = models.BooleanField(default=True, help_text='Whether the offer is active or not')
     description = models.TextField(blank=True, help_text='Optional description for the offer')
     created_at = models.DateTimeField(auto_now_add=True, help_text='When the offer is created')
@@ -178,7 +178,7 @@ class Offer(models.Model):
     @property
     def is_valid(self):
         now = timezone.now()
-        if self.is_active:
+        if not self.is_active:
             return False
         if now < self.valid_from or now > self.valid_to:
             return False

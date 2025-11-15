@@ -37,6 +37,7 @@ urlpatterns = [
     path('admin_offer_list/', views.admin_offer_list, name='admin_offer_list'),
     path('admin_add_offer/', views.admin_offer_creation, name='admin_add_offer'),
     path('admin_delete_offer/<int:offer_id>/', views.admin_offer_delete, name='admin_offer_delete'),
+    path('admin_edit_offer/<int:offer_id>/', views.admin_offer_edit, name='admin_edit_offer'),
 
     path('admin_sales_report/', views.admin_sales_report, name='admin_sales_report'),
 

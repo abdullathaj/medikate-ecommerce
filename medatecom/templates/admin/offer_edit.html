@@ -3,21 +3,20 @@
 
 {% block content %}
 <div class="container py-4">
-    <h2 class="text-center mb-4">Create New Offer</h2>
-
+    <h2 class="text-center mb-4">Edit Offer</h2>
     <div class="card shadow-sm border-0">
         <div class="card-body">
             <form method="post" novalidate>
                 {% csrf_token %}
-                
+
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Offer Name</label>
-                        {{ form.name }}
-                        <small class="text-muted">{{ form.name.help_text }}</small>
+                        <input type="text" class="form-control" value="{{ offer.name }}(Immutable)" readonly>
+                        <small class="text-muted">{{form.name.help_text}}</small>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Discount Percentage</label>
+                        <label class="form-label fw-semibold">Discount Percentage (%)</label>
                         {{ form.discount_percentage }}
                         <small class="text-muted">{{ form.discount_percentage.help_text }}</small>
                     </div>
@@ -26,33 +25,25 @@
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Description</label>
                     {{ form.description }}
-                    <small class="text-muted">{{ form.description.help_text }}</small>
+                    <small class="text-muted">Provide an optional description for the coupon.</small>
                 </div>
 
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Valid From</label>
                         {{ form.valid_from }}
-                        <small class="text-muted">{{ form.valid_from.help_text }}</small>
+                        <small class="text-muted">{{form.valid_from.help_text}}</small>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Valid To</label>
                         {{ form.valid_to }}
-                        <small class="text-muted">{{ form.valid_to.help_text }}</small>
+                        <small class="text-muted">{{form.valid_to.help_text}}</small>
                     </div>
                 </div>
 
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Product</label>
-                        {{ form.product }}
-                        <small class="text-muted">Select product if this is a product-level offer</small>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Category</label>
-                        {{ form.category }}
-                        <small class="text-muted">Select category if this is a category-level offer</small>
-                    </div>
+                <div class="form-check mb-3">
+                    {{ form.is_active }}
+                    <label class="form-check-label fw-semibold ms-1">Active</label>
                 </div>
 
                 <div class="d-flex justify-content-between mt-4">
@@ -60,11 +51,13 @@
                         <i class="fas fa-arrow-left me-1"></i> Back
                     </a>
                     <button type="submit" class="btn btn-success px-4">
-                        Create Offer
+                        <i class="fas fa-save me-1"></i> Update Offer
                     </button>
                 </div>
+
             </form>
         </div>
     </div>
 </div>
+
 {% endblock %}
