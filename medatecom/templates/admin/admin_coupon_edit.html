@@ -53,6 +53,10 @@
                         <small class="text-muted">Set 0 for unlimited usage.</small>
                     </div>
                 </div>
+                <div class="form-check mb-3">
+                    {{ form.is_active }}
+                    <label class="form-check-label fw-semibold ms-1">Active</label>
+                </div>
 
                 <div class="d-flex justify-content-between mt-4">
                     <a href="{% url 'admin_coupon_list' %}" class="btn btn-secondary">

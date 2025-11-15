@@ -5,8 +5,14 @@ from django.core.validators import MinValueValidator,MaxValueValidator
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
 import uuid
+import re
 from django.utils import timezone
 # Create your models here.
+
+# def alphanumeric_validator(value): 
+#     if not re.match(r'^[a-zA-Z0-9]+$'):
+#         raise ValidationError(f'{value} must only contain letters and digits.')
+
 class Categories(models.Model):
     name = models.CharField(max_length=25, unique=True)
     description = models.TextField(blank=True)
@@ -92,7 +98,8 @@ class ProductImage(models.Model): # related_name SHOULD HAVE TO CHANGE TO produc
 
 # MODEL FOR COUPON MANAGEMENT
 class Coupon(models.Model):
-    coupon_code=models.CharField(max_length=50, unique= True, help_text='Unique code for each coupon')
+    coupon_code=models.CharField(max_length=50, unique= True, help_text='Unique code for each coupon (strictly alphanumeric)')
+    
     is_active=models.BooleanField(default=True, help_text='Whether the coupon is active or not')
     description=models.TextField(blank= True, help_text='Optional description for the coupon')
     created_at=models.DateTimeField(auto_now_add=True, help_text='When the coupon is created')
@@ -168,3 +175,11 @@ class Offer(models.Model):
             raise ValidationError('Offer can only apply on either Product or Category')
         if not self.product and not self.category:
             raise ValidationError('A product or Category must be selected')
+    @property
+    def is_valid(self):
+        now = timezone.now()
+        if self.is_active:
+            return False
+        if now < self.valid_from or now > self.valid_to:
+            return False
+        return True

@@ -59,7 +59,7 @@
                     <td>{{ offer.valid_from|date:"M d, Y" }}</td>
                     <td>{{ offer.valid_to|date:"M d, Y" }}</td>
                     <td>
-                        {% if offer.is_active %}
+                        {% if offer.is_valid %}
                             <span class="badge bg-success">Active</span>
                         {% else %}
                             <span class="badge bg-danger">Inactive</span>

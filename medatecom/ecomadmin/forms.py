@@ -172,12 +172,17 @@ class CouponForm(forms.ModelForm):
             'max_usage_limit': forms.NumberInput(attrs={'class':'form-control'}),
             # 'is_active': forms.CheckboxInput(attrs={'class':'form-check-input'}),
         }
+    def clean_coupon_code(self):
+        code= self.cleaned_data.get('coupon_code')
+        if not re.match(r'^[a-zA-Z0-9]+$',code):
+            raise ValidationError('Coupon code only contain letters and digits.')
+        return code
 
 class CouponEditForm(forms.ModelForm):
     class Meta:
         model= Coupon
         fields=['description','discount_percentage','valid_from','valid_to',
-                'minimum_purchase_amount','max_usage_limit',
+                'minimum_purchase_amount','max_usage_limit','is_active'
                 ]
         widgets={
             'description':forms.Textarea(attrs={'rows':3,'class':'form-control'}),
@@ -186,5 +191,6 @@ class CouponEditForm(forms.ModelForm):
             'valid_to':forms.DateTimeInput(attrs={'type':'datetime-local','class':'form-control'}),
             'minimum_purchase_amount':forms.NumberInput(attrs={'class':'form-control'}),
             'max_usage_limit':forms.NumberInput(attrs={'class':'form-control'}),
+            'is_active':forms.CheckboxInput(attrs={'class':'form-check-input'}),
         }
 

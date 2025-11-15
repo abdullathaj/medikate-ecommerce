@@ -45,15 +45,28 @@
         <p class="text-danger">Inactive: <strong>{{inactive_products}}</strong></p>
       </div>
     </div>
-
     <div class="col-sm-6 col-md-4 col-lg-3">
       <div class="dashboard-card shadow-sm border-0 text-center">
         <div class="icon-box bg-info text-white mx-auto mb-3">
+          <i class="fa-solid fa-gift"></i>
+        </div>
+        <h5 class="fw-semibold">Referrals</h5>
+        <hr>
+        <p class="text-muted mb-1">Total: <strong>{{referral_count}}</strong></p>
+        <p class="text-success mb-1">Referrers: <strong>{{referrer_count}}</strong></p>
+        <p class="text-success mb-1">Referrees: <strong>{{referral_count}}</strong></p>
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-4 col-lg-3">
+      <div class="dashboard-card shadow-sm border-0 text-center">
+        <div class="icon-box bg-dark text-white mx-auto mb-3">
           <i class="fa-solid fa-ticket"></i>
         </div>
         <h5 class="fw-semibold">Coupons</h5>
         <hr>
         <p class="text-muted mb-1">Total: <strong>{{coupon_count}}</strong></p>
+        <p class="text-success mb-1">Valid: <strong>{{valid_coupons}}</strong></p>
+        <p class="text-danger mb-1">Invalid: <strong>{{invalid_coupons}}</strong></p>
         <p class="text-success mb-1">Active: <strong>{{active_coupons}}</strong></p>
         <p class="text-danger">Inactive: <strong>{{inactive_coupons}}</strong></p>
       </div>
@@ -80,24 +93,13 @@
         <h5 class="fw-semibold">Orders</h5>
         <hr>
         <p class="text-muted mb-1">Total: <strong>{{order_count}}</strong></p>
-        <p class="text-success mb-1">COD: <strong>{{cod_count}}</strong></p>
-        <p class="text-success mb-1">Online: <strong>{{online_count}}</strong></p>
-        <p class="text-success mb-1">Wallet: <strong>{{wallet_count}}</strong></p>
+        <p class="text-primary mb-1">COD: <strong>{{cod_count}}</strong></p>
+        <p class="text-primary mb-1">Online: <strong>{{online_count}}</strong></p>
+        <p class="text-primary mb-1">Wallet: <strong>{{wallet_count}}</strong></p>
       </div>
     </div>
 
-    <div class="col-sm-6 col-md-4 col-lg-3">
-      <div class="dashboard-card shadow-sm border-0 text-center">
-        <div class="icon-box bg-dark text-white mx-auto mb-3">
-          <i class="fa-solid fa-gift"></i>
-        </div>
-        <h5 class="fw-semibold">Referrals</h5>
-        <hr>
-        <p class="text-muted mb-1">Total: <strong>{{referral_count}}</strong></p>
-        <p class="text-success mb-1">Referrers: <strong>{{referrer_count}}</strong></p>
-        <p class="text-success mb-1">Referrees: <strong>{{referral_count}}</strong></p>
-      </div>
-    </div>
+    
   </div>
 </div>
 

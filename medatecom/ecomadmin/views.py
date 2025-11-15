@@ -46,8 +46,11 @@ def admin_dashboard(request):
 
     coupons= Coupon.objects.all()
     coupon_count= coupons.count()
-    active_coupons= coupons.filter(is_active= True).count()
-    inactive_coupons= coupons.filter(is_active= False).count()
+    valid_coupons= len([i for i in coupons if i.is_valid])
+    invalid_coupons= coupon_count-valid_coupons
+    active_coupons= coupons.filter(is_active=True).count()
+    inactive_coupons= coupon_count-active_coupons
+
 
     offers= Offer.objects.all()
     offer_count= offers.count()
@@ -72,7 +75,7 @@ def admin_dashboard(request):
         'customer_count':customer_count, 'active_users':active_users, 'inactive_users':inactive_users,
         'category_count':category_count, 'active_categories':active_categories, 'inactive_categories':inactive_categories,
         'product_count':product_count, 'active_products':active_products, 'inactive_products':inactive_products,
-        'coupon_count':coupon_count, 'active_coupons':active_coupons, 'inactive_coupons':inactive_coupons,
+        'coupon_count':coupon_count, 'valid_coupons':valid_coupons, 'invalid_coupons':invalid_coupons,'active_coupons':active_coupons,'inactive_coupons':inactive_coupons,
         'offer_count':offer_count, 'active_offers':active_offers, 'inactive_offers':inactive_offers,
         'order_count':order_count, 'cod_count':cod_count, 'wallet_count':wallet_count, 'online_count':online_count,
         'referral_count':referral_count, 'referrer_count':referrer_count
