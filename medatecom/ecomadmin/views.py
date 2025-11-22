@@ -56,6 +56,8 @@ def admin_dashboard(request):
     offer_count= offers.count()
     active_offers= offers.filter(is_active= True).count()
     inactive_offers= offers.filter(is_active= False).count()
+    valid_offers= len([i for i in offers if i.is_valid])
+    invalid_offers= len([i for i in offers if not i.is_valid])
     
     orders= Order.objects.all()
     order_count= orders.count()
@@ -76,7 +78,7 @@ def admin_dashboard(request):
         'category_count':category_count, 'active_categories':active_categories, 'inactive_categories':inactive_categories,
         'product_count':product_count, 'active_products':active_products, 'inactive_products':inactive_products,
         'coupon_count':coupon_count, 'valid_coupons':valid_coupons, 'invalid_coupons':invalid_coupons,'active_coupons':active_coupons,'inactive_coupons':inactive_coupons,
-        'offer_count':offer_count, 'active_offers':active_offers, 'inactive_offers':inactive_offers,
+        'offer_count':offer_count, 'active_offers':active_offers, 'inactive_offers':inactive_offers,'valid_offers':valid_offers,'invalid_offers':invalid_offers,
         'order_count':order_count, 'cod_count':cod_count, 'wallet_count':wallet_count, 'online_count':online_count,
         'referral_count':referral_count, 'referrer_count':referrer_count
         }
@@ -105,7 +107,7 @@ def admin_customer_details(request):
         {'name': 'Customer', 'url':''},
     ]
 
-    return render(request,'admin/customer_details.html',{'users':users,'page_obj':page_obj,
+    return render(request,'admin/user_details.html',{'users':users,'page_obj':page_obj,
                                                          'query':query, 'breadcrumbs':breadcrumbs})
 
 @staff_member_required(login_url='admin_login')
@@ -127,7 +129,7 @@ def admin_add_user(request):
         {'name': 'Customer', 'url':'customer_details'},
         {'name': 'Add user', 'url': ''},
     ]       
-    return render(request, 'admin/add_user.html', {'form': form, 'breadcrumbs': breadcrumbs}) 
+    return render(request, 'admin/user_creation.html', {'form': form, 'breadcrumbs': breadcrumbs}) 
 
 @staff_member_required(login_url='admin_login')
 @never_cache
@@ -140,7 +142,7 @@ def admin_block_user(request,user_id):
         user.save()
         status='unblocked' if user.is_active else 'blocked'
         messages.success(request,f'User {user.username} has been {status}...')
-    return redirect(admin_customer_details)
+    return redirect('customer_details')
 
 
 # -----------------------------------------------------------------------------------------------------------
@@ -467,7 +469,7 @@ def admin_order_list(request):
     
     ''' TABLE LISTING OF ORDERS'''
     query = request.GET.get('q', '').strip()
-    orders = Order.objects.all().order_by('-created_at')   # ✅ note the ()
+    orders = Order.objects.all().order_by('-created_at')  
     order_count=Order.objects.count()
 
     if query:
@@ -498,7 +500,7 @@ def admin_order_list(request):
         'order_count':order_count,
         'breadcrumbs': breadcrumbs
     }
-    return render(request, 'admin/admin_order_list.html', context)
+    return render(request, 'admin/order_list.html', context)
 
 @staff_member_required(login_url='admin_login')
 def admin_order_item_list(request, order_id):
@@ -514,7 +516,7 @@ def admin_order_item_list(request, order_id):
         {'name': 'Order Item', 'url': ''}
     ]
     context = {'order': order, 'items': items, 'breadcrumbs': breadcrumbs}
-    return render(request, 'admin/admin_order_item_list.html', context)
+    return render(request, 'admin/order_item_list.html', context)
 
 @staff_member_required(login_url='admin_login')
 @never_cache
@@ -552,7 +554,7 @@ def admin_request_list(request):
         {'name': 'Requests', 'url':''},
     ]
     context= {'return_requests':return_requests, 'breadcrumbs': breadcrumbs}
-    return render(request,'admin/admin_return_request_list.html',context)
+    return render(request,'admin/return_request_list.html',context)
 
 @staff_member_required(login_url='admin_login')
 def admin_return_approval(request,request_id):
@@ -628,10 +630,9 @@ def admin_return_approval(request,request_id):
 
 @staff_member_required(login_url='admin_login')
 def admin_coupon_list(request):
-    # Get all coupons
+
     coupons = Coupon.objects.all().order_by('-created_at')
     
-    # Handle search query
     query = request.GET.get('q', '')
     if query:
         coupons = coupons.filter(
@@ -639,8 +640,7 @@ def admin_coupon_list(request):
             Q(description__icontains=query)
         )
     
-    # Paginate results
-    paginator = Paginator(coupons, 4)  # Show 10 coupons per page
+    paginator = Paginator(coupons, 8) 
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
@@ -655,7 +655,7 @@ def admin_coupon_list(request):
         'breadcrumbs': breadcrumbs
     }
     
-    return render(request, 'admin/admin_coupon_list.html', context)
+    return render(request, 'admin/coupon_list.html', context)
 
 @staff_member_required(login_url='admin_login')
 def admin_coupon_creation(request):
@@ -678,7 +678,7 @@ def admin_coupon_creation(request):
         {'name': 'Coupons', 'url':'admin_coupon_list'},
         {'name': 'Create Coupon', 'url': ''}
     ]
-    return render(request,'admin/admin_coupon_creation.html',{'form': form, 'breadcrumbs': breadcrumbs})
+    return render(request,'admin/coupon_creation.html',{'form': form, 'breadcrumbs': breadcrumbs})
 
 @staff_member_required(login_url='admin_login')
 def admin_coupon_delete(request, coupon_id):
@@ -712,7 +712,7 @@ def admin_coupon_edit(request,coupon_id):
         {'name': 'Coupons', 'url':'admin_coupon_list'},
         {'name': 'Edit Coupon', 'url': ''}
     ]
-    return render(request,'admin/admin_coupon_edit.html',{'form':form,'coupon':coupon ,'breadcrumbs':breadcrumbs})
+    return render(request,'admin/coupon_edit.html',{'form':form,'coupon':coupon ,'breadcrumbs':breadcrumbs})
 #################################################################################################################################
 
 # --------------------------------------------------------------------------------
@@ -733,7 +733,7 @@ def admin_offer_list(request):
             Q(category__name__icontains=query)
         )
 
-    paginator = Paginator(offers, 5)
+    paginator = Paginator(offers, 8)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -748,7 +748,7 @@ def admin_offer_list(request):
         'breadcrumbs': breadcrumbs
     }
 
-    return render(request, 'admin/admin_offer_list.html', context)
+    return render(request, 'admin/offer_list.html', context)
 
 @staff_member_required(login_url='admin_login')
 def admin_offer_creation(request):
@@ -768,7 +768,7 @@ def admin_offer_creation(request):
         {'name': 'Offers', 'url':'admin_offer_list'},
         {'name': 'Offer Creation', 'url': ''}
     ]
-    return render(request, 'admin/admin_offer_creation.html', {'form': form, 'breadcrumbs': breadcrumbs})
+    return render(request, 'admin/offer_creation.html', {'form': form, 'breadcrumbs': breadcrumbs})
 
 @staff_member_required(login_url='admin_login')
 def admin_offer_delete(request,offer_id):
@@ -814,6 +814,6 @@ def admin_sales_report(request):
         'breadcrumbs': breadcrumbs
     }
 
-    return render(request, 'admin/admin_sales_report.html', context)
+    return render(request, 'admin/sales_report.html', context)
 
 

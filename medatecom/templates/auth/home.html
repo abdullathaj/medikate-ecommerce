@@ -90,7 +90,7 @@
                             {% endwith %}
                         </div>
                         <div class="product-details">
-                            {% with variant=product.product_variant.first %}
+                            {% with variant=product.active_variants.0 %}
                                 {% if variant %}
                                     <h5><a href="{% url 'product_details' variant.id %}">{{ product.name|truncatechars:30 }}</a></h5>
                                 {% else %}
@@ -100,7 +100,7 @@
                            
                             
                             <div class="product-bottom-details">
-                                {% with variant=product.product_variant.first %}
+                                {% with variant=product.active_variants.0 %}
                                     {% if variant %}
                                         <div class="product-price">
                                             <span class="current-price">₹{{ variant.final_price|floatformat:2 }}</span>

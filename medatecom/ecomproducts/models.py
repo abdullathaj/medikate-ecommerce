@@ -170,6 +170,12 @@ class Offer(models.Model):
         
         return f'{self.name} - {self.discount_percentage}%'
     
+    class Meta:
+        constraints=[
+            models.UniqueConstraint(fields=['product'], condition=models.Q(product__isnull=False), name='unique_product_offer'),
+            models.UniqueConstraint(fields=['category'], condition=models.Q(category__isnull=False), name='unique_category_offer'),
+        ]
+    
     def clean(self):
         if self.product and self.category:
             raise ValidationError('Offer can only apply on either Product or Category')

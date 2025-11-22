@@ -14,30 +14,30 @@ from django.conf import settings
 import razorpay
 from django.views.decorators.csrf import csrf_exempt
 
-def create_razorpay_order(amount, user_id, checkout_type='cart'):
-    """
-    Create a Razorpay order with comprehensive configuration
-    """
-    razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+# def create_razorpay_order(amount, user_id, checkout_type='cart'):
+#     """
+#     Create a Razorpay order with comprehensive configuration
+#     """
+#     razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
     
-    order_data = {
-        'amount': int(amount * 100),  # Convert to paise
-        'currency': 'INR',
-        'payment_capture': '1',  # Auto capture payment
-        'notes': {
-            'order_type': 'ecommerce',
-            'user_id': str(user_id),
-            'checkout_type': checkout_type,
-            'platform': 'web'
-        }
-    }
+#     order_data = {
+#         'amount': int(amount * 100),  # Convert to paise
+#         'currency': 'INR',
+#         'payment_capture': '1',  # Auto capture payment
+#         'notes': {
+#             'order_type': 'ecommerce',
+#             'user_id': str(user_id),
+#             'checkout_type': checkout_type,
+#             'platform': 'web'
+#         }
+#     }
     
-    try:
-        razorpay_order = razorpay_client.order.create(order_data)
-        return razorpay_order
-    except Exception as e:
-        print(f"Error creating Razorpay order: {str(e)}")
-        raise e
+#     try:
+#         razorpay_order = razorpay_client.order.create(order_data)
+#         return razorpay_order
+#     except Exception as e:
+#         print(f"Error creating Razorpay order: {str(e)}")
+#         raise e
 
 @login_required(login_url='login')
 def buy_now(request, variant_id):

@@ -8,7 +8,7 @@ from .models import UserAddress,User,WishlistProducts,CartProducts,Wallet,Referr
 from ecomproducts.models import Product,ProductVariant,ProductImage,Categories,Coupon
 from django.core.paginator import Paginator
 from django.db import models
-from django.db.models import Min,Q,F,Sum,FloatField
+from django.db.models import Min,Q,F,Sum,FloatField,Prefetch
 from .forms import UserProfileForm,UserAddressForm,UserPasswordChangeForm,EmailChangeForm
 from django.core.mail import send_mail
 from django.conf import settings
@@ -26,62 +26,75 @@ import random
 # -------------------------------------------------------------------------
 
 def userhomeview(request):
-     # Fetch active products with related category and filter active variants
-    products = Product.objects.filter(
-        product_variant__is_active=True,
-        category__is_active=True
-    ).select_related('category').order_by('-created_at').distinct()[:8]
-    print(products)
 
+    active_variant_prefetch= Prefetch('product_variant',queryset=ProductVariant.objects.filter(is_active=True),
+                                                                            to_attr='active_variants')
+    
+    products = (Product.objects.filter(product_variant__is_active= True, category__is_active= True)
+                .select_related('category')
+                .prefetch_related(active_variant_prefetch)
+                .order_by('-created_at').distinct()[:8]
+                ) 
     trending_products=products[:8]
-  
+    print(f'trending products: {trending_products}')
+    
     return render(request, 'auth/home.html',{'products': products, 'trending_products':trending_products})
 
 @login_required(login_url='login') 
 @never_cache
 def home_after_login(request):
     
-    products = Product.objects.filter(
-        product_variant__is_active=True,
-        category__is_active=True
-    ).select_related('category').order_by('-created_at').distinct()[:8]
-    
+    active_variant_prefetch = Prefetch('product_variant', queryset=ProductVariant.objects.filter(is_active=True), to_attr='active_variants'      
+    )
+
+    products = (Product.objects.filter(product_variant__is_active=True,category__is_active=True,)
+        .select_related('category')
+        .prefetch_related(active_variant_prefetch)
+        .order_by('-created_at').distinct()[:8]
+    )
+
     wishlist_variant_ids= []
     if request.user.is_authenticated:
         wishlist_variant_ids= WishlistProducts.objects.filter(
             user= request.user
         ).values_list('variant_id', flat= True)
+    
     trending_products=products[:8]
+
+    print(f'latest products: {trending_products}')
+    print(f'wishlist IDs: {wishlist_variant_ids}')
    
     return render(request,'auth/home.html',{'products':products,'trending products':trending_products,
                                             'wishlist_variant_ids':wishlist_variant_ids})
 
 def product_details(request, variant_id):
-    # Fetch the product
+    ''' Showing Details of a Product, Related Products and Bread Crumbs'''
+
     variant = get_object_or_404(ProductVariant, id=variant_id, is_active=True, product__category__is_active=True)
     product=variant.product
+    print(f'Details of {product}')
     
-
-    # Fetch active variants for the product
     variants = product.product_variant.filter(is_active=True)
     wishlist_variant_ids=[]
     if request.user.is_authenticated:
         wishlist_variant_ids= WishlistProducts.objects.filter(
             user= request.user
         ).values_list('variant_id',flat=True)
+    print(f'Wishlist IDs: {wishlist_variant_ids}')
 
-    # Fetch related products (same category, excluding current product, up to 4)
     related_products = Product.objects.filter(
         category=product.category,
         product_variant__is_active=True,
         category__is_active=True
-    ).exclude(id=product.id).distinct()[:6]
+    ).exclude(id=product.id).distinct()[:4]
+    print(f'Related Products of {product}: {related_products}')
 
     breadcrumbs=[
         {'name': 'Home', 'url':'login_home'},
         {'name': 'Products', 'url': 'product_listing'},
         {'name': 'Product Details', 'url': ''}
     ]
+    print(f'Breadcrumbs: {breadcrumbs}')
     context = {
         'product': product,
         'selected_variant':variant,
@@ -119,11 +132,8 @@ def user_product_listing(request):
             user= request.user
         ).values_list('variant_id',flat=True)
 
-
-    # 
     categories = Categories.objects.filter(is_active=True)
 
-    # 
     brands = Product.objects.filter(
         product_variant__is_active=True,
         category__is_active=True
@@ -135,15 +145,12 @@ def user_product_listing(request):
     price_min = request.GET.get('price_min')
     price_max = request.GET.get('price_max')
 
-
     if selected_categories:
         variants = variants.filter(product__category__id__in=selected_categories)
-
 
     if selected_brands:
         variants = variants.filter(product__brand__in=selected_brands)
 
-    #
     if price_min:
         try:
             price_min = float(price_min)
@@ -168,11 +175,9 @@ def user_product_listing(request):
     elif sort == 'name_desc':
         variants = variants.order_by('-product__name', '-variant_name')
 
-
     paginator = Paginator(variants, 12)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-
 
     query_params = request.GET.copy()
     if 'page' in query_params:
@@ -183,6 +188,7 @@ def user_product_listing(request):
         {'name': 'Home', 'url':'login_home'},
         {'name': 'Products', 'url': ''}
     ]
+
     context = {
         'variants': page_obj,
         'categories': categories,
@@ -228,6 +234,7 @@ def users_profile_page(request):
 def user_delete_address(request, address_id):
     ''' TO DELETE CURRENT ADDRESSES '''
     address = get_object_or_404(UserAddress, id=address_id, user=request.user)
+    print(f'Deleting Address: {address}')
     address.delete()
     messages.success(request, "Address deleted successfully.")
     return redirect('user_profile_page')
@@ -247,16 +254,18 @@ def users_profile_update_page(request):
             user_form = UserProfileForm(request.POST, instance=user)
             if user_form.is_valid():
                 user_form.save()
+                print(f"{user} updated Profile.")
                 messages.success(request, "Profile updated.")
                 return redirect('user_profile_page')
 
         elif 'update_address' in request.POST:
             address_form = UserAddressForm(request.POST)
-            address_form.initial['user'] = user  # for form clean()
-            address_form.instance.user = user    # for save()
+            address_form.initial['user'] = user  
+            address_form.instance.user = user   
 
             if address_form.is_valid():
                 address_form.save()
+                print(f'{user} is Created new Address.')
                 messages.success(request, "Address saved.")
                 return redirect('user_profile_page')
             
@@ -264,12 +273,14 @@ def users_profile_update_page(request):
             password_form = UserPasswordChangeForm(user=user, data=request.POST)
             if password_form.is_valid():
                 password_form.save()
-                update_session_auth_hash(request, user)  # Keep user logged in
+                update_session_auth_hash(request, user) 
+                print(f'{user} updated Password.')
                 messages.success(request, "Password updated successfully.")
                 return redirect('user_profile_page')
             else:
                 for field, error_list in password_form.errors.items():
                     for error in error_list:
+                        print(error)
                         messages.error(request, f"{password_form.fields[field].label}: {error}")
         
         elif 'request_email_otp' in request.POST:
@@ -278,11 +289,11 @@ def users_profile_update_page(request):
                 new_email=email_form.cleaned_data['new_email']
                 otp=str(random.randint(100000,999999))
                 expiry_time=timezone.now() + timedelta(seconds=60)
-
+                
                 request.session['change_email']= new_email
                 request.session['email_otp']= otp
                 request.session['email_expiry_time']= expiry_time.isoformat()
-                print(f'generated otp is {otp}.')
+                print(f'OTP for {new_email} : {otp}')
 
                 subject='OTP for Email Change.'
                 message=f'Dear {user},\n\n OTP for email verification for email change is {otp}.\n\n Best Regards,\n\n Team MediKate.'
@@ -304,13 +315,14 @@ def users_profile_update_page(request):
         {'name': 'Profile', 'url': 'user_profile_page'},
         {'name': 'Profrle updation', 'url': ''}
     ]
-    return render(request, 'user/profile_edit.html', {
+    context= {
         'user_form': user_form,
         'address_form': address_form,
         'password_form':password_form,
         'email_form': email_form,
-        'breadcrumbs': breadcrumbs
-    })
+        'breadcrumbs': breadcrumbs}
+    
+    return render(request, 'user/profile_edit.html', context)
 
 @never_cache
 @login_required(login_url='login')
@@ -324,21 +336,24 @@ def verify_email_otp(request):
 
         if not new_email or not stored_otp or not expiry_str:
             messages.error(request,f'Session has expired. Please try again.')
+            print('Session has expired. ')
             return redirect('user_profile_update')
         if stored_otp != entered_otp:
             messages.error(request,f'The OTP is not correct. Try again.')
+            print('Entered Incorrect OTP.')
             return redirect('user_profile_update')
         expiry_time= parse_datetime(expiry_str)
         if timezone.now() > expiry_time:
             request.session.pop('change_email',None)
             request.session.pop('email_otp',None)
             request.session.pop('email_expiry_time', None)
-
+            print('Session time for OTP has expired.')
             messages.error(request,f'OTP has expired.Please try again.')
             return redirect('user_profile_update')
         user= request.user
         user.email= new_email
         user.save()
+        print(f'The changed Email for {user} is {new_email}.')
 
         for i in ['change_email','email_otp','email_expiry_time']:
             request.session.pop(i,None)
@@ -358,10 +373,12 @@ def verify_email_otp(request):
 def user_edit_address(request, address_id):
     ''' EDIT CURRENT USER ADDRESS '''
     address = get_object_or_404(UserAddress, id=address_id, user=request.user)
+    print(f'Editing Address is: {address}')
     if request.method == 'POST':
         form = UserAddressForm(request.POST, instance=address)
         if form.is_valid():
             form.save()
+            print(f'Address changed to: {address}')
             messages.success(request, "Address updated successfully.")
             return redirect('user_profile_page')
         else:
@@ -409,7 +426,7 @@ def users_wishlist_page(request):
         variant__is_active=True
     ).select_related('variant__product')    
     
-    print('wishlist:',wishlist_items)
+    print(f'{request.user}s wishlist products:\n {wishlist_items}')
     breadcrumbs=[
         {'name': 'Home', 'url':'login_home'},
         {'name': 'Wishlist', 'url': ''}
@@ -420,15 +437,15 @@ def users_wishlist_page(request):
 def move_to_cart(request,variant_id):
     """ MOVING THE PRODUCT TO CART FROM WISHLIST AND REMOVE IT FROM WISHLIST """
     variant= get_object_or_404(ProductVariant, id=variant_id, is_active=True)
-
     WishlistProducts.objects.filter(user=request.user, variant= variant).delete()
-
     cart,created= CartProducts.objects.get_or_create(user=request.user, variant=variant)
 
     if created:
         messages.success(request, f'{variant.product.name} {variant.variant_name} is added to the cart.')
+        print(f'{variant} as Added to Cart from Wishlist.')
     else:
         messages.warning(request, f'{variant.product.name} {variant.variant_name} is already in your cart.')
+        print(f'Unable to add {variant} to Cart. Cart already has this product.')
     return redirect('user_wishlist_page')
 
 @never_cache
@@ -439,6 +456,7 @@ def remove_from_wishlist(request):
 
     WishlistProducts.objects.filter(user=request.user, variant=variant).delete()
     messages.success(request, f"{variant} removed from your wishlist.")
+    print(f'{variant} has Removed from Wishlist.')
 
     return redirect('user_wishlist_page')
 
@@ -449,7 +467,8 @@ def remove_from_wishlist(request):
 @never_cache
 @login_required(login_url='login')
 def add_to_cart(request, variant_id):
-    """Add a product variant to the user's cart or update quantity if it already exists."""
+    """Adding Product to the Cart using Cart Button. Restricts when Product stock is less than one or
+      Product alreadyin the Cart."""
     try:
         variant = get_object_or_404(ProductVariant, id=variant_id, is_active=True)
         
@@ -458,8 +477,8 @@ def add_to_cart(request, variant_id):
             return redirect(request.META.get('HTTP_REFERER', 'user_cart_page'))
 
         if CartProducts.objects.filter(user=request.user, variant=variant).exists():
-            messages.info(request,f'The item {variant} is already in the cart.')
-            print(f'{variant} is already in cartl.')
+            messages.warning(request,f'The item {variant} is already in the cart.')
+            print(f'{variant} is already in cart.')
         else:
             CartProducts.objects.create(user=request.user, variant=variant, quantity=1)
             messages.success(request,f" the Item {variant} is added to the cart.")
@@ -491,10 +510,12 @@ def users_cart_page(request):
 
     cart_item_details = []
     for item in cart_items:
-        if item.quantity > item.variant.stock:
-            messages.error(request, f"Insufficient stock for {item.variant}. Only {item.variant.stock} available.")
-            return redirect('user_cart_page')
-
+        if item.quantity <1 :
+            item.delete()
+            continue
+        if item.quantity > item.variant.stock or item.variant.stock == 0:
+            messages.error(request, f"Insufficient stock for {item.variant}. {item.variant.stock} items available.")
+            continue
         if item.quantity > 5:
             item.quantity = 5
             item.save()
@@ -603,7 +624,7 @@ def update_cart_quantity(request, cart_item_id):
         if action == 'increase':
             if cart_item.quantity >=5:
                 messages.warning(request,f'You can only select maximum of 5 products for each product.')
-            elif cart_item.quantity + 1 >= cart_item.variant.stock:
+            elif cart_item.quantity  >= cart_item.variant.stock:
                 messages.error(request, f"Cannot increase quantity. Stock limit reached.")
             else:
                 cart_item.quantity += 1
