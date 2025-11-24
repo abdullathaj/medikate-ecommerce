@@ -372,29 +372,18 @@ def admin_edit_product(request,product_id):
             if product_form.is_valid() and variant_form.is_valid() and image_form.is_valid():
                 product = product_form.save()
                 variants = variant_form.save(commit=False)
-                if not variants and not variant_form.deleted_objects:
+                if not variants:
                     raise ValidationError('At least one variant is required.')
                 for variant in variants:
                     variant.product = product
                     variant.save()
-                for obj in variant_form.deleted_objects:
-                    obj.delete()
-                    # HANDLING IMAGES
-                images = image_form.save(commit=False)
-               
-                deleted_ids = [img.id for img in image_form.deleted_objects if img and img.id]
-                existing_images = ProductImage.objects.filter(product=product).exclude(id__in=deleted_ids)
                 
-                new_images = [img for img in images if img.image]  # Only images with new uploads
-                total_images = len(existing_images) + len(new_images)
-                # Delete images marked for deletion
-                for obj in image_form.deleted_objects:
-                    obj.delete()
-                # Save new images
-                for image in new_images:
+                images = image_form.save(commit=False)
+            
+                for image in images:
                     image.product = product
                     image.save()
-                # Check total images after processing
+        
                 total_images = ProductImage.objects.filter(product=product).count()
                 if total_images != 3:
                     raise ValidationError(f"Exactly 3 images are required. Currently, there are {total_images} images.")

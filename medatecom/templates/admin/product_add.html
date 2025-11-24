@@ -44,9 +44,15 @@
                         <label for="{{ product_form.name.id_for_label }}" class="form-label">Product Name</label>
                         {{ product_form.name }}
                     </div>
-                    <div class="col-md-12 mb-3">
-                        <label for="{{ product_form.description.id_for_label }}" class="form-label">Description</label>
-                        {{ product_form.description }}
+                    <div class="row">
+                         <div class="col-md-6 mb-3">
+                            <label for="{{ product_form.description.id_for_label }}" class="form-label">Description</label>
+                            {{ product_form.description }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ product_form.brand.id_for_label }}" class="form-label">Brand Name</label>
+                            {{ product_form.brand }}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -93,10 +99,6 @@
                                         <input type="text" class="form-control" name="variants-TEMPLATE-size" placeholder="Enter size (optional)">
                                     </div>
                                 </div>
-                                <div class="form-check mb-3">
-                                    <input type="checkbox" class="form-check-input" name="variants-TEMPLATE-is_active" checked>
-                                    <label class="form-check-label">Active</label>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -135,10 +137,6 @@
                                             <label for="{{ form.size.id_for_label }}" class="form-label">Size (Optional)</label>
                                             {{ form.size }}
                                         </div>
-                                    </div>
-                                    <div class="form-check mb-3">
-                                        {{ form.is_active }}
-                                        <label for="{{ form.is_active.id_for_label }}" class="form-check-label">Active</label>
                                     </div>
                                 </div>
                             </div>

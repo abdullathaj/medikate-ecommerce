@@ -34,18 +34,22 @@
                     </div>
                 {% endif %}
                 <div class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 col-sm-12 mb-3">
                         <label for="{{ product_form.category.id_for_label }}" class="form-label">Category</label>
                         {{ product_form.category }}
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 col-sm-12 mb-3">
                         <label for="{{ product_form.name.id_for_label }}" class="form-label">Product Name</label>
                         {{ product_form.name }}
                     </div>
-                    <div class="col-md-12 mb-3">
-                        <label for="{{ product_form.description.id_for_label }}" class="form-label">Description</label>
-                        {{ product_form.description }}
-                    </div>
+                     <div class="col-md-6 col-sm-12 mb-3">
+                            <label for="{{ product_form.description.id_for_label }}" class="form-label">Description</label>
+                            {{ product_form.description }}
+                        </div>
+                        <div class="col-md-6 col-sm-12 mb-3">
+                            <label for="{{ product_form.brand.id_for_label }}" class="form-label">Brand Name</label>
+                            {{ product_form.brand }}
+                        </div>
                 </div>
             </div>
         </div>
@@ -54,7 +58,7 @@
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h2 class="h5 mb-0">Product Variants</h2>
-                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addVariantForm()">Add Variant</button>
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="addVariantForm()">Add Variant</button>
             </div>
             <div class="card-body">
                 {{ variant_form.management_form }}
@@ -74,31 +78,24 @@
                             <div class="card-body">
                                 <h3 class="h6">Variant <span class="variant-number"></span></h3>
                                 <div class="row">
-                                    <div class="col-md-3 mb-3">
+                                    <div class="col-md-3 col-sm-3 mb-3">
                                         <label class="form-label">Variant Name</label>
                                         <input type="text" class="form-control" name="variants-TEMPLATE-variant_name" placeholder="Enter variant name">
                                     </div>
-                                    <div class="col-md-3 mb-3">
+                                    <div class="col-md-3 col-sm-3 mb-3">
                                         <label class="form-label">Price</label>
                                         <input type="number" step="0.01" class="form-control" name="variants-TEMPLATE-price" placeholder="Enter price">
                                     </div>
-                                    <div class="col-md-3 mb-3">
+                                    <div class="col-md-3 col-sm-3 mb-3">
                                         <label class="form-label">Stock</label>
                                         <input type="number" class="form-control" name="variants-TEMPLATE-stock" placeholder="Enter stock quantity">
                                     </div>
-                                    <div class="col-md-3 mb-3">
+                                    <div class="col-md-3 col-sm-3 mb-3">
                                         <label class="form-label">Size (Optional)</label>
                                         <input type="text" class="form-control" name="variants-TEMPLATE-size" placeholder="Enter size (optional)">
                                     </div>
                                 </div>
-                                <div class="form-check mb-3">
-                                    <input type="checkbox" class="form-check-input" name="variants-TEMPLATE-is_active" checked>
-                                    <label class="form-check-label">Active</label>
-                                </div>
-                                <div class="form-check mb-3">
-                                    <input type="checkbox" class="form-check-input" name="variants-TEMPLATE-DELETE">
-                                    <label class="form-check-label text-danger">Delete this variant</label>
-                                </div>
+                                
                             </div>
                         </div>
                     </div>
@@ -106,7 +103,7 @@
                     {% for form in variant_form %}
                         <div class="variant-form active mb-3">
                             {{ form.id }}
-                            <div class="card">
+                            <div class="card border-2">
                                 <div class="card-body">
                                     <h3 class="h6">Variant {{ forloop.counter }}</h3>
                                     {% if form.errors %}
@@ -121,30 +118,22 @@
                                         </div>
                                     {% endif %}
                                     <div class="row">
-                                        <div class="col-md-3 mb-3">
+                                        <div class="col-md-3 col-sm-6 mb-3">
                                             <label for="{{ form.variant_name.id_for_label }}" class="form-label">Variant Name</label>
                                             {{ form.variant_name }}
                                         </div>
-                                        <div class="col-md-3 mb-3">
+                                        <div class="col-md-3 col-sm-6 mb-3">
                                             <label for="{{ form.price.id_for_label }}" class="form-label">Price</label>
                                             {{ form.price }}
                                         </div>
-                                        <div class="col-md-3 mb-3">
+                                        <div class="col-md-3 col-sm-6 mb-3">
                                             <label for="{{ form.stock.id_for_label }}" class="form-label">Stock</label>
                                             {{ form.stock }}
                                         </div>
-                                        <div class="col-md-3 mb-3">
+                                        <div class="col-md-3 col-sm-6 mb-3">
                                             <label for="{{ form.size.id_for_label }}" class="form-label">Size (Optional)</label>
                                             {{ form.size }}
                                         </div>
-                                    </div>
-                                    <div class="form-check mb-3">
-                                        {{ form.is_active }}
-                                        <label for="{{ form.is_active.id_for_label }}" class="form-check-label">Active</label>
-                                    </div>
-                                    <div class="form-check mb-3">
-                                        {{ form.DELETE }}
-                                        <label for="{{ form.DELETE.id_for_label }}" class="form-check-label text-danger">Delete this variant</label>
                                     </div>
                                 </div>
                             </div>
@@ -199,10 +188,6 @@
                                     <div class="mb-3">
                                         {{ form.image }}
                                     </div>
-                                    <div class="form-check mb-3">
-                                        {{ form.DELETE }}
-                                        <label for="{{ form.DELETE.id_for_label }}" class="form-check-label text-danger">Delete this image</label>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -214,10 +199,13 @@
         <!-- Submit Button -->
         <div class="text-end mb-4">
             <button type="submit" class="btn btn-primary me-2">Update Product</button>
-            <a href="{% url 'admin_product_list' %}" class="btn btn-outline-secondary">Cancel</a>
+            <a href="{% url 'admin_product_list' %}" class="btn btn-outline-dark">Cancel</a>
         </div>
     </form>
 </div>
+<style>
+    
+</style> 
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>

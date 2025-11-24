@@ -95,6 +95,10 @@
                                     <div class="mb-3">
                                         <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
                                         {{ field }}
+                                        <button type="button" class="btn btn-outline-warning btn-sm toggle-password m-1" 
+                                                data-target="{{ field.id_for_label }}">
+                                            Show
+                                        </button>
                                         {% if field.help_text %}
                                             <div class="form-text">{{ field.help_text|safe }}</div>
                                         {% endif %}
@@ -142,6 +146,20 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     toastList.forEach(function (toast) {
         toast.show();
+    });
+});
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.toggle-password').forEach(function(button) {
+        button.addEventListener('click', function () {
+            const input = document.getElementById(this.dataset.target);
+            if (input.type === "password") {
+                input.type = "text";
+                this.textContent = "Hide";
+            } else {
+                input.type = "password";
+                this.textContent = "Show";
+            }
+        });
     });
 });
 </script>

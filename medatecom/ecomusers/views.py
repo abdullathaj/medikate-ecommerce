@@ -437,15 +437,19 @@ def users_wishlist_page(request):
 def move_to_cart(request,variant_id):
     """ MOVING THE PRODUCT TO CART FROM WISHLIST AND REMOVE IT FROM WISHLIST """
     variant= get_object_or_404(ProductVariant, id=variant_id, is_active=True)
-    WishlistProducts.objects.filter(user=request.user, variant= variant).delete()
-    cart,created= CartProducts.objects.get_or_create(user=request.user, variant=variant)
-
-    if created:
-        messages.success(request, f'{variant.product.name} {variant.variant_name} is added to the cart.')
-        print(f'{variant} as Added to Cart from Wishlist.')
+   
+    
+    if variant.stock < 1:
+        messages.error(request,f'{variant} is Out of stock.')
     else:
-        messages.warning(request, f'{variant.product.name} {variant.variant_name} is already in your cart.')
-        print(f'Unable to add {variant} to Cart. Cart already has this product.')
+        WishlistProducts.objects.filter(user=request.user, variant= variant).delete()
+        cart,created= CartProducts.objects.get_or_create(user=request.user, variant=variant)
+        if created:
+            messages.success(request, f'{variant.product.name} {variant.variant_name} is added to the cart.')
+            print(f'{variant} as Added to Cart from Wishlist.')
+        else:
+            messages.warning(request, f'{variant.product.name} {variant.variant_name} is already in your cart.')
+            print(f'Unable to add {variant} to Cart. Cart already has this product.')
     return redirect('user_wishlist_page')
 
 @never_cache

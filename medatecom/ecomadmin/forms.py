@@ -37,9 +37,10 @@ class CategoryAddForm(forms.ModelForm):
 class ProductAddForm(ModelForm):
     class Meta:
         model = Product
-        fields = ['name', 'category','description']
+        fields = ['name', 'category','description','brand']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter product name'}),
+            'brand': forms.TextInput(attrs={'class':'form-control','placeholder':'Enter the brand (Optional)'}),
             'category': forms.Select(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -69,13 +70,13 @@ class ProductAddForm(ModelForm):
 class VariantAddForm(ModelForm):
     class Meta:
         model = ProductVariant
-        fields = ['variant_name', 'price', 'stock', 'size', 'is_active']
+        fields = ['variant_name', 'price', 'stock', 'size', ]
         widgets = {
             'variant_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter variant name'}),
             'price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': 'Enter price'}),
             'stock': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter stock quantity'}),
             'size': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter size (optional)'}),
-            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            # 'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
  
     def clean_variant_name(self):
@@ -120,9 +121,9 @@ class BaseVariantFormset(BaseInlineFormSet):
             seen.add(name)
 
 VariantFormset=inlineformset_factory(Product,ProductVariant,form=VariantAddForm,formset=BaseVariantFormset,
-                                     extra=0,can_delete=True,min_num=1,validate_min=True)
+                                     extra=0, min_num=1,validate_min=True)
 ImageFormset=inlineformset_factory(Product,ProductImage,form=ProductImageForm,
-                                    extra=0,can_delete=True,max_num=3,min_num=3,
+                                    extra=0,max_num=3,min_num=3,
                                     validate_min=True,validate_max=True)
 
 class OfferForm(forms.ModelForm):
