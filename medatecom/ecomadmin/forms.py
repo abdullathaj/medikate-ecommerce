@@ -53,19 +53,24 @@ class ProductAddForm(ModelForm):
          self.fields['category'].empty_label='Select from categories'
 
     def clean_name(self):
+            ''' Product name will not allow other symbols and Reject duplicate names Case Insestive way.'''
             name = self.cleaned_data.get('name')
             if not re.fullmatch(r'[A-Za-z][A-Za-z0-9\s]*', name):
-                raise ValidationError("Product name should only contain letters,digits and spaces.")
-            
+                raise ValidationError("Product name should only contain letters,digits and spaces.")  
             # FOR UNIQUE PRODUCT - CASE INSENSITIVE
             qs = Product.objects.filter(name__iexact=name)
             if self.instance.pk:
                 qs = qs.exclude(pk=self.instance.pk)
             if qs.exists():
                 raise ValidationError("A product with this name already exists.")
-
             return name
-
+    
+    def clean_brand(self):
+        ''' Brand name do not allows any other symbols.'''
+        brand= self.cleaned_data.get('brand')
+        if brand and not re.fullmatch(r'[a-zA-Z0-9\s]*',brand):
+            raise ValidationError('Brand name should only contain Alphabets,Digits and Spaces.')
+        return brand
 
 class VariantAddForm(ModelForm):
     class Meta:

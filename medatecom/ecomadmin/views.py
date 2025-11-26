@@ -372,8 +372,8 @@ def admin_edit_product(request,product_id):
             if product_form.is_valid() and variant_form.is_valid() and image_form.is_valid():
                 product = product_form.save()
                 variants = variant_form.save(commit=False)
-                if not variants:
-                    raise ValidationError('At least one variant is required.')
+                # if not variants:
+                #     raise ValidationError('At least one variant is required.')
                 for variant in variants:
                     variant.product = product
                     variant.save()

@@ -1,6 +1,5 @@
 from django.shortcuts import render,redirect,get_object_or_404
 from django.http import Http404,JsonResponse
-import json
 from django.db import IntegrityError,transaction
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
@@ -399,6 +398,8 @@ def user_edit_address(request, address_id):
 @never_cache
 @login_required(login_url='login') 
 def add_to_wishlist(request, variant_id):
+    if request.method != 'POST':
+        return JsonResponse({'status':'error','message':'Invalid Request Method.'},status=400)
     
     variant = get_object_or_404(ProductVariant, id=variant_id,is_active=True)
 
@@ -406,18 +407,22 @@ def add_to_wishlist(request, variant_id):
     existing = WishlistProducts.objects.filter(user=request.user, variant=variant).exists()
     if existing:
         print(f'{variant} is ALREADY in wishlist.')
-        messages.warning(request, "This item is already in your wishlist.")
+        return JsonResponse({
+            'status':'warning','message':f'{variant.product.name} {variant.variant_name} is already in wishlist.',
+            'variant_id':variant_id,}) 
     else:
         WishlistProducts.objects.create(user=request.user, variant=variant)
         print(f'{variant} ADDED to wishlist.')
-        messages.success(request, f"{variant} added to your wishlist.")
+       
 
-    return redirect(request.META.get('HTTP_REFERER', 'user_wishlist_page'))
+    return JsonResponse({
+        'status':'success','message': f"{variant.product.name} {variant.variant_name} added to your wishlist.",
+        'variant_id':variant_id,
+    })
 
 @login_required(login_url='login') 
 def users_wishlist_page(request):
-    """FOR SHOWING THE PRODUCTS IN WISHLIST ADDED BY AUTHENTICATED USER
-    """
+    """FOR SHOWING THE PRODUCTS IN WISHLIST ADDED BY AUTHENTICATED USER  """
     if not request.user.is_active:
         return redirect('login')
     
@@ -436,21 +441,23 @@ def users_wishlist_page(request):
 @login_required(login_url='login')
 def move_to_cart(request,variant_id):
     """ MOVING THE PRODUCT TO CART FROM WISHLIST AND REMOVE IT FROM WISHLIST """
+
     variant= get_object_or_404(ProductVariant, id=variant_id, is_active=True)
-   
-    
+
     if variant.stock < 1:
-        messages.error(request,f'{variant} is Out of stock.')
+        return JsonResponse({'status':'error','message':f'{variant} is Out of stock.'})
     else:
         WishlistProducts.objects.filter(user=request.user, variant= variant).delete()
         cart,created= CartProducts.objects.get_or_create(user=request.user, variant=variant)
         if created:
-            messages.success(request, f'{variant.product.name} {variant.variant_name} is added to the cart.')
+            message = f'{variant.product.name} {variant.variant_name} is added to the cart.'
             print(f'{variant} as Added to Cart from Wishlist.')
         else:
-            messages.warning(request, f'{variant.product.name} {variant.variant_name} is already in your cart.')
+            message = f'{variant.product.name} {variant.variant_name} is already in your cart.'
             print(f'Unable to add {variant} to Cart. Cart already has this product.')
-    return redirect('user_wishlist_page')
+    return JsonResponse({
+        'status':'success','message':message,'variant_id':variant_id,
+    })
 
 @never_cache
 @login_required(login_url='login') 
@@ -459,10 +466,12 @@ def remove_from_wishlist(request):
     variant = get_object_or_404(ProductVariant, id=variant_id)
 
     WishlistProducts.objects.filter(user=request.user, variant=variant).delete()
-    messages.success(request, f"{variant} removed from your wishlist.")
+    message = f"{variant.product.name} {variant.variant_name} removed from your wishlist."
     print(f'{variant} has Removed from Wishlist.')
 
-    return redirect('user_wishlist_page')
+    return JsonResponse({
+        'status':'success','message':message,'variant_id':variant_id,
+    })
 
 
 # --------------------------------------------------------------------

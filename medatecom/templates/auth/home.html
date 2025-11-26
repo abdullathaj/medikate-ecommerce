@@ -82,7 +82,7 @@
                     <div class="product-card">
                         <div class="product-thumb">
                             {% with product_image=product.product_image.first %}
-                                {% if product_image %}
+                                {% if product_image %} 
                                     <img src="{{ product_image.image.url }}" alt="{{ product.name }}" loading="lazy">
                                 {% else %}
                                     <img src="https://via.placeholder.com/150?text={{ product.name|urlencode }}" alt="{{ product.name }}" loading="lazy">
@@ -164,12 +164,12 @@
     </section>
 
      <!-- Single Banner Section -->
-    <section class="single-banner-section container my-1">
+     {% comment %} <section class="single-banner-section container my-1">
         <div class="single-banner">
             <div class="banner-overlay"></div>
             <img src="{% static 'home/images/supplementbanner.jpg' %}" class="d-block w-100" alt="Promotional Banner">
         </div>
-    </section>
+    </section>  {% endcomment %}
 
     <!-- Category Section-->
     <section class="category-section container my-1">
@@ -515,7 +515,7 @@ body {
 /* =============================
    SINGLE BANNER SECTION
 ============================= */
-        .single-banner-section {
+        {% comment %} .single-banner-section {
             padding: 2rem 0;
         }
 
@@ -564,7 +564,7 @@ body {
             .single-banner img {
                 max-height: 250px;
             }
-        }
+        } {% endcomment %}
 
 /* =============================
    PRODUCT LISTING SECTION
