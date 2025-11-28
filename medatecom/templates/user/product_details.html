@@ -560,10 +560,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
         cartBtn.setAttribute("data-id",variantId);
         wishlistBtn.setAttribute("data-id",variantId);
+
+        window.location.href= `/product_details/${variantId}/`;
     }
 
     variantSelect.addEventListener('change', updateInfo);
-    updateInfo();
+    // updateInfo();
 });
 
 
