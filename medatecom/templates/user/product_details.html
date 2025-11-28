@@ -4,7 +4,7 @@
 {% block content %}
 
     <!-- Toast Container -->
-    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055;">
         {% if messages %}
             {% for message in messages %}
                 <div class="toast align-items-center text-white 
@@ -121,11 +121,12 @@
                 <!-- Action Buttons -->
                 <div class="product-actions">
                     <a href="{% url 'buy_now' selected_variant.id %}" class="btn btn-primary buy-now-btn mx-2">Buy Now</a>
-                    <a href="{% url 'add_to_cart' selected_variant.id %}" id="addToCartBtn" class="btn btn-outline-secondary" title="Add to Cart">
-                        <i class="fas fa-shopping-cart"></i> Add to Cart
+                    <a href="#" id="addToCartBtn" data-id= "{{selected_variant.id}}"
+                        class="add-to-cart btn btn-outline-secondary" title="Add to Cart">
+                            <i class="fas fa-shopping-cart"></i> Add to Cart
                     </a>
-                    <a href="{% url 'add_to_wishlist' selected_variant.id %}" id="addToWishlistBtn" 
-                    class="btn btn-outline-secondary mx-2 {% if selected_variant.id in wishlist_variant_ids %}in-wishlist{% endif %}" 
+                    <a href="#" id="addToWishlistBtn" data-id='{{selected_variant.id}}'
+                    class="add-to-wishlist btn btn-outline-secondary mx-2 {% if selected_variant.id in wishlist_variant_ids %}in-wishlist{% endif %}" 
                     title="Add to Wishlist">
                         <i class="fas fa-heart"></i>
                     </a>
@@ -165,16 +166,22 @@
                                         <span class="current-price">₹{{ variant.final_price|floatformat:2 }}</span>
                                     </div>
                                     <div class="product-links">
-                                        <a href="{% url 'add_to_cart' variant.id %}" title="Add to Cart" class="cart-btn">
-                                            <i class="fas fa-shopping-cart"></i></a>
-                                        <a href="{% url 'add_to_wishlist' variant.id %}" title="Add to Wishlist" class="wishlist-btn ">
-                                            <i class="fas fa-heart"></i></a>
+                                        <a href="#" title="Add to Cart" data-id= "{{variant.id}}"
+                                            class="add-to-cart cart-btn text-decoration-none">
+                                            <i class="fas fa-shopping-cart"></i>
+                                        </a>
+
+                                        <a href="#" 
+                                            title="Add to Wishlist" data-id="{{ variant.id }}"
+                                            class="add-to-wishlist wishlist-btn text-decoration-none {% if variant.id in wishlist_variant_ids %}in-wishlist{% endif %}">
+                                                <i class="fas fa-heart"></i>
+                                        </a>
                                     </div>
                                 {% else %}
                                     <div class="related-product-price">N/A</div>
                                     <div class="product-links">
-                                        <button class="cart-btn" disabled><i class="fas fa-shopping-cart"></i></button>
-                                        <button class="wishlist-btn" disabled><i class="fas fa-heart"></i></button>
+                                        <button class="cart-btn text-decoration-none" disabled><i class="fas fa-shopping-cart"></i></button>
+                                        <button class="wishlist-btn text-decoration-none" disabled><i class="fas fa-heart"></i></button>
                                     </div>
                                 {% endif %}
                             {% endwith %}
@@ -464,6 +471,10 @@
             color: #fff;
         }
 
+        .wishlist-btn.in-wishlist{
+            color: red;
+        }
+        
     /* Responsive Adjustments */
         @media (max-width: 992px) {
             .product-thumb {
@@ -515,6 +526,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <!-- JavaScript for dynamic price and stock update -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.js"> </script>
    
 {% endblock %}
 {% block extra_scripts %}
@@ -545,22 +558,21 @@ document.addEventListener('DOMContentLoaded', function () {
             stockStatus.innerHTML = `<span class="text-success">In Stock (${stock})</span>`;
         }
 
-        cartBtn.href = `/add_to_cart/${variantId}/`;
-        wishlistBtn.href = `/add_to_wishlist/${variantId}/`;
+        cartBtn.setAttribute("data-id",variantId);
+        wishlistBtn.setAttribute("data-id",variantId);
     }
 
     variantSelect.addEventListener('change', updateInfo);
     updateInfo();
 });
 
-// JavaScript to Initialize Toasts 
 
 document.addEventListener('DOMContentLoaded', function () {
     var toastElList = [].slice.call(document.querySelectorAll('.toast'));
     var toastList = toastElList.map(function (toastEl) {
         return new bootstrap.Toast(toastEl, {
             autohide: true,
-            delay: 5000 // Toast auto-hides after 5 seconds
+            delay: 5000 
         });
     });
     toastList.forEach(function (toast) {
@@ -568,5 +580,70 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
+function showToast(message, status){
+    let bgClass = "bg-primary";
+    if (status === 'success') bgClass = 'bg-success';
+    else if (status === 'error') bgClass = 'bg-danger';
+    else if (status === 'warning') bgClass = 'bg-warning';
+    else if (status === 'info') bgClass = 'bg-info';
+
+    let toastHTML = `
+        <div class="toast align-items-center text-white ${bgClass} border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                        data-bs-dismiss="toast"></button>
+            </div>
+        </div>`;
+
+    $(".toast-container").append(toastHTML);
+    new bootstrap.Toast($(".toast-container .toast").last()[0]).show();
+}
+
+$(document).on("click", ".add-to-wishlist", function (e) {
+    e.preventDefault();
+
+    let btn = $(this);
+    let variantId = btn.data("id");
+
+    $.ajax({
+        url: `/add_to_wishlist/${variantId}/`,
+        type: "POST",
+        data: {
+            csrfmiddlewaretoken: "{{ csrf_token }}",
+        },
+        success: function (response) {
+            showToast(response.message, response.status);
+
+            if (response.status === "success") {
+                btn.addClass("in-wishlist");
+            }
+        },
+        error: function () {
+            showToast("Something went wrong!", "error");
+        }
+    });
+});
+
+$(document).on('click', '.add-to-cart', function (e) {
+    e.preventDefault();
+
+    let btn= $(this);
+    let variantId = btn.data('id');
+
+    $.ajax({
+        url: `/add_to_cart/${variantId}/`,
+        type: 'POST',
+        data: {
+            csrfmiddlewaretoken : "{{csrf_token}}",
+        },
+        success : function (response){
+            showToast(response.message, response.status);
+        },
+        error: function (response) {
+            showToast('Something went wrong!', 'error');
+        },
+    });
+});
 </script>
 {% endblock %}

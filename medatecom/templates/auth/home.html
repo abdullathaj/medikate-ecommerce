@@ -106,10 +106,16 @@
                                             <span class="current-price">₹{{ variant.final_price|floatformat:2 }}</span>
                                         </div>
                                         <div class="product-links">
-                                            <a href="{% url 'add_to_wishlist' variant.id %}" title="Add to Wishlist" 
-                                                class="wishlist-btn {% if variant.id in wishlist_variant_ids %}in-wishlist {% endif %}">
-                                                    <i class="fas fa-heart"></i></a>
-                                                <a href="{% url 'add_to_cart' variant.id %}" title="Add to Cart" class="cart-btn"><i class="fas fa-shopping-cart"></i></a>
+                                                <a href="#" 
+                                                    title="Add to Wishlist"
+                                                    data-id="{{ variant.id }}"
+                                                    class="add-to-wishlist wishlist-btn {% if variant.id in wishlist_variant_ids %}in-wishlist{% endif %}">
+                                                        <i class="fas fa-heart"></i>
+                                                </a>
+                                                <a href="#" title="Add to Cart"  data-id="{{variant.id}}"
+                                                    class="add-to-cart cart-btn">
+                                                    <i class="fas fa-shopping-cart"></i>
+                                                </a>
                                         </div> 
                                     {% else %}
                                         <div class="product-price">N/A</div>
@@ -747,7 +753,8 @@ body {
 <!-- Include Font Awesome for icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
-<!-- JavaScript to Initialize Toasts -->
+<script src="https://code.jquery.com/jquery-3.7.1.js"> </script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     var toastElList = [].slice.call(document.querySelectorAll('.toast'));
@@ -759,6 +766,72 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     toastList.forEach(function (toast) {
         toast.show();
+    });
+});
+
+function showToast(message, status){
+    let bgClass = "bg-primary";
+    if (status === 'success') bgClass = 'bg-success';
+    else if (status === 'error') bgClass = 'bg-danger';
+    else if (status === 'warning') bgClass = 'bg-warning';
+    else if (status === 'info') bgClass = 'bg-info';
+
+    let toastHTML = `
+        <div class="toast align-items-center text-white ${bgClass} border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                        data-bs-dismiss="toast"></button>
+            </div>
+        </div>`;
+
+    $(".toast-container").append(toastHTML);
+    new bootstrap.Toast($(".toast-container .toast").last()[0]).show();
+}
+
+$(document).on("click", ".add-to-wishlist", function (e) {
+    e.preventDefault();
+
+    let btn = $(this);
+    let variantId = btn.data("id");
+
+    $.ajax({
+        url: `/add_to_wishlist/${variantId}/`,
+        type: "POST",
+        data: {
+            csrfmiddlewaretoken: "{{ csrf_token }}",
+        },
+        success: function (response) {
+            showToast(response.message, response.status);
+
+            if (response.status === "success") {
+                btn.addClass("in-wishlist");
+            }
+        },
+        error: function () {
+            showToast("Something went wrong!", "error");
+        }
+    });
+});
+
+$(document).on("click", ".add-to-cart", function (e) {
+    e.preventDefault();
+
+    let btn = $(this);
+    let variantId = btn.data("id");
+
+    $.ajax({
+        url: `/add_to_cart/${variantId}/`,
+        type: "POST",
+        data: {
+            csrfmiddlewaretoken: "{{ csrf_token }}",
+        },
+        success: function (response) {
+            showToast(response.message, response.status);
+        },
+        error: function () {
+            showToast("Something went wrong!", "error");
+        }
     });
 });
 </script>

@@ -72,6 +72,7 @@ def product_details(request, variant_id):
     variant = get_object_or_404(ProductVariant, id=variant_id, is_active=True, product__category__is_active=True)
     product=variant.product
     print(f'Details of {product}')
+    print(f'selected variant id is {variant_id}')
     
     variants = product.product_variant.filter(is_active=True)
     wishlist_variant_ids=[]
@@ -486,24 +487,40 @@ def add_to_cart(request, variant_id):
         variant = get_object_or_404(ProductVariant, id=variant_id, is_active=True)
         
         if variant.stock < 1:
-            messages.error(request, f"{variant} is out of stock.")
-            return redirect(request.META.get('HTTP_REFERER', 'user_cart_page'))
+            print(f'{variant} is out of stock.')
+            return JsonResponse({
+                'status':'error', 'message':f'{variant.product.name} {variant.variant_name} is Out of Stock.',
+                'variant_id':variant_id,
+            })
 
         if CartProducts.objects.filter(user=request.user, variant=variant).exists():
-            messages.warning(request,f'The item {variant} is already in the cart.')
             print(f'{variant} is already in cart.')
+            return JsonResponse({
+                'status':'warning','message':f'{variant.product.name} {variant.variant_name} is already in Cart.',
+                'variant_id':variant_id,
+            })
+            
         else:
             CartProducts.objects.create(user=request.user, variant=variant, quantity=1)
-            messages.success(request,f" the Item {variant} is added to the cart.")
             print(f'{variant} is added to the cart.')
+            return JsonResponse({
+                'status':'success', 'message':f'{variant.product.name} {variant.variant_name} is added to Cart.',
+                'variant_id':variant_id,
+            })
+            
 
     except IntegrityError:
-        messages.error(request,"Something is wrong for adding to the cart. Please try again.")
+        return JsonResponse({
+            'status':'error','message':'Something went wrong, Please try again.',
+            'variant_id':variant_id,
+        })
 
     except Exception as e:
-        messages.error(request,f'Unexpected error : {str(e)}')
+        return JsonResponse({
+            'status':'error','message':f'Unexpected Error Occured: {str(e)}',
+            'variant_id':variant_id,
+        })
     
-    return redirect(request.META.get('HTTP_REFERER', 'user_cart_page'))
 
 @login_required(login_url='login')
 def users_cart_page(request):
