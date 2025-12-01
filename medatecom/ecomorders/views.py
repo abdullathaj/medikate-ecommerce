@@ -45,14 +45,13 @@ def buy_now(request, variant_id):
     try:
         variant = get_object_or_404(ProductVariant, id=variant_id, is_active=True)
 
-        if variant.stock <1:         # IF PRODUCT OUT OF STOCK
+        if variant.stock <1:        
             messages.error(request,f'Product {variant} is out of stock. Please try again later.')
             return redirect(request.META.get('HTTP_REFERER','product_listing'))
         
         if request.method == 'POST':
-            # GETTING QUANTITY OF PRODUCT FROM TEMPLATE
+            
             quantity = int(request.POST.get('quantity', 1))
-            address_id = request.POST.get('address_id')
             
             if quantity < 1:
                 messages.error(request, "Quantity must be at least 1.")
@@ -61,31 +60,25 @@ def buy_now(request, variant_id):
             if quantity > variant.stock:        
                 messages.error(request, f"Only {variant.stock} items available in stock.")
                 return redirect('buy_now', variant_id=variant_id)
-                
-            if not address_id:
-                messages.error(request, "Please select a delivery address Or add a new address.")
-                return redirect('buy_now', variant_id=variant_id)
-                
-            address = get_object_or_404(UserAddress, id=address_id, user=request.user)
+
             
-            request.session['order_data'] = {
+            request.session['buy_now_order_data'] = {
                 'variant_id': variant.id,
                 'quantity': quantity,
-                'price': str(variant.final_price),
-                'address_id': address_id,
+                'unit_price': str(variant.final_price),
+                'total_price': str(quantity * variant.final_price),
                 'is_cart_checkout': False,
             }
-            return redirect('payment_method')
+            print(f'order data: {request.session['buy_now_order_data']}')
+            return redirect('checkout')
             
-        addresses = UserAddress.objects.filter(user=request.user)
         context = {
             'variant': variant,
             'max_quantity': min(variant.stock, 5),
-            'addresses': addresses,
             'total_price': variant.final_price,
             'active_offer': variant.active_offer,
         }
-        return render(request, 'user/order_quantity_address_select.html', context)
+        return render(request, 'user/buynow_quantity_select.html', context)
     except IntegrityError:
         messages.error(request, f'Something went wrong. Please try again.')
         return redirect(request.META.get('HTTP_REFERER','product_listing'))
@@ -95,9 +88,9 @@ def buy_now(request, variant_id):
     
 
 @login_required(login_url='login')
-def cart_checkout(request):
+def checkout(request):
     ''' MULTI PRODUCT PURCHASE FROM CART. SELECT ADDRESS FOR DELIVERY. '''
-
+    
     cart_items = CartProducts.objects.filter(
         user=request.user,
         variant__is_active=True
@@ -180,7 +173,7 @@ def cart_checkout(request):
         'addresses': addresses,
         'default_address': default_address,
     }
-    return render(request, 'user/cart_checkout.html', context)
+    return render(request, 'user/checkout.html', context)
 
 
 @never_cache
@@ -229,7 +222,7 @@ def payment_method(request):
             'item_total': price * quantity
         }]
         total_amount = price * quantity
-        address = get_object_or_404(UserAddress, id=order_data['address_id'], user=request.user)
+        address = "get_object_or_404(UserAddress, id=order_data['address_id'], user=request.user)"
 
     if request.method == 'POST':
         payment_method = request.POST.get('payment_method', 'COD')
@@ -306,28 +299,29 @@ def payment_method(request):
                 messages.error(request, f"Error processing order: {str(e)}")
                 return redirect('cart_checkout' if is_cart_checkout else 'buy_now', variant_id=variants[0]['variant'].id)
 
-        elif payment_method == 'RAZORPAY':
-            try:
-                razorpay_order = create_razorpay_order(
-                    total_amount, 
-                    request.user.id, 
-                    'cart' if is_cart_checkout else 'buy_now'
-                )
-            except Exception as e:
-                messages.error(request, f"Failed to create payment order: {str(e)}")
-                return redirect('cart_checkout' if is_cart_checkout else 'buy_now', variant_id=variants[0]['variant'].id)
-            order_data_with_total = order_data.copy()
-            order_data_with_total['total_amount'] = str(total_amount)
-            request.session[f'razorpay_pending_{razorpay_order["id"]}'] = order_data_with_total
-            return render(request, 'user/razorpay_checkout.html', {
-                'variants': variants,
-                'total_amount': total_amount,
-                'address': address,
-                'is_cart_checkout': is_cart_checkout,
-                'razorpay_order_id': razorpay_order['id'],
-                'razorpay_key': settings.RAZORPAY_KEY_ID,
-                'razorpay_amount': int(total_amount * 100),
-            })
+        # elif payment_method == 'RAZORPAY':
+            # try:
+            #     razorpay_order = create_razorpay_order(
+            #         total_amount, 
+            #         request.user.id, 
+            #         'cart' if is_cart_checkout else 'buy_now'
+            #     )
+            # except Exception as e:
+            #     messages.error(request, f"Failed to create payment order: {str(e)}")
+            #     return redirect('cart_checkout' if is_cart_checkout else 'buy_now', variant_id=variants[0]['variant'].id)
+            # order_data_with_total = order_data.copy()
+            # order_data_with_total['total_amount'] = str(total_amount)
+            # request.session[f'razorpay_pending_{razorpay_order["id"]}'] = order_data_with_total
+            # return render(request, 'user/razorpay_checkout.html', {
+            #     'variants': variants,
+            #     'total_amount': total_amount,
+            #     'address': address,
+            #     'is_cart_checkout': is_cart_checkout,
+            #     'razorpay_order_id': razorpay_order['id'],
+            #     'razorpay_key': settings.RAZORPAY_KEY_ID,
+            #     'razorpay_amount': int(total_amount * 100),
+            # })
+            pass
 
     return render(request, 'user/payment_method.html', {
         'variants': variants,

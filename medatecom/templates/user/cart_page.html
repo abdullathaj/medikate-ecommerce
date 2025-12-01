@@ -6,7 +6,7 @@
     <h2 class="mb-4">Your Cart</h2>
 
     <!-- Toast Container -->
-    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055;">
         {% if messages %}
             {% for message in messages %}
                 <div class="toast align-items-center text-white 
@@ -31,7 +31,7 @@
         <!-- Left Section: Cart Items -->
         <div class="col-lg-8 col-md-12 mb-4">
             {% for item in cart_items %}
-                <div class="card mb-3 border-white">
+                <div class="card mb-3 border-white" id="cart-item-{{item.id}}">
                     <div class="card-body">
                         <div class="row align-items-center">
                             <div class="col-md-2">
@@ -80,8 +80,12 @@
                             <div class="col-md-3 text-end">
                                 <p>Total: ₹{{ item.total_price|floatformat:2 }}</p>
                                 <div class="mt-2">
-                                    <a href="{% url 'remove_cart_item' item.id %}" class="btn btn-sm btn-danger mb-1">Remove</a>
-                                    <a href="{% url 'save_for_later' item.id %}" class="btn btn-sm btn-outline-primary">Save for Later</a>
+                                    <a href="#" data-id="{{item.id}}"
+                                        class="remove-from-cart btn btn-sm btn-danger mb-1">Remove
+                                    </a>
+                                    <a href="{% url 'save_for_later' item.id %}" data-id= "{{item.id}}"
+                                        class="save-for-later btn btn-sm btn-outline-primary">Save for Later
+                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -92,22 +96,22 @@
 
         <!-- Right Section: Price Summary -->
         <div class="col-lg-4 col-md-12">
-            <div class="card p-3 shadow-sm">
+            <div class="card p-3 shadow-sm mb-3">
                 <h4>Order Summary</h4>
                 <hr>
                 <p>Original Price: ₹{{ original_total_price|floatformat:2 }}</p>
                 <p>Discount: <span class="text-success text-decoration-line-through">-₹{{ discount_total|floatformat:2 }}</span></p>
                 <p>Subtotal: ₹{{ selling_total_price|floatformat:2 }}</p>
-           {% if coupon_applied %}
+           {% comment %} {% if coupon_applied %}
                 <p>After Coupon: ₹{{ payable_amount|floatformat:2 }}</p>
-            {% endif %}
+            {% endif %} {% endcomment %}
 
 
                 <hr>
                 <h5>Payable Amount: ₹{{ payable_amount|floatformat:2 }}</h5>
                 <p class="text-muted">Estimated Delivery: {{ estimated_delivery_date }}</p>
         <!-- Coupon Section -->
-            {% if coupon_applied %}
+            {% comment %} {% if coupon_applied %}
                 <p>Coupon Discount ({{ coupon_applied.coupon_code }}) 
                     <a href="{% url 'remove_coupon' %}" class="text-danger text-decoration-none">Remove</a>: 
                     <span class="text-success text-decoration-line-through">-₹{{ coupon_discount|floatformat:2 }}</span>
@@ -133,8 +137,8 @@
                 {% else %}
                     <p class="text-muted">No valid coupons available for this order.</p>
                 {% endif %}
-            {% endif %}
-                <a href="{% url 'cart_checkout' %}" class="btn btn-primary w-100 my-3">Proceed to Checkout</a>
+            {% endif %} {% endcomment %}
+                <a href="{% url 'checkout' %}" class="btn btn-primary w-100 my-3">Proceed to Checkout</a>
             </div>
         </div>
     </div>
@@ -145,6 +149,8 @@
     </div>
     {% endif %}
 </div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.js"> </script>
 
 <script>
 // JavaScript to Initialize Toasts 
@@ -158,6 +164,75 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     toastList.forEach(function (toast) {
         toast.show();
+    });
+});
+
+function showToast(message, status){
+    let bgClass = "bg-primary";
+    if (status === 'success') bgClass = 'bg-success';
+    else if (status === 'error') bgClass = 'bg-danger';
+    else if (status === 'warning') bgClass = 'bg-warning';
+    else if (status === 'info') bgClass = 'bg-info';
+
+    let toastHTML = `
+        <div class="toast align-items-center text-white ${bgClass} border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                        data-bs-dismiss="toast"></button>
+            </div>
+        </div>`;
+
+    $(".toast-container").append(toastHTML);
+    new bootstrap.Toast($(".toast-container .toast").last()[0]).show();
+}
+
+$(document).on('click','.remove-from-cart', function (e){
+    e.preventDefault();
+
+    let itemId =$(this).data('id');
+
+    $.ajax({
+        url: `/remove_cart_item/${itemId}/`,
+        type: "POST",
+        data: {
+            csrfmiddlewaretoken: "{{csrf_token}}",
+        },
+        success: function (response) {
+            showToast(response.message, response.status);
+
+             $("#cart-item-" + itemId).fadeOut(100, function() {
+                $(this).remove();
+            });
+        },
+        error: function (response) {
+            showToast(response.message, response.status);
+        }
+    });
+});
+
+$(document).on('click','.save-for-later', function (e){
+    e.preventDefault();
+
+    let btn = $(this);
+    let itemId =btn.data('id');
+
+    $.ajax({
+        url: `/save_for_later/${itemId}/`,
+        type: "POST",
+        data: {
+            csrfmiddlewaretoken: "{{csrf_token}}",
+        },
+        success: function (response) {
+            showToast(response.message, response.status);
+
+             $("#cart-item-" + itemId).fadeOut(100, function() {
+                $(this).remove();
+            });
+        },
+        error: function (response) {
+            showToast(response.message, response.status);
+        }
     });
 });
 </script>

@@ -83,10 +83,10 @@ class ProductVariant(models.Model):
             return discounted_price.quantize(Decimal("1"), rounding=ROUND_HALF_UP)
         return self.price
 
-    @property
-    def original_price(self):
-        """For display the striked original price if no offer is availavle """
-        return self.price
+    # @property
+    # def original_price(self):
+    #     """For display the striked original price if no offer is availavle """
+    #     return self.price
            
 
 class ProductImage(models.Model): # related_name SHOULD HAVE TO CHANGE TO product_image

@@ -535,12 +535,12 @@ def users_cart_page(request):
     original_total_price = Decimal('0')
     selling_total_price = Decimal('0')
     discount_total = Decimal('0')
-    coupon_discount = Decimal('0')
-    coupon_applied = None
+    # coupon_discount = Decimal('0')
+    # coupon_applied = None
 
     cart_item_details = []
     for item in cart_items:
-        if item.quantity <1 :
+        if item.quantity <1 :  # AUTO DELETION OF CART ITEM
             item.delete()
             continue
         if item.quantity > item.variant.stock or item.variant.stock == 0:
@@ -551,78 +551,83 @@ def users_cart_page(request):
             item.save()
             messages.info(request, 'The maximum purchase quantity of same product is limited to 5.')
 
-        # TRUE PRICE OF PRODUCT BEFORE OFFER
-        original_item_price = item.quantity * item.variant.original_price 
-        # CALCULATED PRICE WHETHER OFFER IS ON OR OFF
-        selling_item_price = item.total_price  
+        # ACTUAL PRICE ADDED BY ADMIN PRODUCT CREATION
+        original_item_price = item.quantity * item.variant.price 
         original_total_price += original_item_price
+        print(f'original_item_price: {original_item_price}, original_total_price: {original_total_price} for {item.variant}')
+        # PRICE BASED ON OFFER AVAILABILITY
+        selling_item_price = item.total_price  
         selling_total_price += selling_item_price
+        print(f'selling_item_price : {selling_item_price}, selling_total_price:{selling_total_price} for {item.variant}')
         # THE TOTAL DISCOUNT USER GETS IF ANY DISCOUNT FOR THE PRODUCT
+        item_discount = (original_item_price - selling_item_price)
+        print(f'item discount: {item_discount} for {item.variant}')
         discount_total += original_item_price - selling_item_price
+        print(f'discount_total:{discount_total}')
 
-        # temporarily store without coupon
+    
         cart_item_details.append({
             'variant_id': item.variant.id,
             'quantity': item.quantity,
-            'unit_price': str(item.variant.final_price),   # calculated price before coupon
+            'unit_price': str(item.variant.final_price),   
             'item_total': str(item.total_price),
-            'item_discount': str(original_item_price - item.total_price)
+            'item_discount': str(item_discount)
         })
 
     #  Apply coupon if present
-    if 'applied_coupon' in request.session:
-        try:
-            coupon = Coupon.objects.get(coupon_code=request.session['applied_coupon'], is_active=True)
-            if coupon.is_valid and coupon.minimum_purchase_amount <= selling_total_price:
-                coupon_applied = coupon
-                coupon_discount = (selling_total_price * Decimal(coupon.discount_percentage) / Decimal(100)).quantize(Decimal('0.01'))
-                if coupon_discount > selling_total_price:
-                    coupon_discount = selling_total_price
+    # if 'applied_coupon' in request.session:
+    #     try:
+    #         coupon = Coupon.objects.get(coupon_code=request.session['applied_coupon'], is_active=True)
+    #         if coupon.is_valid and coupon.minimum_purchase_amount <= selling_total_price:
+    #             coupon_applied = coupon
+    #             coupon_discount = (selling_total_price * Decimal(coupon.discount_percentage) / Decimal(100)).quantize(Decimal('0.01'))
+    #             if coupon_discount > selling_total_price:
+    #                 coupon_discount = selling_total_price
 
-                # 🔑 Distribute discount across cart items proportionally
-                distributed_cart_items = []
-                for detail in cart_item_details:
-                    item_total = Decimal(detail['item_total'])
-                    share = (item_total / selling_total_price) if selling_total_price > 0 else Decimal('0')
-                    item_discount_share = (coupon_discount * share).quantize(Decimal('0.01'))
-                    discounted_total = item_total - item_discount_share
-                    discounted_unit_price = (discounted_total / detail['quantity']).quantize(Decimal('0.01'))
+    #             # 🔑 Distribute discount across cart items proportionally
+    #             distributed_cart_items = []
+    #             for detail in cart_item_details:
+    #                 item_total = Decimal(detail['item_total'])
+    #                 share = (item_total / selling_total_price) if selling_total_price > 0 else Decimal('0')
+    #                 item_discount_share = (coupon_discount * share).quantize(Decimal('0.01'))
+    #                 discounted_total = item_total - item_discount_share
+    #                 discounted_unit_price = (discounted_total / detail['quantity']).quantize(Decimal('0.01'))
 
-                    distributed_cart_items.append({
-                        'variant_id': detail['variant_id'],
-                        'quantity': detail['quantity'],
-                        'unit_price': str(discounted_unit_price),   #  discounted price per unit
-                        'item_total': str(discounted_total),       #  total after coupon share
-                        'item_discount': str((Decimal(detail['item_discount']) + item_discount_share).quantize(Decimal('0.01')))
-                    })
+    #                 distributed_cart_items.append({
+    #                     'variant_id': detail['variant_id'],
+    #                     'quantity': detail['quantity'],
+    #                     'unit_price': str(discounted_unit_price),   #  discounted price per unit
+    #                     'item_total': str(discounted_total),       #  total after coupon share
+    #                     'item_discount': str((Decimal(detail['item_discount']) + item_discount_share).quantize(Decimal('0.01')))
+    #                 })
 
-                cart_item_details = distributed_cart_items
+    #             cart_item_details = distributed_cart_items
 
-            else:
-                del request.session['applied_coupon']
-        except Coupon.DoesNotExist:
-            del request.session['applied_coupon']
+    #         else:
+    #             del request.session['applied_coupon']
+    #     except Coupon.DoesNotExist:
+    #         del request.session['applied_coupon']
 
-    amount_payable = selling_total_price - coupon_discount 
+    amount_payable = selling_total_price 
 
     # Fetch valid coupons
-    valid_coupons = Coupon.objects.filter(
-        models.Q(is_active=True) &
-        models.Q(valid_from__lte=timezone.now()) &
-        models.Q(valid_to__gte=timezone.now()) &
-        (models.Q(max_usage_limit__gt=models.F('total_usage')) | models.Q(max_usage_limit=0)) &
-        models.Q(minimum_purchase_amount__lte=selling_total_price)
-    )
+    # valid_coupons = Coupon.objects.filter(
+    #     Q(is_active=True) &
+    #     Q(valid_from__lte=timezone.now()) &
+    #     Q(valid_to__gte=timezone.now()) &
+    #     (Q(max_usage_limit__gt=models.F('total_usage')) | models.Q(max_usage_limit=0)) &
+    #     Q(minimum_purchase_amount__lte=selling_total_price)
+    # )
 
     #  Save price breakdown in session (with per-item discounted unit price)
     request.session['cart_price_data'] = {
         'original_total_price': str(original_total_price),
         'selling_total_price': str(selling_total_price),
         'discount_total': str(discount_total),
-        'coupon_discount': str(coupon_discount),
         'amount_payable': str(amount_payable),
         'cart_item_details': cart_item_details,
-        'applied_coupon': coupon_applied.coupon_code if coupon_applied else None
+        # 'coupon_discount': str(coupon_discount),
+        # 'applied_coupon': coupon_applied.coupon_code if coupon_applied else None
     }
 
     breadcrumbs=[
@@ -635,9 +640,9 @@ def users_cart_page(request):
         'original_total_price': original_total_price,
         'discount_total': discount_total,
         'selling_total_price': selling_total_price,
-        'coupon_discount': coupon_discount,
-        'coupon_applied': coupon_applied,
-        'valid_coupons': valid_coupons,
+        # 'coupon_discount': coupon_discount,
+        # 'coupon_applied': coupon_applied,
+        # 'valid_coupons': valid_coupons,
         'estimated_delivery_date': (datetime.now() + timedelta(days=7)).strftime('%B %d, %Y'),
         'breadcrumbs': breadcrumbs
     }
@@ -653,27 +658,54 @@ def update_cart_quantity(request, cart_item_id):
 
         if action == 'increase':
             if cart_item.quantity >=5:
-                messages.warning(request,f'You can only select maximum of 5 products for each product.')
+                print('You can only select maximum of 5 products for each product.')
+                return JsonResponse({
+                    'status':'warning','message':'You can only select maximum of 5 products for each product.',
+                    'cart_item_id':cart_item_id,
+                })
+                
             elif cart_item.quantity  >= cart_item.variant.stock:
-                messages.error(request, f"Cannot increase quantity. Stock limit reached.")
+                print('Cannot increase quantity. Stock limit reached.')
+                return JsonResponse({
+                    'status':'error','message':'Cannot increase quantity. Stock limit reached.',
+                    'cart_item_id':cart_item_id,
+                })
+              
             else:
                 cart_item.quantity += 1
                 cart_item.save()
-                messages.success(request,f"Quantity updated for {cart_item.variant} as {cart_item.quantity}.")
+                print(f"Quantity updated for {cart_item.variant} as {cart_item.quantity}.")
+                return JsonResponse({
+                    'status':'success','message':f"Quantity updated for {cart_item.variant} as {cart_item.quantity}.",
+                    'cart_item_id':cart_item_id,'new_quantity':cart_item.quantity,
+                })
 
         elif action == 'decrease':
             if cart_item.quantity > 1:
                 cart_item.quantity -= 1
                 cart_item.save()
-                messages.success(request, f"Quantity updated for {cart_item.variant} as {cart_item.quantity}.")
+                print(f"Quantity updated for {cart_item.variant} as {cart_item.quantity}.")
+                return JsonResponse({
+                    'status':'success','message':f"Quantity updated for {cart_item.variant} as {cart_item.quantity}.",
+                    'cart_item_id':cart_item_id,'new_quantity':cart_item.quantity,
+                })
                                         
             else:
-                messages.warning(request, "Quantity must be at least 1.")
+                return JsonResponse({
+                    'status':'warning','message': "Quantity must be at least 1.",
+                    'cart_item_id':cart_item_id,
+                })
         else:
-            messages.error(request, "Invalid action.")
+            return JsonResponse({
+                    'status':'error','message':'Invalid action.',
+                    'cart_item_id':cart_item_id,
+                })
 
     except Exception as e:
-        messages.error(request, f"Unexpected error occurred: {str(e)}")
+        return JsonResponse({
+                    'status':'error','message':f"Unexpected error occurred: {str(e)}",
+                    'cart_item_id':cart_item_id,
+                })
 
     return redirect('user_cart_page')
 
@@ -684,10 +716,12 @@ def remove_cart_item(request,cart_item_id):
 
     cart_item=get_object_or_404(CartProducts,user=request.user,id=cart_item_id)
     cart_item.delete()
+    print(f'{cart_item.variant} {cart_item.variant.variant_name} has removed successfully.')
+    return JsonResponse({
+        'status':'success', 'message':f'{cart_item.variant} {cart_item.variant.variant_name} has removed successfully.',
+        'cart_item_id':cart_item_id,
+    })
 
-    messages.success(request, f"{cart_item.variant} removed from your cart.")
-
-    return redirect('user_cart_page')
 
 @never_cache
 @login_required(login_url='login') 
@@ -697,15 +731,21 @@ def save_for_later(request,cart_item_id):
     variant=cart_item.variant
 
     if WishlistProducts.objects.filter(user=request.user,variant=variant).exists():
-        messages.error(request,f'{variant} is already in the wishlist')
+        print(f'{variant.product.name} {variant.variant_name} has already in the wishlist.')
+        return JsonResponse({
+            'status':'error','message':f'{variant.product.name} {variant.variant_name} has already in the wishlist.',
+            'cart_item_id':cart_item_id,
+        })
     else:
         WishlistProducts.objects.create(user=request.user,variant=variant)
-        messages.success(request,f'{variant} is added to the wishlist.')
+        cart_item.delete()
+        print(f'{variant.product.name} {variant.variant_name} has added to wishlist.')
+        return JsonResponse({
+            'status':'success','message':f'{variant.product.name} {variant.variant_name} has added to wishlist.',
+            'cart_item_id':cart_item_id,
+        })
     
-    cart_item.delete()
-    
-    return redirect('user_cart_page')
-
+   
 @login_required(login_url='login')
 def apply_coupon(request):
      if request.method =='POST':
