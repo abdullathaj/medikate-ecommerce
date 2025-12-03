@@ -3,8 +3,7 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h2 class="mb-4">Your Cart</h2>
-
+    
     <!-- Toast Container -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055;">
         {% if messages %}
@@ -25,7 +24,8 @@
             {% endfor %}
         {% endif %}
     </div>
-
+    
+        <h2 class="mb-4">Your Cart</h2>
     {% if cart_items %}
     <div class="row">
         <!-- Left Section: Cart Items -->
@@ -52,9 +52,10 @@
                                         {{ item.variant.variant_name }}
                                     </a>
                                 </p>
-                            {% if item.variant.final_price < item.variant.original_price %}
+                            {% if item.variant.final_price < item.variant.price %}
                                 <p>Unit Price: 
-                                    <span class="text-decoration-line-through text-muted">₹{{ item.variant.original_price|floatformat:2 }}</span>
+                                    <span class="text-decoration-line-through text-muted">₹{{ item.variant.price|floatformat:2 }}</span>
+                                    </span>&nbsp;
                                     <span class="fw-semibold text-success">₹{{ item.variant.final_price|floatformat:2 }}</span>
                             {% else %}
                                  <p >Unit Price: 

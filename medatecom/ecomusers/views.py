@@ -535,118 +535,71 @@ def users_cart_page(request):
     original_total_price = Decimal('0')
     selling_total_price = Decimal('0')
     discount_total = Decimal('0')
-    # coupon_discount = Decimal('0')
-    # coupon_applied = None
 
     cart_item_details = []
+    
     for item in cart_items:
-        if item.quantity <1 :  # AUTO DELETION OF CART ITEM
+
+        # Auto-delete invalid items
+        if item.quantity < 1:
             item.delete()
             continue
+
+        # Out of stock check
         if item.quantity > item.variant.stock or item.variant.stock == 0:
-            messages.error(request, f"Insufficient stock for {item.variant}. {item.variant.stock} items available.")
+            messages.error(request, f"Insufficient stock for {item.variant}. {item.variant.stock} available.")
             continue
+
+        # Limit quantity to 5
         if item.quantity > 5:
             item.quantity = 5
             item.save()
-            messages.info(request, 'The maximum purchase quantity of same product is limited to 5.')
+            messages.info(request, 'Maximum purchase quantity per product is 5.')
 
-        # ACTUAL PRICE ADDED BY ADMIN PRODUCT CREATION
-        original_item_price = item.quantity * item.variant.price 
+        # Price calculations
+        original_item_price = item.variant.price * item.quantity
+        selling_item_price = item.total_price
+        item_discount = original_item_price - selling_item_price
+
         original_total_price += original_item_price
-        print(f'original_item_price: {original_item_price}, original_total_price: {original_total_price} for {item.variant}')
-        # PRICE BASED ON OFFER AVAILABILITY
-        selling_item_price = item.total_price  
         selling_total_price += selling_item_price
-        print(f'selling_item_price : {selling_item_price}, selling_total_price:{selling_total_price} for {item.variant}')
-        # THE TOTAL DISCOUNT USER GETS IF ANY DISCOUNT FOR THE PRODUCT
-        item_discount = (original_item_price - selling_item_price)
-        print(f'item discount: {item_discount} for {item.variant}')
-        discount_total += original_item_price - selling_item_price
-        print(f'discount_total:{discount_total}')
+        discount_total += item_discount
 
-    
         cart_item_details.append({
             'variant_id': item.variant.id,
             'quantity': item.quantity,
-            'unit_price': str(item.variant.final_price),   
+            'unit_price': str(item.variant.final_price),
             'item_total': str(item.total_price),
-            'item_discount': str(item_discount)
+            'item_discount': str(item_discount),
         })
 
-    #  Apply coupon if present
-    # if 'applied_coupon' in request.session:
-    #     try:
-    #         coupon = Coupon.objects.get(coupon_code=request.session['applied_coupon'], is_active=True)
-    #         if coupon.is_valid and coupon.minimum_purchase_amount <= selling_total_price:
-    #             coupon_applied = coupon
-    #             coupon_discount = (selling_total_price * Decimal(coupon.discount_percentage) / Decimal(100)).quantize(Decimal('0.01'))
-    #             if coupon_discount > selling_total_price:
-    #                 coupon_discount = selling_total_price
+    # Final payable amount (no coupon logic)
+    amount_payable = selling_total_price
 
-    #             # 🔑 Distribute discount across cart items proportionally
-    #             distributed_cart_items = []
-    #             for detail in cart_item_details:
-    #                 item_total = Decimal(detail['item_total'])
-    #                 share = (item_total / selling_total_price) if selling_total_price > 0 else Decimal('0')
-    #                 item_discount_share = (coupon_discount * share).quantize(Decimal('0.01'))
-    #                 discounted_total = item_total - item_discount_share
-    #                 discounted_unit_price = (discounted_total / detail['quantity']).quantize(Decimal('0.01'))
-
-    #                 distributed_cart_items.append({
-    #                     'variant_id': detail['variant_id'],
-    #                     'quantity': detail['quantity'],
-    #                     'unit_price': str(discounted_unit_price),   #  discounted price per unit
-    #                     'item_total': str(discounted_total),       #  total after coupon share
-    #                     'item_discount': str((Decimal(detail['item_discount']) + item_discount_share).quantize(Decimal('0.01')))
-    #                 })
-
-    #             cart_item_details = distributed_cart_items
-
-    #         else:
-    #             del request.session['applied_coupon']
-    #     except Coupon.DoesNotExist:
-    #         del request.session['applied_coupon']
-
-    amount_payable = selling_total_price 
-
-    # Fetch valid coupons
-    # valid_coupons = Coupon.objects.filter(
-    #     Q(is_active=True) &
-    #     Q(valid_from__lte=timezone.now()) &
-    #     Q(valid_to__gte=timezone.now()) &
-    #     (Q(max_usage_limit__gt=models.F('total_usage')) | models.Q(max_usage_limit=0)) &
-    #     Q(minimum_purchase_amount__lte=selling_total_price)
-    # )
-
-    #  Save price breakdown in session (with per-item discounted unit price)
+    # Store in session for checkout
     request.session['cart_price_data'] = {
         'original_total_price': str(original_total_price),
         'selling_total_price': str(selling_total_price),
         'discount_total': str(discount_total),
         'amount_payable': str(amount_payable),
         'cart_item_details': cart_item_details,
-        # 'coupon_discount': str(coupon_discount),
-        # 'applied_coupon': coupon_applied.coupon_code if coupon_applied else None
     }
 
-    breadcrumbs=[
-        {'name': 'Home', 'url':'login_home'},
-        {'name': 'Cart', 'url': ''}
-    ]
     context = {
         'cart_items': cart_items,
         'payable_amount': amount_payable,
         'original_total_price': original_total_price,
         'discount_total': discount_total,
         'selling_total_price': selling_total_price,
-        # 'coupon_discount': coupon_discount,
-        # 'coupon_applied': coupon_applied,
-        # 'valid_coupons': valid_coupons,
         'estimated_delivery_date': (datetime.now() + timedelta(days=7)).strftime('%B %d, %Y'),
-        'breadcrumbs': breadcrumbs
+        'breadcrumbs': [
+            {'name': 'Home', 'url': 'login_home'},
+            {'name': 'Cart', 'url': ''},
+        ],
     }
+    
     return render(request, 'user/cart_page.html', context)
+
 
 @never_cache
 @login_required(login_url='login')
@@ -746,37 +699,37 @@ def save_for_later(request,cart_item_id):
         })
     
    
-@login_required(login_url='login')
-def apply_coupon(request):
-     if request.method =='POST':
-        coupon_code= request.POST.get('coupon_code')
-        if coupon_code:
-            try:
-                coupon=Coupon.objects.get(coupon_code=coupon_code, is_active= True)
-                cart_items= CartProducts.objects.filter(user= request.user, variant__is_active=True)
-                selling_total_price= sum(item.quantity * item.variant.final_price for item in cart_items)
-                if not coupon.is_valid:
-                    messages.error(request,f'This is invalid coupon or coupon validity expired.')
-                elif Decimal(coupon.minimum_purchase_amount) > Decimal(selling_total_price):
-                    messages.error(request,f'Minimum purchase amount of {coupon.minimum_purchase_amount} is required to apply this coupon.')
-                elif request.session.get('applied_coupon') == coupon_code:
-                    messages.info(request,f'This coupon is already applied.')
-                else:
-                    request.session['applied_coupon']= coupon_code
-                    messages.success(request, f'Coupon {coupon_code} is applied successfully.')
-            except Coupon.DoesNotExist:
-                messages.error(request,f'This coupon doesn not exist.')
-        else:
-            messages.warning(request, f'Please select a coupon.')
+# @login_required(login_url='login')
+# def apply_coupon(request):
+#      if request.method =='POST':
+#         coupon_code= request.POST.get('coupon_code')
+#         if coupon_code:
+#             try:
+#                 coupon=Coupon.objects.get(coupon_code=coupon_code, is_active= True)
+#                 cart_items= CartProducts.objects.filter(user= request.user, variant__is_active=True)
+#                 selling_total_price= sum(item.quantity * item.variant.final_price for item in cart_items)
+#                 if not coupon.is_valid:
+#                     messages.error(request,f'This is invalid coupon or coupon validity expired.')
+#                 elif Decimal(coupon.minimum_purchase_amount) > Decimal(selling_total_price):
+#                     messages.error(request,f'Minimum purchase amount of {coupon.minimum_purchase_amount} is required to apply this coupon.')
+#                 elif request.session.get('applied_coupon') == coupon_code:
+#                     messages.info(request,f'This coupon is already applied.')
+#                 else:
+#                     request.session['applied_coupon']= coupon_code
+#                     messages.success(request, f'Coupon {coupon_code} is applied successfully.')
+#             except Coupon.DoesNotExist:
+#                 messages.error(request,f'This coupon doesn not exist.')
+#         else:
+#             messages.warning(request, f'Please select a coupon.')
     
-     return redirect('user_cart_page')
+#      return redirect('user_cart_page')
 
-@login_required(login_url='login')
-def remove_coupon(request):    
-    if 'applied_coupon' in request.session:
-        del request.session['applied_coupon']
-        messages.success(request, 'Coupon removed successfully!')
-    return redirect('user_cart_page')
+# @login_required(login_url='login')
+# def remove_coupon(request):    
+#     if 'applied_coupon' in request.session:
+#         del request.session['applied_coupon']
+#         messages.success(request, 'Coupon removed successfully!')
+#     return redirect('user_cart_page')
 
 # ----------------------------------------------------------------------------
 # USER WALLET PAGE

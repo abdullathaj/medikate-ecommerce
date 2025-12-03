@@ -87,8 +87,10 @@
                                 {% endif %}
                             {% endwith %}
                             <div>
-                                <strong>{{ item.variant.product.name }}</strong><br>
-                                <small>{{ item.variant.variant_name }}</small>
+                                <a href="{% url 'product_details' item.variant.id %}" class=" text-decoration-none text-black">
+                                    <strong>{{ item.variant.product.name }}</strong><br>
+                                    <small>{{ item.variant.variant_name }}</small>
+                                </a>
                             </div>
                         </div>
 

@@ -143,6 +143,11 @@ class Coupon(models.Model):
             return False
         return True
     
+    def calculate_discount(self,amount):
+        if amount < self.minimum_purchase_amount:
+            return Decimal('0')
+        discount = (Decimal(self.discount_percentage)/100) * amount
+        return discount.quantize(Decimal('0.01'))    
 
 class Offer(models.Model):
     name = models.CharField(max_length=100, help_text='Name of the offer for admin reference (Only alphanumeric value)')

@@ -114,7 +114,14 @@
                 {% if selected_variant.active_offer %}
                     <span class="badge bg-success ms-2">{{ selected_variant.active_offer.discount_percentage }}% off</span>
                 {% endif %}
-                <span class="d-block mt-2" id="stockStatus"></span> <!-- Only placeholder -->
+             
+                {% if  selected_variant.stock == 0 %}
+                    <span class="d-block mt-2 text-danger"> Out of Stock</span>
+                {% elif selected_variant.stock <= 5 %}
+                    <span class="d-block mt-2 text-bg-warning"> Limited Stock Available </span>
+                {% else %}
+                    <span class="d-block mt-2 text-success"> In Stock ({{selected_variant.stock}}) </span>
+                {% endif %}
             </div>
 
 
@@ -549,14 +556,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         priceSpan.textContent = '₹' + price;
         originalPriceSpan.textContent = '₹' + originalPrice;
-
-        if (stock === 0) {
-            stockStatus.innerHTML = '<span class="text-danger">Out of Stock</span>';
-        } else if (stock < 5) {
-            stockStatus.innerHTML = `<span class="text-warning">Limited Stock (${stock})</span>`;
-        } else {
-            stockStatus.innerHTML = `<span class="text-success">In Stock (${stock})</span>`;
-        }
 
         cartBtn.setAttribute("data-id",variantId);
         wishlistBtn.setAttribute("data-id",variantId);

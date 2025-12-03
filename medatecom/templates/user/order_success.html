@@ -29,19 +29,26 @@
 
             <h6>Items:</h6>
             <ul>
-                {% for item in order.items.all %}
+                {% for item in same_items %}
                     <li style="list-style-type: none; margin:5px">
-                        {% with product_image=item.variant.product.product_image.first %}
-                            {% if product_image %}
-                                <img src="{{ product_image.image.url }}" alt="{{ item.variant.product.name }} - {{ item.variant.variant_name }}" class="img-fluid" style="width: 100px; height: 100px; object-fit: contain;">
-                            {% else %}
-                                <img src="https://via.placeholder.com/100?text={{ item.variant.product.name|urlencode }}%20-%20{{ item.variant.variant_name|urlencode }}" alt="{{ item.variant.product.name }} - {{ item.variant.variant_name }}" class="img-fluid" style="max-height: 100px; object-fit: cover; display: inline-block; vertical-align: middle; margin-right: 10px;">
-                            {% endif %}
-                        {% endwith %}
-                        {{ item.variant }} x {{ item.quantity }} - ₹{{ item.total_price|floatformat:2 }}
+
+                        {% if item.image %}
+                            <img src="{{ item.image.image.url }}" 
+                                alt="{{ item.variant.product.name }} - {{ item.variant.variant_name }}" 
+                                class="img-fluid" 
+                                style="width: 100px; height: 100px; object-fit: contain;">
+                        {% else %}
+                            <img src="https://via.placeholder.com/100?text={{ item.variant.product.name|urlencode }}%20-%20{{ item.variant.variant_name|urlencode }}"
+                                class="img-fluid"
+                                style="width: 100px; height: 100px; object-fit: contain;">
+                        {% endif %}
+
+                        {{ item.variant }} × {{ item.quantity }}  
+                        – ₹{{ item.unit_price|floatformat:2 }}
                     </li>
                 {% endfor %}
             </ul>
+
             <p><strong>Order Date:</strong> {{ order.created_at|date:"F d, Y H:i" }}</p>
             {% comment %} <p><strong>Status:</strong> {{ order.get_status_display }}</p> {% endcomment %}
             <p><strong>Payment Method:</strong> {{ order.payment_method }}</p>
