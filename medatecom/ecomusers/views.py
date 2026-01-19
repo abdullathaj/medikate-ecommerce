@@ -68,7 +68,7 @@ def home_after_login(request):
 
 def product_details(request, variant_id):
     ''' Showing Details of a Product, Related Products and Bread Crumbs'''
-
+    
     variant = get_object_or_404(ProductVariant, id=variant_id, is_active=True, product__category__is_active=True)
     product=variant.product
     print(f'Details of {product}')
@@ -526,6 +526,10 @@ def add_to_cart(request, variant_id):
 def users_cart_page(request):
     if not request.user.is_active:
         return redirect('login')
+    
+    if request.method =='GET':
+        request.session.pop('coupon_applied',None)
+        request.session.pop('order_data',None)
 
     cart_items = CartProducts.objects.filter(
         user=request.user,
@@ -540,50 +544,56 @@ def users_cart_page(request):
     
     for item in cart_items:
 
-        # Auto-delete invalid items
         if item.quantity < 1:
             item.delete()
             continue
 
-        # Out of stock check
         if item.quantity > item.variant.stock or item.variant.stock == 0:
             messages.error(request, f"Insufficient stock for {item.variant}. {item.variant.stock} available.")
             continue
 
-        # Limit quantity to 5
         if item.quantity > 5:
             item.quantity = 5
             item.save()
             messages.info(request, 'Maximum purchase quantity per product is 5.')
 
-        # Price calculations
-        original_item_price = item.variant.price * item.quantity
-        selling_item_price = item.total_price
+        # Cart Price
+        original_item_price = item.variant.price * item.quantity # variant price in Product Model
+        selling_item_price = item.total_price                    # Item final price * qty in cart model.
         item_discount = original_item_price - selling_item_price
 
-        original_total_price += original_item_price
-        selling_total_price += selling_item_price
+        original_total_price += original_item_price    # sum of item price * qty
+        selling_total_price += selling_item_price      # sum of item final price * qty
         discount_total += item_discount
 
-        cart_item_details.append({
+        cart_item_details.append({           # Appending details of each Product Variant as Cart Item
             'variant_id': item.variant.id,
             'quantity': item.quantity,
-            'unit_price': str(item.variant.final_price),
-            'item_total': str(item.total_price),
+            'unit_price': str(item.variant.final_price), #with or without Offer discount on product or category
+            'item_total': str(item.total_price),         # item final price * qty
             'item_discount': str(item_discount),
         })
 
-    # Final payable amount (no coupon logic)
-    amount_payable = selling_total_price
+    
+    amount_payable = selling_total_price      # sum of item final price * qty
 
-    # Store in session for checkout
+    # This session will pass to Checkout page for adding discount and offers.
     request.session['cart_price_data'] = {
+        'original_total_price': str(original_total_price), # sum of item price * qty
+        'selling_total_price': str(selling_total_price),     # sum of item final price * qty
+        'discount_total': str(discount_total),
+        'amount_payable': str(amount_payable),            # Amont payable == selling_total_price
+        'cart_item_details': cart_item_details,
+    }
+
+    dictt={
         'original_total_price': str(original_total_price),
         'selling_total_price': str(selling_total_price),
         'discount_total': str(discount_total),
-        'amount_payable': str(amount_payable),
+        'amount_payable': str(amount_payable),            # Amont payable == selling_total_price
         'cart_item_details': cart_item_details,
     }
+    print(dictt)
 
     context = {
         'cart_items': cart_items,
@@ -660,7 +670,7 @@ def update_cart_quantity(request, cart_item_id):
                     'cart_item_id':cart_item_id,
                 })
 
-    return redirect('user_cart_page')
+    
 
 @never_cache
 @login_required(login_url='login') 
@@ -685,8 +695,9 @@ def save_for_later(request,cart_item_id):
 
     if WishlistProducts.objects.filter(user=request.user,variant=variant).exists():
         print(f'{variant.product.name} {variant.variant_name} has already in the wishlist.')
+        cart_item.delete()
         return JsonResponse({
-            'status':'error','message':f'{variant.product.name} {variant.variant_name} has already in the wishlist.',
+            'status':'warning','message':f'{variant.product.name} {variant.variant_name} has already in the wishlist.',
             'cart_item_id':cart_item_id,
         })
     else:
@@ -698,38 +709,6 @@ def save_for_later(request,cart_item_id):
             'cart_item_id':cart_item_id,
         })
     
-   
-# @login_required(login_url='login')
-# def apply_coupon(request):
-#      if request.method =='POST':
-#         coupon_code= request.POST.get('coupon_code')
-#         if coupon_code:
-#             try:
-#                 coupon=Coupon.objects.get(coupon_code=coupon_code, is_active= True)
-#                 cart_items= CartProducts.objects.filter(user= request.user, variant__is_active=True)
-#                 selling_total_price= sum(item.quantity * item.variant.final_price for item in cart_items)
-#                 if not coupon.is_valid:
-#                     messages.error(request,f'This is invalid coupon or coupon validity expired.')
-#                 elif Decimal(coupon.minimum_purchase_amount) > Decimal(selling_total_price):
-#                     messages.error(request,f'Minimum purchase amount of {coupon.minimum_purchase_amount} is required to apply this coupon.')
-#                 elif request.session.get('applied_coupon') == coupon_code:
-#                     messages.info(request,f'This coupon is already applied.')
-#                 else:
-#                     request.session['applied_coupon']= coupon_code
-#                     messages.success(request, f'Coupon {coupon_code} is applied successfully.')
-#             except Coupon.DoesNotExist:
-#                 messages.error(request,f'This coupon doesn not exist.')
-#         else:
-#             messages.warning(request, f'Please select a coupon.')
-    
-#      return redirect('user_cart_page')
-
-# @login_required(login_url='login')
-# def remove_coupon(request):    
-#     if 'applied_coupon' in request.session:
-#         del request.session['applied_coupon']
-#         messages.success(request, 'Coupon removed successfully!')
-#     return redirect('user_cart_page')
 
 # ----------------------------------------------------------------------------
 # USER WALLET PAGE
@@ -739,7 +718,7 @@ def save_for_later(request,cart_item_id):
 def users_wallet_page(request):
 
     wallet,created=Wallet.objects.get_or_create(user=request.user)
-    transactions= wallet.transactions.all().order_by('created_at')
+    transactions= wallet.transactions.all().order_by('-created_at')
     breadcrumbs=[
         {'name': 'Home', 'url':'login_home'},
         {'name': 'Wallet', 'url': ''}

@@ -17,38 +17,21 @@ from django.conf import settings
 import razorpay
 from django.views.decorators.csrf import csrf_exempt
 
-# def create_razorpay_order(amount, user_id, checkout_type='cart'):
-#     """
-#     Create a Razorpay order with comprehensive configuration
-#     """
-#     razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
-    
-#     order_data = {
-#         'amount': int(amount * 100),  # Convert to paise
-#         'currency': 'INR',
-#         'payment_capture': '1',  # Auto capture payment
-#         'notes': {
-#             'order_type': 'ecommerce',
-#             'user_id': str(user_id),
-#             'checkout_type': checkout_type,
-#             'platform': 'web'
-#         }
-#     }
-    
-#     try:
-#         razorpay_order = razorpay_client.order.create(order_data)
-#         return razorpay_order
-#     except Exception as e:
-#         print(f"Error creating Razorpay order: {str(e)}")
-#         raise e
+
 @login_required(login_url='login')
 def buy_now(request, variant_id):
+    '''Single Variant Purchase with Multiple Qty.'''
+    
     try:
         variant = get_object_or_404(ProductVariant, id=variant_id, is_active=True)
 
         if variant.stock < 1:
             messages.error(request, f'Product {variant} is out of stock.')
             return redirect(request.META.get('HTTP_REFERER', 'product_listing'))
+        
+        if request.method =='GET':
+            request.session.pop('coupon_applied',None)
+            request.session.pop('order_data',None)
 
         if request.method == 'POST':
             quantity = int(request.POST.get('quantity', 1))
@@ -61,18 +44,18 @@ def buy_now(request, variant_id):
                 messages.error(request, f"Only {variant.stock} items available.")
                 return redirect('buy_now', variant_id=variant_id)
 
-            total_price = quantity * variant.final_price
+            total_price = quantity * variant.final_price  # with or without offer discount on Product or Category
 
-            request.session['buy_now_order_data'] = {
+            request.session['buy_now_order_data'] = {  # Session is passing to Checkout page along with Cart Data.
                 'variant_id': variant.id,
                 'quantity': quantity,
-                'original_unit_price': str(variant.price),
-                'unit_price': str(variant.final_price),
-                'total_price': str(total_price),
+                'original_unit_price': str(variant.price), # item price
+                'unit_price': str(variant.final_price),     # item final price
+                'total_price': str(total_price),            # item final price * qty
                 'is_cart_checkout': False,
             }
 
-            return redirect('checkout')
+            return redirect('buynow_checkout')
 
         context = {
             'variant': variant,
@@ -89,246 +72,296 @@ def buy_now(request, variant_id):
     except Exception as e:
         messages.error(request, f"Unexpected error: {str(e)}")
         return redirect(request.META.get('HTTP_REFERER','product_listing'))
- 
+    
+
 @login_required(login_url='login')
-def checkout(request):
-    ''' MULTI PRODUCT PURCHASE FROM CART. SELECT ADDRESS FOR DELIVERY. '''
-    buy_now_data = request.session.get('buy_now_order_data')
-    if buy_now_data and buy_now_data.get('is_cart_checkout') is False:
-        variant = get_object_or_404(
-            ProductVariant,
-            id=buy_now_data['variant_id'],
-            is_active=True
-        )
+@never_cache
+def buynow_checkout(request):
+    
+    bn_data = request.session.get('buy_now_order_data')
+    if not bn_data:
+        messages.error(request, "Session expired. Please try buying the product again.")
+        return redirect('product_listing')
+    
+    if request.method=='GET':
+        request.session.pop('coupon_appled',None)
+        request.session.pop('order_data',None)
 
-        quantity = int(buy_now_data['quantity'])
-        original_unit_price = Decimal(buy_now_data['original_unit_price'])
-        unit_price = Decimal(buy_now_data['unit_price'])
-        total_price = Decimal(buy_now_data['total_price'])
-        original_item_total = quantity * original_unit_price
-        selling_item_total = quantity * unit_price
-        discount_item_total = (original_item_total - selling_item_total)
-
-
-        if quantity > variant.stock:
-            messages.error(request, f"Only {variant.stock} items available in stock.")
-            return redirect('product_listing')
-        
-        addresses = UserAddress.objects.filter(user=request.user)
-        if not addresses.exists():
-            messages.warning(request, "Please add a delivery address before checkout.")
-            return redirect('user_profile_update')
-
-        default_address = addresses.filter(is_default=True).first()
-        estimated_delivery_date = (datetime.now() + timedelta(days=7)).strftime('%B %d, %Y')
-                
-        if request.method == "POST":
-            address_id = request.POST.get("address_id")
-
-            if not address_id:
-                messages.error(request, "Please select a delivery address.")
-                return redirect('checkout')
-
-            selected_address = get_object_or_404(UserAddress, id=address_id, user=request.user)
-
-            if 'buy_now_order_data' in request.session:
-                del request.session['buy_now_order_data']
-
-            request.session['order_data'] = {
-                'cart_items': [
-                    {
-                        'variant_id': variant.id,
-                        'quantity': quantity,
-                        'price': str(unit_price),
-                        'line_total': str(total_price),
-                        'original_total': str(original_item_total),
-                        'selling_total': str(selling_item_total),
-                        'total_discount': str(discount_item_total)
-                    }
-                ],
-                'address_id': address_id,
-                'total_amount': str(total_price),
-                'is_cart_checkout': False,
-            }
-            return redirect('payment_method')
-        
-        available_coupons = Coupon.objects.filter(
-            is_active=True,
-            valid_from__lte=timezone.now(),
-            valid_to__gte=timezone.now()
-        ).exclude(
-            Q(max_usage_limit__gt=0) &
-            Q(total_usage__gte=F('max_usage_limit'))
-        )
-        print(f'available coupons: {available_coupons}')
-
-        context = {
-            'is_buy_now': True,
-            'bn_variant': variant,
-            'bn_quantity': quantity,
-            'bn_unit_price': original_item_total,
-            'bn_selling_price': selling_item_total,
-            'bn_discount_price': discount_item_total,
-            'bn_total_price': total_price,
-            'addresses': addresses,
-            'default_address': default_address,
-            'estimated_delivery_date': estimated_delivery_date,
-            'available_coupons':available_coupons,
-        }
-        return render(request, 'user/checkout.html', context)
+    variant = get_object_or_404(ProductVariant, id=bn_data['variant_id'], is_active=True)
+    quantity = int(bn_data['quantity'])
+    
+    
+    total_before_coupon = Decimal(bn_data['total_price'])  # item final price * qty
+    
+    
+    if quantity > variant.stock:
+        messages.error(request, f"Insufficient stock. Only {variant.stock} left.")
+        return redirect('product_details', variant_id=variant.id)
 
     
+    applied_coupon = request.session.get('applied_coupon')
+    print(f'Applied Coupon in Buynow: {applied_coupon}')
+    if applied_coupon:
+        final_payable = Decimal(applied_coupon['final_amount']) # discounted amount
+    else:
+        final_payable = total_before_coupon       # item final price * qty
+    print(f'Final Payable: {final_payable}')
+
+    
+    if request.method == "POST":
+        address_id = request.POST.get("address_id")
+        if not address_id:
+            messages.error(request, "Please select an address.")
+            return redirect('buynow_checkout')
+
+        
+        effective_unit_price = (final_payable / quantity).quantize(Decimal('0.01')) # User Paid price per item
+
+        request.session['order_data'] = {
+            'cart_items': [{
+                'variant_id': variant.id,
+                'quantity': quantity,
+                'unit_price': str(effective_unit_price),  # User paid price per item
+                'line_total': str(final_payable),         # User paid price for Total Order 
+            }],
+            'address_id': address_id,
+            'total_amount': str(final_payable),           # User paid price for Total Order
+            'coupon': applied_coupon['coupon_code'] if applied_coupon else None,
+            'is_cart_checkout': False,
+        }
+        dictt={
+            'cart_items': [{
+                'variant_id': variant.id,
+                'quantity': quantity,
+                'unit_price': str(effective_unit_price), 
+                'line_total': str(final_payable),
+            }],
+            'address_id': address_id,
+            'total_amount': str(final_payable),
+            'coupon': applied_coupon['coupon_code'] if applied_coupon else None,
+            'is_cart_checkout': False,
+        }
+        print(f'Session Order data for buynow \n {dictt}')
+
+        return redirect('payment_method')
+
+    
+    addresses = UserAddress.objects.filter(user=request.user)
+    available_coupons = Coupon.objects.filter(
+        is_active=True, valid_from__lte=timezone.now(), valid_to__gte=timezone.now()
+    ).exclude(Q(max_usage_limit__gt=0) & Q(total_usage__gte=F('max_usage_limit')))
+
+    context = {
+        'variant': variant,
+        'quantity': quantity,
+        'original_unit_price': bn_data['original_unit_price'],  # item price
+        'subtotal': total_before_coupon,       # Item final price * qty
+        'final_payable': final_payable,       # User paid price for Total Order.
+        'addresses': addresses,
+        'default_address': addresses.filter(is_default=True).first(),
+        'available_coupons': available_coupons,
+        'estimated_delivery': (timezone.now() + timedelta(days=7)).date(),
+    }
+    return render(request, 'user/buynow_checkout.html', context)
+ 
+@login_required(login_url='login')
+@never_cache
+def checkout(request):
     
     cart_items = CartProducts.objects.filter(
         user=request.user,
         variant__is_active=True
     ).select_related('variant__product')
     
-        
-    if not cart_items:
+    if not cart_items.exists():
         messages.error(request, "Your cart is empty. Add items to proceed.")
         return redirect('user_cart_page')
+    
+    if request.method =='GET':
+        request.session.pop('coupon_applied',None)
+        request.session.pop('order_data',None)
     
     cart_price_data = request.session.get('cart_price_data', {})
     if not cart_price_data:
         messages.error(request, "Cart data is missing. Please revisit your cart.")
         return redirect('user_cart_page')
     
-    original_total_price = Decimal(cart_price_data.get('original_total_price', '0'))
-    selling_total_price = Decimal(cart_price_data.get('selling_total_price', '0'))
+    original_total_price = Decimal(cart_price_data.get('original_total_price', '0'))  # sum of item price * qty
+    selling_total_price = Decimal(cart_price_data.get('selling_total_price', '0'))     # sum of item finla price * qty
     discount_total = Decimal(cart_price_data.get('discount_total', '0'))
-    amount_payable = Decimal(cart_price_data.get('amount_payable', '0'))
+    amount_payable = Decimal(cart_price_data.get('amount_payable', '0'))             # Amount payable == selling totla price
     
     cart_item_details = cart_price_data.get('cart_item_details', [])
+
+    
     for item in cart_items:
         if item.quantity > item.variant.stock:
             messages.error(request, f"Insufficient stock for {item.variant}. Only {item.variant.stock} available.")
             return redirect('user_cart_page')
+        
+        
         for detail in cart_item_details:
             if detail['variant_id'] == item.variant.id and detail['quantity'] == item.quantity:
-                item.total_original_price = item.variant.price * item.quantity
-                item.total_selling_price = item.variant.final_price * item.quantity
+                item.total_original_price = item.variant.price * item.quantity  # item price * qty
+                item.total_selling_price = item.variant.final_price * item.quantity   # item final price * qty
                 item.item_discount = (item.total_original_price - item.total_selling_price)
-                item.item_total = Decimal(detail['item_total'])
-                print(f'{item.variant} \n quantity: {item.quantity} total original: {item.total_original_price} \n total selling: {item.total_selling_price} \n item discount: {item.item_discount}')
+                item.item_total = Decimal(detail['item_total'])    # Item final price* qty in Cart model
                 break
         else:
             messages.warning(request, "Cart data is outdated. Please revisit your cart.")
             return redirect('user_cart_page')
     
-    estimated_delivery_date = (datetime.now() + timedelta(days=7)).strftime('%B %d, %Y')
     
     addresses = UserAddress.objects.filter(user=request.user)
     if not addresses.exists():
         messages.warning(request, "Please add a delivery address before checkout.")
         return redirect('user_profile_update')  
+
     default_address = addresses.filter(is_default=True).first()
 
     if request.method == 'POST':
         address_id = request.POST.get('address_id')
-        
         if not address_id:
             messages.error(request, "Please select a delivery address.")
             return redirect('checkout')
             
         selected_address = get_object_or_404(UserAddress, id=address_id, user=request.user)
-        print(f'selected address: {selected_address}')
 
+        
         applied_coupon = request.session.get('applied_coupon')
         if applied_coupon:
-            amount_payable = applied_coupon['final_amount']
-            coupon = applied_coupon['coupon_code']
+            final_amount = Decimal(applied_coupon['final_amount'])    # discounted amount
+            coupon_code = applied_coupon['coupon_code']
+            discount_percent=applied_coupon['discount_percent']/Decimal('100')
+            
+            print(f'Coupon applied: {coupon_code}, final amount : {final_amount}')
         else:
-            amount_payable= amount_payable
-            coupon = None
-        print(f'Coupon code: {coupon}, Amount payable: {amount_payable}')
+            final_amount = amount_payable       # sum of item final price * qty
+            coupon_code = None
+            discount_percent=Decimal('0.00')
+
+        order_items=[]
+        calaculated_total=Decimal('0.00')
+        for item in cart_items:
+            base_unit_price= item.variant.final_price  
+            paid_unit_price= (base_unit_price * (Decimal('1.00')- discount_percent)).quantize(Decimal('0.01'))  # Actual paid price per item
+            line_total = paid_unit_price * item.quantity 
+            calaculated_total+= line_total
+
+            order_items.append({
+                'variant_id':item.variant.id,
+                'quantity': item.quantity,
+                'unit_price':str(paid_unit_price),    # actual paid price per unit
+                'line_total':str(line_total)            # unit price * qty
+            })
+
+        final_amount=calaculated_total.quantize(Decimal('0.01'))  
 
         request.session['order_data'] = {
-            'cart_items': [
-                {
-                    'variant_id': item.variant.id,
-                    'quantity': item.quantity,
-                    'unit_price': str(item.item_total / item.quantity), 
-                    'line_total': str(item.item_total)  
-                } for item in cart_items
-            ],
+            'cart_items': order_items,
             'address_id': address_id,
-            'total_amount': str(amount_payable),
-            'coupon': coupon,
+            'total_amount': str(final_amount),   # sum of all distributed item prices
+            'coupon': coupon_code,
             'is_cart_checkout': True
         }
-        print(request.session['order_data'])
+        
+        
         return redirect('payment_method')
+    
     
     available_coupons = Coupon.objects.filter(
         is_active=True,
         valid_from__lte=timezone.now(),
         valid_to__gte=timezone.now()
     ).exclude(
-        Q(max_usage_limit__gt=0) &
-        Q(total_usage__gte=F('max_usage_limit'))
+        Q(max_usage_limit__gt=0) & Q(total_usage__gte=F('max_usage_limit'))
     )
-    print(f'available coupons: {available_coupons}')
     
+    
+
     context = {
         'cart_items': cart_items,
         'original_total_price': original_total_price,
         'selling_total_price': selling_total_price,
         'discount_total': discount_total,
         'amount_payable': amount_payable,
-        'estimated_delivery_date': estimated_delivery_date,
+        'estimated_delivery_date': (datetime.now() + timedelta(days=7)).strftime('%B %d, %Y'),
         'addresses': addresses,
         'default_address': default_address,
-        'available_coupons':available_coupons
+        'available_coupons': available_coupons
     }
     return render(request, 'user/checkout.html', context)
 
 
+@login_required
+@never_cache
 def apply_coupon(request):
-
     if request.method == 'POST':
-        code= request.POST.get('coupon_code')
+        code = request.POST.get('coupon_code')
         coupon = Coupon.objects.filter(coupon_code=code).first()
-        print(f'coupon code: {code}')
+        checkout_type= request.POST.get('checkout_type')
 
         if not coupon or not coupon.is_valid:
-            return JsonResponse({
-                'status':'error', 'message':'coupon does not exists or Invalid coupon.'})
-        cart_data = request.session['cart_price_data']
-        amount = Decimal(cart_data['amount_payable'])
-        print(f'amount payable: {amount}')
+            return JsonResponse({'status': 'error', 'message': 'Invalid or expired coupon.'})
+
+        
+        if checkout_type == 'buy_now':
+            if 'buy_now_order_data' not in request.session:
+                return JsonResponse({'status': 'error', 'message': 'Buy Now session expired.'})
+            amount = Decimal(request.session['buy_now_order_data']['total_price'])    # item final price * qty
+
+        elif checkout_type == 'cart':
+            if 'cart_price_data' not in request.session:
+                return JsonResponse({'status': 'error', 'message': 'Cart session expired.'})
+            amount = Decimal(request.session['cart_price_data']['amount_payable'])  # sum of item final price * qty
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Invalid checkout type.'})
 
         if amount < coupon.minimum_purchase_amount:
             return JsonResponse({
-                'status':'error', 'message':f'Requires minimum purchase of ₹{coupon.minimum_purchase_amount}'
+                'status': 'error', 
+                'message': f'Requires minimum purchase of ₹{coupon.minimum_purchase_amount}'
             })
-        discount = coupon.calculate_discount(amount)
-        final_amount = (amount - discount).quantize(Decimal('0.01'))
-        print(f'discount: {discount}, final amount: {final_amount}')
 
-        request.session['applied_coupon'] ={
-            'coupon_code': coupon.coupon_code,'coupon_discount':str(discount),
-            'final_amount':str(final_amount),
+        discount = coupon.calculate_discount(amount)   # amount*(discount /100)
+        discounted_amount = (amount - discount).quantize(Decimal('0.01'))
+        discount_percent=coupon.discount_percentage
+
+        request.session['applied_coupon'] = {
+            'coupon_code': coupon.coupon_code,
+            'coupon_discount': str(discount),
+            'final_amount': str(discounted_amount),
+            'discount_percent':discount_percent,
             'coupon_applied': True,
+            'checkout_type':checkout_type
         }
-        print(f'User applied {code} as coupon')
+
         return JsonResponse({
-            'status':'success','message':f'{code} applied successfully.',
-            'discount':str(discount), 'final_amount':str(final_amount),
+            'status': 'success',
+            'message': f'{code} applied successfully.',
+            'discount': str(discount), 
+            'final_amount': str(discounted_amount),
+        })
+@login_required
+@never_cache
+def remove_coupon(request):
+    if request.method == 'POST':
+        request.session.pop('applied_coupon', None)
+        checkout_type = request.POST.get('checkout_type') 
+
+        
+        if checkout_type == 'buy_now':
+            final_amount = request.session['buy_now_order_data']['total_price']  # item final price * qty
+        else:
+            final_amount = request.session['cart_price_data']['amount_payable']   # sum of item final price * qty
+
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Coupon removed.',
+            'final_amount': str(final_amount),
+            'discount': '0.00'
         })
 
-
-def remove_coupon(request):
-    if 'applied_coupon' in request.session:
-        del request.session['applied_coupon']
-
-    cart_data = request.session['cart_price_data']
-    final_amount = cart_data['amount_payable']
-    
-    return JsonResponse({
-        'status':'success', 'message':'Coupon has removed.',
-        'final_amount':final_amount,
-    })
 
 
 @never_cache
@@ -340,19 +373,20 @@ def payment_method(request):
     
     order_data = request.session['order_data']
     is_cart_checkout = order_data.get('is_cart_checkout', False)
-
     address = get_object_or_404(UserAddress,id=order_data['address_id'],user=request.user)
+    total_amount = Decimal(order_data.get('total_amount','0'))       # Sum of all distributed item prices
+    applied_coupon=request.session.get('applied_coupon')
 
     ordering_items = order_data.get('cart_items',[])
 
     variants = []
-    total_amount = Decimal(order_data.get('total_amount','0'))
+    
     
     for item in ordering_items:
         variant = get_object_or_404(ProductVariant, id=item['variant_id'])
         quantity = int(item['quantity'])
-        price = Decimal(item['unit_price'])
-        item_total = Decimal(item.get('line_total',quantity * price))
+        price = Decimal(item['unit_price'])    # Item distributed price per qty
+        item_total = Decimal(item.get('line_total',quantity * price))  # Item distributed * qty
 
         variants.append({
             'variant':variant, 'quantity':quantity,
@@ -411,17 +445,6 @@ def payment_method(request):
                     if is_cart_checkout:
                         CartProducts.objects.filter(user=request.user).delete()
 
-                    # # increment coupon usage
-                    # applied_coupon_code = cart_price_data.get('applied_coupon')
-                    # if applied_coupon_code:
-                    #     try:
-                    #         coupon = Coupon.objects.get(coupon_code=applied_coupon_code, is_active=True)
-                    #         coupon.total_usage += 1
-                    #         coupon.save()
-                    #         if 'applied_coupon' in request.session:
-                    #             del request.session['applied_coupon']
-                    #     except Coupon.DoesNotExist:
-                    #         pass
 
                     del request.session['order_data']
                     return redirect('order_success', order_id=order.id)
@@ -430,29 +453,9 @@ def payment_method(request):
                 messages.error(request, f"Error processing order: {str(e)}")
                 return redirect('cart_checkout' if is_cart_checkout else 'buy_now', variant_id=variants[0]['variant'].id)
 
-        # elif payment_method == 'RAZORPAY':
-            # try:
-            #     razorpay_order = create_razorpay_order(
-            #         total_amount, 
-            #         request.user.id, 
-            #         'cart' if is_cart_checkout else 'buy_now'
-            #     )
-            # except Exception as e:
-            #     messages.error(request, f"Failed to create payment order: {str(e)}")
-            #     return redirect('cart_checkout' if is_cart_checkout else 'buy_now', variant_id=variants[0]['variant'].id)
-            # order_data_with_total = order_data.copy()
-            # order_data_with_total['total_amount'] = str(total_amount)
-            # request.session[f'razorpay_pending_{razorpay_order["id"]}'] = order_data_with_total
-            # return render(request, 'user/razorpay_checkout.html', {
-            #     'variants': variants,
-            #     'total_amount': total_amount,
-            #     'address': address,
-            #     'is_cart_checkout': is_cart_checkout,
-            #     'razorpay_order_id': razorpay_order['id'],
-            #     'razorpay_key': settings.RAZORPAY_KEY_ID,
-            #     'razorpay_amount': int(total_amount * 100),
-            # })
-            pass
+        elif payment_method == 'RAZORPAY':
+          
+            return redirect('order_error')
 
     return render(request, 'user/payment_method.html', {
         'variants': variants,
@@ -465,128 +468,7 @@ def payment_method(request):
 
 @csrf_exempt
 def razorpay_success(request):
-    if request.method == "POST":
-        data = request.POST
-        razorpay_order_id = data.get('razorpay_order_id')
-        payment_id = data.get('razorpay_payment_id')
-        signature = data.get('razorpay_signature')
-
-        pending_key = f'razorpay_pending_{razorpay_order_id}'
-        pending_data = request.session.get(pending_key)
-        if not pending_data:
-            messages.error(request, "No pending order found.")
-            return redirect('product_listing')
-
-        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
-        try:
-            # Verify payment signature
-            client.utility.verify_payment_signature({
-                'razorpay_order_id': razorpay_order_id,
-                'razorpay_payment_id': payment_id,
-                'razorpay_signature': signature
-            })
-            
-            # Fetch payment details to get payment method used
-            payment_details = client.payment.fetch(payment_id)
-            payment_method_used = payment_details.get('method', 'unknown')
-            
-            print(f"Payment successful - Method: {payment_method_used}, Order ID: {razorpay_order_id}")
-
-            order_data = pending_data
-            is_cart_checkout = order_data.get('is_cart_checkout', False)
-            total_amount = Decimal(order_data['total_amount'])
-            address = get_object_or_404(UserAddress, id=order_data['address_id'], user=request.user)
-            cart_price_data = request.session.get('cart_price_data', {})
-            cart_item_details = cart_price_data.get('cart_item_details', [])
-
-            with transaction.atomic():
-                order = Order.objects.create(
-                    user=request.user,
-                    address=address,
-                    total_amount=total_amount,
-                    payment_method='RAZORPAY',
-                    is_paid=True,
-                    razorpay_order_id=razorpay_order_id,
-                    razorpay_payment_id=payment_id,
-                    razorpay_signature=signature
-                )
-
-                if is_cart_checkout:
-                    for item in order_data['cart_items']:
-                        variant = get_object_or_404(ProductVariant, id=item['variant_id'])
-                        quantity = item['quantity']
-                        detail = next((d for d in cart_item_details if d['variant_id'] == item['variant_id']), None)
-                        unit_price = Decimal(detail['unit_price']) if detail else Decimal(item['price'])
-
-                        if variant.stock < quantity:
-                            raise Exception(f"Insufficient stock for {variant}.")
-                        for _ in range(quantity):
-                            OrderItem.objects.create(
-                                order=order,
-                                variant=variant,
-                                quantity=1,
-                                price=unit_price,  # ✅ per-unit final price
-                                status='ACTIVE',
-                                delivery_status='PENDING'
-                            )
-                        variant.stock -= quantity
-                        variant.save()
-                    CartProducts.objects.filter(user=request.user).delete()
-                else:
-                    variant = get_object_or_404(ProductVariant, id=order_data['variant_id'])
-                    quantity = order_data['quantity']
-                    price = Decimal(order_data['price'])
-                    if variant.stock < quantity:
-                        raise Exception(f"Insufficient stock for {variant}.")
-                    for _ in range(quantity):
-                        OrderItem.objects.create(
-                            order=order,
-                            variant=variant,
-                            quantity=1,
-                            price=price,
-                            status='ACTIVE',
-                            delivery_status='PENDING'
-                        )
-                        variant.stock -= quantity
-                        variant.save()
-
-                # increment coupon usage
-                applied_coupon_code = cart_price_data.get('applied_coupon')
-                if applied_coupon_code:
-                    try:
-                        coupon = Coupon.objects.get(coupon_code=applied_coupon_code, is_active=True)
-                        coupon.total_usage += 1
-                        coupon.save()
-                        if 'applied_coupon' in request.session:
-                            del request.session['applied_coupon']
-                    except Coupon.DoesNotExist:
-                        pass
-
-                # cleanup
-                if 'order_data' in request.session:
-                    del request.session['order_data']
-                del request.session[pending_key]
-
-                return redirect('order_success', order_id=order.id)
-
-        except razorpay.errors.SignatureVerificationError as e:
-            print(f"Signature verification failed: {str(e)}")
-            messages.error(request, "Payment verification failed. Please try again.")
-            if pending_key in request.session:
-                del request.session[pending_key]
-            return redirect('product_listing')
-        except razorpay.errors.BadRequestError as e:
-            print(f"Razorpay bad request error: {str(e)}")
-            messages.error(request, "Payment request failed. Please try again.")
-            if pending_key in request.session:
-                del request.session[pending_key]
-            return redirect('product_listing')
-        except Exception as e:
-            print(f"Unexpected error during payment processing: {str(e)}")
-            messages.error(request, f"Payment processing failed: {str(e)}")
-            if pending_key in request.session:
-                del request.session[pending_key]
-            return redirect('product_listing')
+   pass
 
 
 @never_cache
@@ -605,6 +487,7 @@ def order_success(request, order_id):
             }
         same_items[varid]['quantity'] += 1
     same_items = list(same_items.values())
+    print(same_items)
 
     context = {
         'order': order,'same_items':same_items,
@@ -623,10 +506,10 @@ def order_error(request):
 @login_required(login_url='login')
 def orderlist(request):
     query = request.GET.get('q', '').strip()
-    status_filter = request.GET.get('status', '').strip()  # new filter param
+    status_filter = request.GET.get('status', '').strip() 
     
     if query:
-        # Search directly in OrderItem
+        
         items = OrderItem.objects.filter(
             order__user=request.user
         ).filter(
@@ -636,7 +519,7 @@ def orderlist(request):
             Q(variant__product__category__name__icontains=query)
         )
         
-        # Apply delivery status filter if provided
+        
         if status_filter:
             if status_filter.upper() == "CANCELLED":
                 items = items.filter(Q(status="CANCELLED") | Q(delivery_status="CANCELLED"))
@@ -652,7 +535,7 @@ def orderlist(request):
     else:
         orders = Order.objects.filter(user=request.user).order_by('-created_at')
         
-        # Apply delivery status filter on items inside orders
+        
         if status_filter:
             orders = orders.filter(items__delivery_status=status_filter.upper()).distinct()
             print('Showing the co-odered items delivery status also.')
@@ -708,11 +591,10 @@ def cancel_order_item(request, order_id, item_id):
 
         try:
             with transaction.atomic():
-                # Restore stock
+                
                 item.variant.stock += item.quantity
                 item.variant.save()
 
-                # SHARING PRICE OF EACH ITEM IN THE ORDER
                 item_total = item.quantity * item.price
                 actual_order_total= sum(it.price * it.quantity for it in order.items.all()) # BEFORE COUPON APPLIED
                 paid_order_total= order.total_amount  # AFTER ANY COUPON APPLIED
@@ -722,7 +604,6 @@ def cancel_order_item(request, order_id, item_id):
 
                 order.total_amount = max(0, order.total_amount - refund_amount)
 
-                # Mark as cancelled
                 item.status = 'CANCELLED'
                 item.delivery_status = 'CANCELLED'
                 item.cancellation_reason = selected_reason
@@ -740,7 +621,7 @@ def cancel_order_item(request, order_id, item_id):
                         amount= Decimal(refund_amount),
                         description= 'Order Cancel Refund'
                     )
-                # Cancel entire order if all items are cancelled
+                
                 if not order.items.filter(status='ACTIVE').exists():
                     order.status = 'CANCELLED'
                     order.total_amount = Decimal('0.00')
@@ -761,26 +642,26 @@ def cancel_order_item(request, order_id, item_id):
 @never_cache
 @login_required(login_url='login')
 def return_order_item(request, order_id, item_id):
-    # Get the order and item based on IDs
+    
     order = get_object_or_404(Order, id=order_id, user=request.user)
     item = get_object_or_404(OrderItem, id=item_id, order=order)
 
-    # Ensure the item is delivered before allowing the return
+    
     if item.delivery_status != 'DELIVERED':
         messages.error(request, "This item cannot be returned as it has not been delivered.")
-        return redirect('order_details', order_id=order.id)
+        return redirect('order_details', order_id=order.id,item_id=item.id)
 
-    # Handle the return process
+    
     if request.method == 'POST':
         reason=request.POST.get('reason')
         other_reason= request.POST.get('other_reason')
         try:
             with transaction.atomic():
-            # CHECK IF A RETURN REQUEST IS ALREADY THERE
+            
                 if ReturnRequest.objects.filter(order_item=item).exists():
                     messages.warning(request,'The return request for the same product is already made.')
                     return redirect('order_details', order_id=order.id, item_id=item.id)
-                # CREATE A RETURN REQUEST
+                
                 ReturnRequest.objects.create(
                     order_item= item,
                     reason= reason,

@@ -537,7 +537,7 @@ def admin_request_list(request):
     
     ''' LIST OF REOUESTS FOR ADMIN APPROVAL FOR RETUTN ORDERS. '''
 
-    return_requests= ReturnRequest.objects.all().select_related('order_item__order','order_item__variant')
+    return_requests= ReturnRequest.objects.all().select_related('order_item__order','order_item__variant').order_by('-created_at')
     breadcrumbs=[
         {'name': 'Dashboard', 'url': 'admin_dashboard'},
         {'name': 'Requests', 'url':''},
@@ -545,6 +545,7 @@ def admin_request_list(request):
     context= {'return_requests':return_requests, 'breadcrumbs': breadcrumbs}
     return render(request,'admin/return_request_list.html',context)
 
+@never_cache
 @staff_member_required(login_url='admin_login')
 def admin_return_approval(request,request_id):
     
@@ -609,7 +610,7 @@ def admin_return_approval(request,request_id):
         
            
     
-    return render(request,'admin/admin_return_approval.html',{'return_request':return_request, 'item':item, 'order':order} )
+    return render(request,'admin/return_approval.html',{'return_request':return_request, 'item':item, 'order':order} )
 
 #################################################################################################################################
 
@@ -646,6 +647,7 @@ def admin_coupon_list(request):
     
     return render(request, 'admin/coupon_list.html', context)
 
+@never_cache
 @staff_member_required(login_url='admin_login')
 def admin_coupon_creation(request):
     
@@ -669,6 +671,7 @@ def admin_coupon_creation(request):
     ]
     return render(request,'admin/coupon_creation.html',{'form': form, 'breadcrumbs': breadcrumbs})
 
+@never_cache
 @staff_member_required(login_url='admin_login')
 def admin_coupon_delete(request, coupon_id):
     
@@ -684,6 +687,8 @@ def admin_coupon_delete(request, coupon_id):
     messages.warning(request, "Invalid request method.")
     return redirect('admin_coupon_list')
 
+@never_cache
+@staff_member_required
 def admin_coupon_edit(request,coupon_id):
     coupon= get_object_or_404(Coupon, id=coupon_id)
     if request.method == 'POST':
@@ -739,6 +744,7 @@ def admin_offer_list(request):
 
     return render(request, 'admin/offer_list.html', context)
 
+@never_cache
 @staff_member_required(login_url='admin_login')
 def admin_offer_creation(request):
     if request.method == 'POST':
@@ -759,6 +765,7 @@ def admin_offer_creation(request):
     ]
     return render(request, 'admin/offer_creation.html', {'form': form, 'breadcrumbs': breadcrumbs})
 
+@never_cache
 @staff_member_required(login_url='admin_login')
 def admin_offer_delete(request,offer_id):
     offer= get_object_or_404(Offer, id=offer_id)
@@ -769,6 +776,7 @@ def admin_offer_delete(request,offer_id):
     messages.error(request,'Invalid request method.')
     return redirect('admin_offer_list')
 
+@never_cache
 @staff_member_required(login_url='admin_login')
 def admin_offer_edit(request,offer_id):
     offer= get_object_or_404(Offer,id=offer_id)
@@ -790,7 +798,9 @@ def admin_offer_edit(request,offer_id):
     ]
     return render(request,'admin/offer_edit.html',{'breadcrumbs':breadcrumbs,'offer':offer, 'form':form})
 
+# ---------------------------------------------------------------------------------------
 # SALES REPORT OF THE WEBSITE
+# -----------------------------------------------------------------------------------------
 @staff_member_required(login_url='admin_login')
 def admin_sales_report(request):
    

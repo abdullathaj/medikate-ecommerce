@@ -2,7 +2,6 @@
 {% block content %}
 <div class="container mt-5">
     
-    <!-- Toast Container -->
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
         {% if messages %}
             {% for message in messages %}
@@ -23,52 +22,30 @@
         {% endif %}
     </div>
     
-   <h2>Checkout</h2>
+    <h2>Checkout</h2>
 
-<div class="card mb-4">
-    <div class="card-body">
-        <h5>Order Summary</h5>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Product</th>
-                    <th>Quantity</th>
-                    <th>Original Price</th>
-                    <th>Selling Price</th>
-                    <th>Discount</th>
-                    <th>Total</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% if is_buy_now %}
-                <tr>
-                    <td>
-                        {% with product_image=bn_variant.product.product_image.first %}
-                            {% if product_image %}
-                                <img src="{{ product_image.image.url }}" class="img-fluid"
-                                     style="max-height: 50px; margin-right: 10px;">
-                            {% else %}
-                                <img src="https://via.placeholder.com/50"
-                                     class="img-fluid" style="max-height: 50px;">
-                            {% endif %}
-                        {% endwith %}
-                        {{ bn_variant.product.name }} - {{ bn_variant.variant_name }}
-                    </td>
-                    <td>{{ bn_quantity }}</td>
-                    <td>₹{{ bn_unit_price }}</td>
-                    <td>₹{{ bn_selling_price }}</td>
-                    <td>₹{{ bn_discount_price }}</td>
-                    <td>₹{{ bn_total_price }}</td>
-                </tr>
-                {% else %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5>Order Summary</h5>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Original Price</th>
+                        <th>Selling Price</th>
+                        <th>Discount</th>
+                    </tr>
+                </thead>
+                <tbody>
                     {% for item in cart_items %}
                         <tr>
                             <td>
                                 {% with product_image=item.variant.product.product_image.first %}
                                     {% if product_image %}
-                                        <img src="{{ product_image.image.url }}" alt="{{ item.variant.product.name }} - {{ item.variant.variant_name }}" class="img-fluid" style="max-height: 50px; object-fit: cover; display: inline-block; vertical-align: middle; margin-right: 10px;">
+                                        <img src="{{ product_image.image.url }}" alt="{{ item.variant.product.name }}" class="img-fluid" style="max-height: 50px; object-fit: cover; display: inline-block; vertical-align: middle; margin-right: 10px;">
                                     {% else %}
-                                        <img src="https://via.placeholder.com/50?text={{ item.variant.product.name|urlencode }}%20-%20{{ item.variant.variant_name|urlencode }}" alt="{{ item.variant.product.name }} - {{ item.variant.variant_name }}" class="img-fluid" style="max-height: 50px; object-fit: cover; display: inline-block; vertical-align: middle; margin-right: 10px;">
+                                        <img src="https://via.placeholder.com/50" class="img-fluid" style="max-height: 50px; margin-right: 10px;">
                                     {% endif %}
                                 {% endwith %}
                                 {{ item.variant.product.name }} - {{ item.variant.variant_name }}
@@ -77,89 +54,75 @@
                             <td>₹{{ item.total_original_price|floatformat:2 }}</td>
                             <td>₹{{ item.total_selling_price|floatformat:2 }}</td>
                             <td>₹{{ item.item_discount|floatformat:2 }}</td>
-                            <td>₹{{ item.item_total|floatformat:2 }}</td>
                         </tr>
                     {% endfor %}
-                {% endif %}
-            </tbody>
-        </table>
-        <hr>
-        {% if is_buy_now %}
-            <p><strong>Amount Payable:</strong> ₹{{ bn_total_price }}</p>
-        {% else %}
+                </tbody>
+            </table>
+            <hr>
+            
             <p><strong>Original Total:</strong> ₹{{ original_total_price|floatformat:2 }}</p>
-            <p><strong>Discount:</strong> ₹{{ discount_total|floatformat:2 }}</p>
-            <p><strong>Selling Total:</strong> ₹{{ selling_total_price|floatformat:2 }}</p>
             <p><strong>Amount Payable:</strong> ₹{{ amount_payable|floatformat:2 }}</p>
-
+            <p><strong>Estimated Delivery:</strong> {{ estimated_delivery_date }}</p>
             
             <div class="card mt-3">
                 <div class="card-body">
-                        <h5>Apply Coupon</h5>
-                        <div class="mb-3">
-                            <label class="form-label">Available Coupons</label>
-                            <select id="coupon-dropdown" class="form-select">
-                                <option value="">-- Select a Coupon --</option>
-                                {% for c in available_coupons %}
-                                    <option value="{{ c.coupon_code }}">
-                                        {{ c.coupon_code }} ({{ c.discount_percentage }}% OFF)
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="input-group mb-3">
-                            <input type="text" id="coupon-code" class="form-control" placeholder="Enter Coupon Code">
-                            <button type="button" id="apply-coupon-btn" class="btn btn-success">Apply</button>
-                            <button type="button" id="remove-coupon-btn" class="btn btn-danger d-none">Remove</button>
-                        </div>
-                       
-                        <p><strong>Coupon Discount:</strong> ₹
-                            <span id="coupon-discount">
-                                {% if request.session.applied_coupon %}{{ request.session.applied_coupon.coupon_discount }}
-                                {% else %}0
-                                {% endif %}  
-                            </span>
-                       </p>
-                        <p><strong>Final Payable:</strong> ₹<span id="final-payable">
-                                {% if request.session.applied_coupon %}
-                                    {{ request.session.applied_coupon.final_amount }}
-                                {% else %}
-                                    {{ amount_payable }}
-                                {% endif %}
-                            </span>
-                        </p>
+                    <h5>Apply Coupon</h5>
+                    <div class="mb-3">
+                        <label class="form-label">Available Coupons</label>
+                        <select id="coupon-dropdown" class="form-select">
+                            <option value="">-- Select a Coupon --</option>
+                            {% for c in available_coupons %}
+                                <option value="{{ c.coupon_code }}">
+                                    {{ c.coupon_code }} ({{ c.discount_percentage }}% OFF)
+                                </option>
+                            {% endfor %}
+                        </select>
                     </div>
+                    <div class="input-group mb-3">
+                        <input type="text" id="coupon-code" class="form-control" placeholder="Enter Coupon Code">
+                        <button type="button" id="apply-coupon-btn" class="btn btn-success">Apply</button>
+                        <button type="button" id="remove-coupon-btn" class="btn btn-danger d-none">Remove</button>
+                    </div>
+                    <p><strong>Offer Discount:</strong> ₹{{ discount_total|floatformat:2 }}</p>
+                    <p><strong>Coupon Discount:</strong> ₹
+                        <span id="coupon-discount">
+                            {% if request.session.applied_coupon %}{{ request.session.applied_coupon.coupon_discount }}{% else %}0.00{% endif %}
+                        </span>
+                    </p>
+                    <p><strong>Final Payable:</strong> ₹<span id="final-payable">
+                            {% if request.session.applied_coupon %}
+                                {{ request.session.applied_coupon.final_amount|floatformat:2 }}
+                            {% else %}
+                                {{ amount_payable |floatformat:2 }}
+                            {% endif %}
+                        </span>
+                    </p>
                 </div>
-
-        {% endif %}
-        <p><strong>Estimated Delivery:</strong> {{ estimated_delivery_date }}</p>
-    </div>
-</div>
-
-<form method="post" class="mb-2">
-    {% csrf_token %}
-    <div class="card mb-3">
-        <div class="card-body">
-            <h5>Select Delivery Address</h5>
-            <select class="form-select" name="address_id" required>
-                <option value="" {% if not default_address %}selected{% endif %}>Select an address</option>
-                {% for address in addresses %}
-                    <option value="{{ address.id }}" {% if address == default_address %}selected{% endif %}>
-                        {{ address.addressline_1 }}{% if address.addressline_2 %}, {{ address.addressline_2 }}{% endif %}, 
-                        {{ address.city }}, {{ address.state }}, {{ address.nation }} - {{ address.postal_code }}
-                    </option>
-                {% endfor %}
-            </select>
-            <a href="{% url 'user_profile_update' %}" class="btn btn-outline-secondary btn-sm mt-2 float-end">Add new Address</a>
+            </div>
         </div>
     </div>
 
-    <button type="submit" class="btn btn-primary mb-1">Proceed to Payment</button>
+    <form method="post" class="mb-2">
+        {% csrf_token %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5>Select Delivery Address</h5>
+                <select class="form-select" name="address_id" required>
+                    <option value="" {% if not default_address %}selected{% endif %}>Select an address</option>
+                    {% for address in addresses %}
+                        <option value="{{ address.id }}" {% if address == default_address %}selected{% endif %}>
+                            {{ address.addressline_1 }}{% if address.addressline_2 %}, {{ address.addressline_2 }}{% endif %}, 
+                            {{ address.city }}, {{ address.state }}, {{ address.nation }} - {{ address.postal_code }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <a href="{% url 'user_profile_update' %}" class="btn btn-outline-secondary btn-sm mt-2 float-end">Add new Address</a>
+            </div>
+        </div>
 
-    {% if not is_buy_now %}
+        <button type="submit" class="btn btn-primary mb-1">Proceed to Payment</button>
         <a href="{% url 'user_cart_page' %}" class="btn btn-secondary mb-1">Back to Cart</a>
-    {% endif %}
-</form>
+    </form>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.7.1.js"> </script>
@@ -219,6 +182,7 @@ $(document).ready(function() {
             method: "POST",
             data: {
                 coupon_code: code,
+                checkout_type: 'cart',
                 csrfmiddlewaretoken: "{{ csrf_token }}"
             },
             success: function(response) {
@@ -246,7 +210,10 @@ $(document).ready(function() {
         $.ajax({
             url: "{% url 'remove_coupon' %}",
             method: "POST",
-            data: { csrfmiddlewaretoken: "{{ csrf_token }}" },
+            data: { csrfmiddlewaretoken: "{{ csrf_token }}",
+                    checkout_type: 'cart'
+                    },
+            
             success: function(response) {
 
                 $("#coupon-discount").text("0");

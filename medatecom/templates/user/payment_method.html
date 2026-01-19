@@ -42,7 +42,7 @@
                         <div>
                             <p class="mb-1"><strong>{{ item.variant.product.name }} - {{ item.variant.variant_name }}</strong></p>
                             <p class="mb-1">Quantity: {{ item.quantity }}</p>
-                            <p class="mb-1">Price: ₹{{ item.price|floatformat:2 }}</p>
+                            <p class="mb-1">Price per Qty: ₹{{ item.price|floatformat:2 }}</p>
                             <p class="mb-1">Total: ₹{{ item.item_total|floatformat:2 }}</p>
                         </div>
                     </div>
@@ -101,14 +101,15 @@
         {% endif %}
     </form>
 </div>
-<!-- JavaScript to Initialize Toasts -->
+
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     var toastElList = [].slice.call(document.querySelectorAll('.toast'));
     var toastList = toastElList.map(function (toastEl) {
         return new bootstrap.Toast(toastEl, {
             autohide: true,
-            delay: 5000 // Toast auto-hides after 5 seconds
+            delay: 5000 
         });
     });
     toastList.forEach(function (toast) {

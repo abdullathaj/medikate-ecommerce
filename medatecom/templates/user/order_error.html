@@ -1,8 +1,33 @@
 {% extends 'auth/navbar.html' %}
 {% block content %}
-<div class="container mt-5">
-    <h2 style="color:red;">Payment Failed!</h2>
-    <p>Unfortunately, your payment could not be processed.</p>
-    <a href="{% url 'product_listing' %}" class="btn btn-secondary">Back to Shopping</a>
+
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 70vh;">
+    <div class="card shadow-sm text-center p-4" style="max-width: 500px; width: 100%;">
+        
+        <div class="mb-3">
+            <i class="bi bi-x-circle-fill text-danger" style="font-size: 4rem;"></i>
+        </div>
+
+        <h3 class="text-danger fw-bold">Payment Failed</h3>
+
+        <p class="text-muted mt-2">
+            Unfortunately, we were unable to process your payment at this time.
+            Please check your payment details or try again.
+        </p>
+
+        <div class="d-grid gap-2 mt-4">
+            <!-- Optional retry button -->
+            <!-- <a href="{% url 'checkout' %}" class="btn btn-danger">Retry Payment</a> -->
+
+            <a href="{% url 'product_listing' %}" class="btn btn-outline-secondary">
+                Continue Shopping
+            </a>
+        </div>
+
+        <small class="text-muted mt-3 d-block">
+            If the amount was deducted, it will be refunded within 5–7 working days.
+        </small>
+    </div>
 </div>
+
 {% endblock %}

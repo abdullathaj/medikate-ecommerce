@@ -7,6 +7,7 @@ urlpatterns = [
     path('payment-method/', views.payment_method, name='payment_method'),
     path('order-success/<int:order_id>/', views.order_success, name='order_success'),  
     path('order-details/<int:order_id>/<int:item_id>/', views.order_details, name='order_details'),
+    path('buy-now-checkout/', views.buynow_checkout, name='buynow_checkout'),
     path('checkout/', views.checkout, name='checkout'),
     path('apply_coupon/', views.apply_coupon, name='apply_coupon'),
     path('remove_coupon/', views.remove_coupon, name='remove_coupon'),

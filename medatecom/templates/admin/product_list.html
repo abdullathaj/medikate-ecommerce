@@ -44,7 +44,8 @@
         <table id='product-listing' class="table table-bordered table-striped align-middle">
             <thead class="table-success">
                 <tr>
-                    <th>ID</th>
+                    <th>VId</th>
+                   <!--<th>PId</th>--> 
                     <th>Product Name</th>
                     <th>Variant Name</th>
                     <th>Category</th>
@@ -59,7 +60,8 @@
             <tbody>
                 {% for variant in page_obj %}
                 <tr>
-                    <td>{{ variant.product.id }}</td>
+                    <td>{{variant.id}}</td>
+                    <!--<td>{{ variant.product.id }}</td>-->
                     <td>{{ variant.product.name }}</td>
                     <td>{{ variant.variant_name }}</td>
                     <td>{{ variant.product.category.name }}</td>

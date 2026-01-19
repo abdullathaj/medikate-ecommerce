@@ -1,0 +1,174 @@
+{% extends 'auth/navbar.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Buy Now Checkout</h2>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5>Product Summary</h5>
+                    <div class="d-flex align-items-center">
+                        {% with img=variant.product.product_image.first %}
+                            <img src="{{ img.image.url }}" style="width: 80px; height: 80px; object-fit: cover;" class="me-3">
+                        {% endwith %}
+                        <div>
+                            <h6>{{ variant.product.name }}</h6>
+                            <small class="text-muted">Variant: {{ variant.variant_name }}</small><br>
+                            <strong>Qty: {{ quantity }}</strong>
+                        </div>
+                        <div class="ms-auto">
+                            <span class="text-muted"><del>₹{{ original_unit_price }}</del></span><br>
+                            <span class="text-success">₹{{ variant.final_price }} each</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5>Select Delivery Address</h5>
+                        <select class="form-select" name="address_id" required>
+                            {% for addr in addresses %}
+                                <option value="{{ addr.id }}" {% if addr == default_address %}selected{% endif %}>
+                                    {{ addr.addressline_1 }}, {{ addr.city }} - {{ addr.postal_code }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <a href="{% url 'user_profile_update' %}" class="btn btn-link btn-sm mt-2">Add New Address</a>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary w-100">Confirm Order</button>
+                    <a href="{% url 'product_listing' %}" class="btn btn-secondary w-100">Cancel</a>
+                </div>
+            </form>
+
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Price Details</h5>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal</span>
+                        <span>₹{{ subtotal }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Coupon Discount</span>
+                        <span class="text-danger">- ₹ <span id="coupon-discount">{{ request.session.applied_coupon.coupon_discount|default:"0.00" }}</span>
+                            </span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-3">
+                        <strong>Total Amount</strong>
+                        <strong>₹<span id="final-payable">{{ final_payable }}</span></strong>
+                    </div>
+
+                    <div class="coupon-section mt-4">
+                        <h6>Apply Coupon</h6>
+                        <div class="input-group mb-2">
+                            <input type="text" id="coupon-code" class="form-control" placeholder="Code">
+                            <button class="btn btn-outline-dark {% if request.session.applied_coupon %}d-none{% endif %}" 
+                                    type="button" id="apply-coupon-btn">
+                                Apply
+                            </button>
+
+                            <button class="btn btn-outline-danger {% if not request.session.applied_coupon %}d-none{% endif %}" 
+                                    type="button" id="remove-coupon-btn">
+                                Remove
+                            </button>
+
+                        </div>
+                        <select id="coupon-dropdown" class="form-select form-select-sm">
+                            <option value="">View Available Coupons</option>
+                            {% for c in available_coupons %}
+                                <option value="{{ c.coupon_code }}">{{ c.coupon_code }} ({{ c.discount_percentage }}% OFF)</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 
+
+<script src="https://code.jquery.com/jquery-3.7.1.js"> </script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const applyBtn = document.getElementById("apply-coupon-btn");
+    const removeBtn = document.getElementById("remove-coupon-btn");
+    const couponInput = document.getElementById("coupon-code");
+    const couponDropdown = document.getElementById("coupon-dropdown");
+
+    const discountEl = document.getElementById("coupon-discount");
+    const finalPayableEl = document.getElementById("final-payable");
+
+    function toggleButtons(applied) {
+        applyBtn.classList.toggle("d-none", applied);
+        removeBtn.classList.toggle("d-none", !applied);
+    }
+
+    /* Apply coupon */
+    applyBtn.addEventListener("click", function () {
+        const code = couponInput.value.trim();
+        if (!code) return alert("Enter coupon code");
+
+        fetch("{% url 'apply_coupon' %}", {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}",
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: new URLSearchParams({
+                 coupon_code: code,
+                checkout_type: 'buy_now' })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "success") {
+                discountEl.textContent = data.discount;
+                finalPayableEl.textContent = data.final_amount;
+                toggleButtons(true);
+            } else {
+                alert(data.message);
+            }
+        });
+    });
+
+    /* Remove coupon */
+    removeBtn.addEventListener("click", function () {
+        fetch("{% url 'remove_coupon' %}", {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: new URLSearchParams({ 
+            checkout_type: 'buy_now'})
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "success") {
+                discountEl.textContent = "0.00";
+                finalPayableEl.textContent = data.final_amount;
+                couponInput.value = "";
+                toggleButtons(false);
+            }
+        });
+    });
+
+    /* Dropdown auto-fill */
+    couponDropdown.addEventListener("change", function () {
+        couponInput.value = this.value;
+    });
+
+});
+</script>
+
+
+{% endblock %}

@@ -64,18 +64,19 @@
                             </div>
                             <div class="col-md-3">
                                 <div class="d-flex align-items-center">
-                                    <form action="{% url 'update_cart_quantity' item.id %}" method="post" class="me-2">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="action" value="decrease">
-                                        <button type="submit" class="btn btn-sm btn-outline-secondary">-</button>
-                                    </form>
-                                    <span class="mx-2">{{ item.quantity }}</span>
-                                    <form action="{% url 'update_cart_quantity' item.id %}" method="post" class="ms-2">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="action" value="increase">
-                                        <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                   
+                                    <button class="btn btn-sm btn-outline-secondary update-qty"
+                                            data-id="{{ item.id }}"
+                                            data-action="decrease">-</button>
+
+                                    <span class="mx-2 qty-value" id="qty-{{ item.id }}">{{ item.quantity }}</span>
+
+                                    <button class="btn btn-sm btn-outline-secondary update-qty"
+                                            data-id="{{ item.id }}"
+                                            data-action="increase"
                                             {% if item.quantity >= item.variant.stock %}disabled{% endif %}>+</button>
-                                    </form>
+
+                                    
                                 </div>
                             </div>
                             <div class="col-md-3 text-end">
@@ -187,6 +188,36 @@ function showToast(message, status){
     $(".toast-container").append(toastHTML);
     new bootstrap.Toast($(".toast-container .toast").last()[0]).show();
 }
+
+$(document).on('click','.update-qty', function (e) {
+    e.preventDefault();
+
+    let btn = $(this);
+    let cartItemId = btn.data('id');
+    let action = btn.data('action');
+
+    $.ajax({
+        url:`/update_cart_quantity/${cartItemId}/`,
+        type: 'POST',
+        data: {
+            action: action,
+            csrfmiddlewaretoken: "{{csrf_token}}"
+        },
+        success: function (response) {
+            showToast(response.message,response.status);
+
+            if (response.status === 'success') {
+                 $('#qty-' + cartItemId).text(response.new_quantity);
+
+                 location.reload();
+            }
+        },
+        error: function (response) {
+            showToast(response.message,response.status)
+        }
+    });
+    
+});
 
 $(document).on('click','.remove-from-cart', function (e){
     e.preventDefault();
