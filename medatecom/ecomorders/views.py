@@ -17,6 +17,7 @@ from django.core.paginator import Paginator
 from django.conf import settings
 import razorpay
 from django.views.decorators.csrf import csrf_exempt
+from .utils import render_to_pdf
 
 
 @login_required(login_url='login')
@@ -598,6 +599,44 @@ def order_error(request):
     }
     return render(request, 'user/order_error.html', context)
 
+from django.http import HttpResponse
+
+@login_required
+def download_invoice_pdf(request,order_id):
+
+    order= get_object_or_404(Order,id=order_id,user=request.user)
+
+    order_items= OrderItem.objects.filter(order=order)
+    
+    # Group items by variant
+    grouped_items = {}
+    for item in order_items:
+        var_id = item.variant.id
+        if var_id not in grouped_items:
+            grouped_items[var_id] = {
+                'variant': item.variant,
+                'quantity': 0,
+                'unit_price': item.price,
+                'total_price': Decimal('0.00')
+            }
+        grouped_items[var_id]['quantity'] += item.quantity
+        # Use simple multiplication for total since we want the aggregated cost
+        grouped_items[var_id]['total_price'] += (item.price * item.quantity)
+
+    data = {
+        'order': order,
+        'order_items': list(grouped_items.values()),
+        'customer_name': request.user.get_full_name() or request.user.username,
+    }
+    pdf= render_to_pdf('user/invoice_pdf.html', data)
+
+    if pdf:
+        response = HttpResponse(pdf, content_type='application/pdf')
+        filename = f"Invoice_Order_{order.id}.pdf"
+        content = f"attachment; filename={filename}"
+        response['Content-Disposition'] = content
+        return response
+    return HttpResponse('Not Found',status=404)
 
 @login_required(login_url='login')
 def orderlist(request):

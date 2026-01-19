@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+
+        body {
+            font-family: sans-serif;
+            color: #333;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .invoice-info {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            text-align: left;
+        }
+
+        th,
+        td {
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            font-size: 12px;
+        }
+
+        .total-section {
+            text-align: right;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>ORDER INVOICE</h1>
+        <p>Order ID: #{{ order.id }} | Date: {{ order.created_at|date:"d M Y" }}</p>
+    </div>
+
+    <div class="invoice-info">
+        <p><strong>Customer:</strong> {{ customer_name }}</p>
+        <p><strong>Shipping Address:</strong> {{ order.address.addressline_1 }}, {{ order.address.city }}</p>
+        <p><strong>Payment Method:</strong> {{ order.payment_method }}</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Product & Variant</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Total Price</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in order_items %}
+            <tr>
+                <td>{{ item.variant.product.name }} ({{ item.variant.variant_name }})</td>
+                <td>{{ item.quantity }}</td>
+                <td>Rs.{{ item.unit_price|floatformat:2 }}</td>
+                <td>Rs.{{ item.total_price|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="total-section">
+        <h3>Grand Total: Rs.{{ order.total_amount }}</h3>
+    </div>
+</body>
+
+</html>
