@@ -404,7 +404,7 @@ def add_to_wishlist(request, variant_id):
     
     variant = get_object_or_404(ProductVariant, id=variant_id,is_active=True)
 
-    # Check if variant is already in user's wishlist
+    
     existing = WishlistProducts.objects.filter(user=request.user, variant=variant).exists()
     if existing:
         print(f'{variant} is ALREADY in wishlist.')

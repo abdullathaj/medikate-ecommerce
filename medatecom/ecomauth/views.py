@@ -81,7 +81,7 @@ def registerview(request):
             messages.error(request,'Failed to send OTP. Please Try again.')
             return render(request,'auth/register.html')
         
-        # STORING USER CREDENTIALS IN SESSION
+        
         request.session['name']=name
         request.session['email']=email
         request.session['phone']=phone
@@ -91,7 +91,7 @@ def registerview(request):
         request.session.modified=True
         print(request.session['name'])
     
-    # REDIRECTS TO OTP VERIFICATION
+    
         messages.success(request,'OTP sent to your mail successfully.')
         return redirect('otp_verify')
          
@@ -101,7 +101,7 @@ def registerview(request):
 # VIEWS FOR OTP VERIFICATION OF THE USER
 @never_cache
 def otp_verify_view(request):
-    # ACTION OF VERIFY OTP BUTTON
+    
     if request.method=='POST':
         
         entered_otp=request.POST.get('otp')
@@ -127,7 +127,7 @@ def otp_verify_view(request):
         if otp_method != 'email':
             messages.error(request,'OTP is sending via Email. Please select Email as method.')
             return render(request,'auth/otpverify.html')
-        # USER DATA STORING.
+       
         if entered_otp == stored_otp:
             user= User.objects.create_user(
                 username=name,
@@ -138,10 +138,10 @@ def otp_verify_view(request):
             user.phone=phone
             user.save()
 
-            # WALLET CREATION
+            # WALLET CREATION in Wallet Model
             Wallet.objects.get_or_create(user=user)
 
-            # REFERRAL HANDLING
+            # REFERRAL system
             if referral_code:
                 try:
                     referrer=User.objects.get(referral_code=referral_code)
@@ -168,7 +168,7 @@ def otp_verify_view(request):
                 except User.DoesNotExist:
                     messages.error(request, 'Invalid Referral')
             
-            # REMOVING SESSION DATA            
+                     
             del request.session['otp']
             del request.session['name']
             del request.session['email']
@@ -223,7 +223,7 @@ def resend_otp_view(request):
         except Exception as e:
             messages.error(request,'Failed to send Email. Try again.')
             return render(request,'auth/otpverify.html')
-        # OTP UPDATING IN THE SESSION.
+     
         request.session['otp']=otp
         request.session.modified= True
         
@@ -238,7 +238,7 @@ def resend_otp_view(request):
 def forgot_password_view(request):
     if request.method=='POST':
         email=request.POST.get('email')
-        # CHECKING EMAIL EXISTING
+       
         if not User.objects.filter(email=email).exists():
             messages.error(request,'A user with this email account does not exists.')
             return redirect('forgot_password')
@@ -248,7 +248,7 @@ def forgot_password_view(request):
         expiry_time=timezone.now() + timedelta(seconds=120)
         print(f'Generated otp for Forgot Password is {otp}')
 
-        # SESSION UPDATE
+  
         request.session['reset_email']=email
         request.session['reset_otp']=otp
         request.session['expiry_time']=expiry_time.isoformat()
@@ -314,7 +314,7 @@ def reset_password_view(request):
             return redirect('reset_password')
         user.set_password(new_password)
         user.save()
-        # SESSION CLEAR
+       
         for key in ['reset_email','reset_otp','expiry_time']:
             request.session.pop(key,None)
         messages.success(request,'New Password set successfully.')
@@ -335,7 +335,7 @@ def resend_password_otp_view(request):
 
         otp = str(random.randint(100000, 999999))
         expiry_time = timezone.now() + timedelta(seconds=120)
-        # to show otp in the terminal
+       
         print(f'Resend otp  for Reset Password is {otp}')
 
         request.session['reset_otp'] = otp

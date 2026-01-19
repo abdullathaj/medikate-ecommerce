@@ -496,7 +496,7 @@ def order_success(request, order_id):
 
 @login_required(login_url='login')
 def order_error(request):
-    # No order_id needed for general payment errors
+    
     context = {
         'order': None,
     }
