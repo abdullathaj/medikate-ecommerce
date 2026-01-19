@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
@@ -454,8 +455,21 @@ def payment_method(request):
                 return redirect('cart_checkout' if is_cart_checkout else 'buy_now', variant_id=variants[0]['variant'].id)
 
         elif payment_method == 'RAZORPAY':
-          
-            return redirect('order_error')
+            currency = 'INR'
+            amount = int(total_amount * 100)  # Amount in paise
+
+            client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+            razorpay_order = client.order.create(dict(amount=amount, currency=currency, payment_capture='1'))
+            razorpay_order_id = razorpay_order['id']
+            
+            context = {
+                'razorpay_order_id': razorpay_order_id,
+                'razorpay_merchant_key': settings.RAZORPAY_KEY_ID,
+                'razorpay_amount': amount,
+                'currency': currency,
+                'callback_url': request.build_absolute_uri(reverse('razorpay_success')),
+            }
+            return render(request, 'user/razorpay_checkout.html', context)
 
     return render(request, 'user/payment_method.html', {
         'variants': variants,
@@ -468,7 +482,89 @@ def payment_method(request):
 
 @csrf_exempt
 def razorpay_success(request):
-   pass
+    if request.method == "POST":
+        try:
+            payment_id = request.POST.get('razorpay_payment_id', '')
+            razorpay_order_id = request.POST.get('razorpay_order_id', '')
+            signature = request.POST.get('razorpay_signature', '')
+            
+            client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+            
+            params_dict = {
+                'razorpay_order_id': razorpay_order_id,
+                'razorpay_payment_id': payment_id,
+                'razorpay_signature': signature
+            }
+            
+            
+            try:
+                client.utility.verify_payment_signature(params_dict)
+            except:
+                return redirect('order_error')
+            
+            
+            if 'order_data' not in request.session:
+                return redirect('order_error')
+                
+            order_data = request.session['order_data']
+            is_cart_checkout = order_data.get('is_cart_checkout', False)
+            address = get_object_or_404(UserAddress, id=order_data['address_id'], user=request.user)
+            total_amount = Decimal(order_data.get('total_amount', '0'))
+            
+            ordering_items = order_data.get('cart_items', [])
+            variants = []
+            for item in ordering_items:
+                variant = get_object_or_404(ProductVariant, id=item['variant_id'])
+                quantity = int(item['quantity'])
+                price = Decimal(item['unit_price'])
+                item_total = Decimal(item.get('line_total', quantity * price))
+                variants.append({
+                    'variant': variant, 'quantity': quantity,
+                    'price': price, 'item_total': item_total,
+                })
+
+            with transaction.atomic():
+                for item in variants:
+                    if item['variant'].stock < item['quantity']:
+                        messages.error(request, f"Insufficient stock for {item['variant']}.")
+                        return redirect('cart_checkout' if is_cart_checkout else 'buy_now', variant_id=item['variant'].id)
+                
+                order = Order.objects.create(
+                    user=request.user,
+                    address=address,
+                    total_amount=total_amount,
+                    payment_method='RAZORPAY',
+                    is_paid=True, 
+                    razorpay_order_id=razorpay_order_id,
+                    razorpay_payment_id=payment_id,
+                    razorpay_signature=signature
+                )
+
+                for item in variants:
+                    for _ in range(item['quantity']):
+                        OrderItem.objects.create(
+                            order=order,
+                            variant=item['variant'],
+                            quantity=1, 
+                            price=item['price'], 
+                            status='ACTIVE',
+                            delivery_status='PENDING'
+                        )
+                
+                    item['variant'].stock -= item['quantity']
+                    item['variant'].save()
+                
+                if is_cart_checkout:
+                    CartProducts.objects.filter(user=request.user).delete()
+
+                del request.session['order_data']
+                return redirect('order_success', order_id=order.id)
+                
+        except Exception as e:
+            print(f"Razorpay Error: {e}") 
+            return redirect('order_error')
+            
+    return redirect('order_error')
 
 
 @never_cache

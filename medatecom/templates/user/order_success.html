@@ -1,78 +1,112 @@
 {% extends 'auth/navbar.html' %}
+{% load static %}
 {% block content %}
-<div class="container mt-5">
-    <h2 style="text-align:center; color: green;"><strong>Order Placed Successfully!</strong></h2>
-    <!-- Toast Container -->
-    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
-        {% if messages %}
+<div class="container mt-5 text-center">
+    <div class="card shadow-sm p-4 p-md-5 mb-5 bg-white rounded mx-auto" style="max-width: 800px;">
+        <div class="mb-4">
+            <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
+        </div>
+        <h2 class="text-success fw-bold">Thank You!</h2>
+        <h4 class="mb-4">Order Placed Successfully!</h4>
+
+        <p class="lead">Your order <strong>#{{ order.id }}</strong> has been confirmed.</p>
+
+        <!-- Toast Container -->
+        <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
+            {% if messages %}
             {% for message in messages %}
-                <div class="toast align-items-center text-white 
-                    {% if message.tags == 'error' %}bg-danger
-                    {% elif message.tags == 'success' %}bg-success
-                    {% elif message.tags == 'info' %}bg-info
-                    {% elif message.tags == 'warning' %}bg-warning
-                    {% else %}bg-primary{% endif %} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                    <div class="d-flex">
-                        <div class="toast-body">
-                            {{ message }}
-                        </div>
-                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            <div class="toast align-items-center text-white 
+                        {% if message.tags == 'error' %}bg-danger
+                        {% elif message.tags == 'success' %}bg-success
+                        {% elif message.tags == 'info' %}bg-info
+                        {% elif message.tags == 'warning' %}bg-warning
+                        {% else %}bg-primary{% endif %} border-0" role="alert" aria-live="assertive"
+                aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        {{ message }}
                     </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                        aria-label="Close"></button>
                 </div>
+            </div>
             {% endfor %}
-        {% endif %}
-    </div>
+            {% endif %}
+        </div>
 
-    <div class="card mb-4">
-        <div class="card-body">
-            <h5>Order Details #{{ order.id }}</h5>
+        <div class="text-start mt-4">
+            <h5>Order Summary</h5>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in same_items %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if item.image %}
+                                    <img src="{{ item.image.image.url }}" alt="{{ item.variant.product.name }}"
+                                        class="img-fluid me-2" style="width: 50px; height: 50px; object-fit: contain;">
+                                    {% else %}
+                                    <img src="https://via.placeholder.com/50" class="img-fluid me-2"
+                                        style="width: 50px; height: 50px; object-fit: contain;">
+                                    {% endif %}
+                                    <span>{{ item.variant.product.name }} - {{ item.variant.variant_name }}</span>
+                                </div>
+                            </td>
+                            <td>{{ item.quantity }}</td>
+                            <td>₹{{ item.unit_price|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
 
-            <h6>Items:</h6>
-            <ul>
-                {% for item in same_items %}
-                    <li style="list-style-type: none; margin:5px">
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <p><strong>Payment Method:</strong> {{ order.payment_method }}</p>
+                    <p><strong>Order Date:</strong> {{ order.created_at|date:"F d, Y H:i" }}</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <h4><strong>Total Amount: ₹{{ order.total_amount|floatformat:2 }}</strong></h4>
+                </div>
+            </div>
+            <div class="mt-3">
+                <h6>Delivery Address:</h6>
+                <p class="text-muted">
+                    {{ order.address.addressline_1 }}{% if order.address.addressline_2 %}, {{
+                    order.address.addressline_2 }}{% endif %},<br>
+                    {{ order.address.city }}, {{ order.address.state }}, {{ order.address.nation }} - {{
+                    order.address.postal_code }}
+                </p>
+            </div>
+        </div>
 
-                        {% if item.image %}
-                            <img src="{{ item.image.image.url }}" 
-                                alt="{{ item.variant.product.name }} - {{ item.variant.variant_name }}" 
-                                class="img-fluid" 
-                                style="width: 100px; height: 100px; object-fit: contain;">
-                        {% else %}
-                            <img src="https://via.placeholder.com/100?text={{ item.variant.product.name|urlencode }}%20-%20{{ item.variant.variant_name|urlencode }}"
-                                class="img-fluid"
-                                style="width: 100px; height: 100px; object-fit: contain;">
-                        {% endif %}
-
-                        {{ item.variant }} × {{ item.quantity }}  
-                        – ₹{{ item.unit_price|floatformat:2 }}
-                    </li>
-                {% endfor %}
-            </ul>
-
-            <p><strong>Order Date:</strong> {{ order.created_at|date:"F d, Y H:i" }}</p>
-            {% comment %} <p><strong>Status:</strong> {{ order.get_status_display }}</p> {% endcomment %}
-            <p><strong>Payment Method:</strong> {{ order.payment_method }}</p>
-            <p><strong>Total Amount:</strong> ₹{{ order.total_amount|floatformat:2 }}</p>
-            
-            <p><strong>Delivery Address:</strong> {{ order.address.addressline_1 }}{% if order.address.addressline_2 %}, {{ order.address.addressline_2 }}{% endif %}, {{ order.address.city }}, {{ order.address.state }}, {{ order.address.nation }} - {{ order.address.postal_code }}</p>
+        <div class="mt-4 d-flex justify-content-center gap-3 flex-wrap">
+            <a href="{% url 'order_list' %}" class="btn btn-primary btn-lg">Order Details</a>
+            <a href="{% url 'product_listing' %}" class="btn btn-outline-secondary btn-lg">Continue Shopping</a>
         </div>
     </div>
-    <a href="{% url 'order_list' %}" class="btn btn-primary mb-1">View All Orders</a>
-    <a href="{% url 'product_listing' %}" class="btn btn-secondary mb-1">Continue Shopping</a>
 </div>
 <!-- JavaScript to Initialize Toasts -->
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
-    var toastList = toastElList.map(function (toastEl) {
-        return new bootstrap.Toast(toastEl, {
-            autohide: true,
-            delay: 5000 // Toast auto-hides after 5 seconds
+    document.addEventListener('DOMContentLoaded', function () {
+        var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+        var toastList = toastElList.map(function (toastEl) {
+            return new bootstrap.Toast(toastEl, {
+                autohide: true,
+                delay: 5000
+            });
+        });
+        toastList.forEach(function (toast) {
+            toast.show();
         });
     });
-    toastList.forEach(function (toast) {
-        toast.show();
-    });
-});
 </script>
 {% endblock %}
