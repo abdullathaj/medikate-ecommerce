@@ -39,6 +39,7 @@ urlpatterns = [
     path('admin_edit_offer/<int:offer_id>/', views.admin_offer_edit, name='admin_edit_offer'),
 
     path('admin_sales_report/', views.admin_sales_report, name='admin_sales_report'),
+    path('admin_sales_report_pdf/', views.admin_sales_report_pdf, name='admin_sales_report_pdf'),
 
 
 ]

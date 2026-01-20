@@ -3,28 +3,122 @@
 <div class="container-fluid">
   <h3 class="mb-4 text-center">Sales Report</h3>
 
+  <!-- Filter Form -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-3">
+          <label for="period" class="form-label">Filter Period</label>
+          <select name="period" id="period" class="form-select" onchange="toggleDateInputs()">
+            <option value="overall" {% if current_period == 'overall' %}selected{% endif %}>Overall</option>
+            <option value="daily" {% if current_period == 'daily' %}selected{% endif %}>Daily</option>
+            <option value="weekly" {% if current_period == 'weekly' %}selected{% endif %}>Weekly</option>
+            <option value="monthly" {% if current_period == 'monthly' %}selected{% endif %}>Monthly</option>
+            <option value="yearly" {% if current_period == 'yearly' %}selected{% endif %}>Yearly</option>
+            <option value="custom" {% if current_period == 'custom' %}selected{% endif %}>Custom Date Range</option>
+          </select>
+        </div>
+        <div class="col-md-3 custom-date" style="display: none;">
+          <label for="start_date" class="form-label">Start Date</label>
+          <input type="date" name="start_date" id="start_date" class="form-control" value="{{ start_date }}">
+        </div>
+        <div class="col-md-3 custom-date" style="display: none;">
+          <label for="end_date" class="form-label">End Date</label>
+          <input type="date" name="end_date" id="end_date" class="form-control" value="{{ end_date }}">
+        </div>
+        <div class="col-md-3">
+          <button type="submit" class="btn btn-primary">Apply Filter</button>
+          <a href="{% url 'admin_sales_report' %}" class="btn btn-secondary">Reset</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-end mb-3">
+    <a href="{% url 'admin_sales_report_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-danger" target="_blank">
+      <i class="bi bi-file-earmark-pdf"></i> Download PDF
+    </a>
+  </div>
+
   <table class="table table-bordered">
     <thead class="table-success">
-     <tr>
-      <th class="text-center">Data</th>  <th class="text-center">Value</th>
-     </tr>
+      <tr>
+        <th class="text-center">Data</th>
+        <th class="text-center">Value</th>
+      </tr>
     </thead>
     <tbody>
-      <tr><td>Total Orders</td><td>201</td></tr>
-    <tr><td>Total Items Sold</td><td>445</td></tr>
-    <tr><td>Total Revenue</td><td>₹114587</td></tr>
-    <tr><td>Average Order Value</td><td>₹842</td></tr>
-    <tr><td>Total Coupon Discounts</td><td>₹45112</td></tr>
-    <tr><td>Total Offer Discounts</td><td>₹68210</td></tr>
-    <tr><td>Delivered Orders</td><td>170</td></tr>
-    <tr><td>Pending Orders</td><td>31</td></tr>
-    <tr><td>Top Payment Method</td><td>COD</td></tr>
-    <tr><td>Cancelled Orders</td><td>30</td></tr>
-    <tr><td>Returned Orders</td><td>34</td></tr>
-    <tr><td>Top Customer</td><td>Abdulla{{ top_user.username }} ({{ top_user.order_count }} orders)</td></tr>
-    <tr><td>Most Ordered Product</td><td>Facewash</td></tr>
-    <tr><td>Top Category</td><td>Skin Care</td></tr>
+      <tr>
+        <td>Total Orders</td>
+        <td>{{ total_order }}</td>
+      </tr>
+      <tr>
+        <td>Total Items Sold</td>
+        <td>{{ total_items }}</td>
+      </tr>
+      <tr>
+        <td>Total Revenue</td>
+        <td>Rs.{{ total_revenue|floatformat:2 }}</td>
+      </tr>
+      <tr>
+        <td>Average Order Value</td>
+        <td>Rs.{{ average_order_value|floatformat:2 }}</td>
+      </tr>
+      <tr>
+        <td>Total Coupon Discounts</td>
+        <td> Rs.0.00</td>
+      </tr>
+      <tr>
+        <td>Total Offer Discounts</td>
+        <td>Rs.0.00</td>
+      </tr>
+      <tr>
+        <td>Delivered Orders</td>
+        <td>{{ deliveries }}</td>
+      </tr>
+      <tr>
+        <td>Pending Orders</td>
+        <td>{{ pendings }}</td>
+      </tr>
+      <tr>
+        <td>Top Payment Method</td>
+        <td>{{ top_payment_method.payment_method|default:"N/A" }}</td>
+      </tr>
+      <tr>
+        <td>Cancelled Orders</td>
+        <td>{{ cancelled }}</td>
+      </tr>
+      <tr>
+        <td>Returned Orders</td>
+        <td>{{ returns }}</td>
+      </tr>
+      <tr>
+        <td>Top Customer</td>
+        <td>{{ top_customer.user__username|default:"N/A" }} ({{ top_customer.count|default:0 }} orders)</td>
+      </tr>
+      <tr>
+        <td>Most Ordered Product</td>
+        <td>{{ top_product.variant__product__name|default:"N/A" }}</td>
+      </tr>
+      <tr>
+        <td>Top Category</td>
+        <td>{{ top_category.variant__product__category__name|default:"N/A" }}</td>
+      </tr>
     </tbody>
+  </table>
+</div>
 
-  </table>  
+<script>
+  function toggleDateInputs() {
+    var period = document.getElementById('period').value;
+    var customDates = document.querySelectorAll('.custom-date');
+    if (period === 'custom') {
+      customDates.forEach(el => el.style.display = 'block');
+    } else {
+      customDates.forEach(el => el.style.display = 'none');
+    }
+  }
+  // Run on load to set correct state
+  window.addEventListener('DOMContentLoaded', toggleDateInputs);
+</script>
 {% endblock %}

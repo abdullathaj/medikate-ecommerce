@@ -17,6 +17,8 @@ from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Q,Sum, Count, F, DecimalField, ExpressionWrapper
 from django.db.models.functions import TruncDay, TruncWeek, TruncMonth, TruncYear
+from ecomorders.utils import render_to_pdf
+from django.http import HttpResponse
 
 
 
@@ -803,16 +805,141 @@ def admin_offer_edit(request,offer_id):
 # -----------------------------------------------------------------------------------------
 @staff_member_required(login_url='admin_login')
 def admin_sales_report(request):
-   
+    
+    
+    period = request.GET.get('period', 'overall')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+
+    orders = Order.objects.all().order_by('-created_at')
+    
+    if period == 'daily':
+        orders = orders.filter(created_at__date=timezone.now().date())
+    elif period == 'weekly':
+        start_week = timezone.now() - timedelta(days=timezone.now().weekday())
+        orders = orders.filter(created_at__gte=start_week)
+    elif period == 'monthly':
+        orders = orders.filter(created_at__month=timezone.now().month, created_at__year=timezone.now().year)
+    elif period == 'yearly':
+        orders = orders.filter(created_at__year=timezone.now().year)
+    elif period == 'custom' and start_date and end_date:
+        orders = orders.filter(created_at__date__range=[start_date, end_date])
+
+    
+    total_order = orders.count()
+    total_revenue = orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+    
+    
+    items = OrderItem.objects.filter(order__in=orders)
+    total_items = items.count()
+    
+    
+    pendings = items.filter(delivery_status='PENDING').count()
+    deliveries = items.filter(delivery_status='DELIVERED').count()
+    cancelled = items.filter(delivery_status='CANCELLED').count()
+    returns = items.filter(delivery_status='RETURNED').count()
+
+    
+    avg_order_value = round(total_revenue / total_order, 2) if total_order > 0 else 0
+    
+    top_payment_method = orders.values('payment_method').annotate(count=Count('payment_method')).order_by('-count').first()
+    top_customer = orders.values('user__username').annotate(count=Count('id')).order_by('-count').first()
+    
+    
+    top_product = items.values('variant__product__name').annotate(count=Count('id')).order_by('-count').first()
+    top_category = items.values('variant__product__category__name').annotate(count=Count('id')).order_by('-count').first()
+
 
     breadcrumbs=[
         {'name': 'Dashboard', 'url': 'admin_dashboard'},
         {'name': 'Sales report', 'url':''},
     ]
+    
     context = {
-        'breadcrumbs': breadcrumbs
+        'breadcrumbs': breadcrumbs,
+        'total_order': total_order,
+        'total_items': total_items,
+        'total_revenue': total_revenue,
+        'average_order_value': avg_order_value,
+        'pendings': pendings, 
+        'deliveries': deliveries,
+        'cancelled': cancelled, 
+        'returns': returns,
+        'top_payment_method': top_payment_method,
+        'top_customer': top_customer,
+        'top_product': top_product,
+        'top_category': top_category,
+        'current_period': period,
+        'start_date': start_date,
+        'end_date': end_date
     }
 
     return render(request, 'admin/sales_report.html', context)
+
+@staff_member_required(login_url='admin_login')
+def admin_sales_report_pdf(request):
+    
+    period = request.GET.get('period', 'overall')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+
+    orders = Order.objects.all().order_by('-created_at')
+
+    if period == 'daily':
+        orders = orders.filter(created_at__date=timezone.now().date())
+    elif period == 'weekly':
+        start_week = timezone.now() - timedelta(days=timezone.now().weekday())
+        orders = orders.filter(created_at__gte=start_week)
+    elif period == 'monthly':
+        orders = orders.filter(created_at__month=timezone.now().month, created_at__year=timezone.now().year)
+    elif period == 'yearly':
+        orders = orders.filter(created_at__year=timezone.now().year)
+    elif period == 'custom' and start_date and end_date:
+        orders = orders.filter(created_at__date__range=[start_date, end_date])
+
+    total_order = orders.count()
+    total_revenue = orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+    items = OrderItem.objects.filter(order__in=orders)
+    total_items = items.count()
+
+    pendings = items.filter(delivery_status='PENDING').count()
+    deliveries = items.filter(delivery_status='DELIVERED').count()
+    cancelled = items.filter(delivery_status='CANCELLED').count()
+    returns = items.filter(delivery_status='RETURNED').count()
+    
+    avg_order_value = round(total_revenue / total_order, 2) if total_order > 0 else 0
+    
+    top_payment_method = orders.values('payment_method').annotate(count=Count('payment_method')).order_by('-count').first()
+    top_customer = orders.values('user__username').annotate(count=Count('id')).order_by('-count').first()
+    top_product = items.values('variant__product__name').annotate(count=Count('id')).order_by('-count').first()
+    top_category = items.values('variant__product__category__name').annotate(count=Count('id')).order_by('-count').first()
+
+    context = {
+        'total_order': total_order,
+        'total_items': total_items,
+        'total_revenue': total_revenue,
+        'average_order_value': avg_order_value,
+        'pendings': pendings, 
+        'deliveries': deliveries,
+        'cancelled': cancelled, 
+        'returns': returns,
+        'top_payment_method': top_payment_method,
+        'top_customer': top_customer,
+        'top_product': top_product,
+        'top_category': top_category,
+        'period': period,
+        'start_date': start_date,
+        'end_date': end_date,
+        'generated_at': timezone.now()
+    }
+    
+    pdf = render_to_pdf('admin/sales_report_pdf.html', context)
+    if pdf:
+        response = HttpResponse(pdf, content_type='application/pdf')
+        filename = f"Sales_Report_{period}_{timezone.now().date()}.pdf"
+        content = f"attachment; filename={filename}"
+        response['Content-Disposition'] = content
+        return response
+    return HttpResponse('Error generating PDF', status=500)
 
 

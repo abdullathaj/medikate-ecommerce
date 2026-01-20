@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+
+        body {
+            font-family: sans-serif;
+            color: #333;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .meta {
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th {
+            background-color: #f0f0f0;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            font-size: 13px;
+        }
+
+        .value {
+            text-align: right;
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 10px;
+            color: #777;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>Sales Report</h1>
+        <h3>MedAT eCommerce</h3>
+    </div>
+
+    <div class="meta">
+        <p><strong>Report Period:</strong> {{ period|title }}</p>
+        {% if period == 'custom' %}
+        <p><strong>Date Range:</strong> {{ start_date }} to {{ end_date }}</p>
+        {% endif %}
+        <p><strong>Generated On:</strong> {{ generated_at|date:"F d, Y H:i" }}</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Metric</th>
+                <th class="value">Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Total Orders</td>
+                <td class="value">{{ total_order }}</td>
+            </tr>
+            <tr>
+                <td>Total Items Sold</td>
+                <td class="value">{{ total_items }}</td>
+            </tr>
+            <tr>
+                <td>Total Revenue</td>
+                <td class="value">Rs. {{ total_revenue|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>Average Order Value</td>
+                <td class="value">Rs. {{ average_order_value|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>Total Coupon Discounts</td>
+                <td class="value">Rs. 0.00</td>
+            </tr>
+            <tr>
+                <td>Total Offer Discounts</td>
+                <td class="value">Rs. 0.00</td>
+            </tr>
+            <tr>
+                <td>Delivered Orders</td>
+                <td class="value">{{ deliveries }}</td>
+            </tr>
+            <tr>
+                <td>Pending Orders</td>
+                <td class="value">{{ pendings }}</td>
+            </tr>
+            <tr>
+                <td>Cancelled Orders</td>
+                <td class="value">{{ cancelled }}</td>
+            </tr>
+            <tr>
+                <td>Returned Orders</td>
+                <td class="value">{{ returns }}</td>
+            </tr>
+            <tr>
+                <td>Top Payment Method</td>
+                <td class="value">{{ top_payment_method.payment_method|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <td>Top Customer</td>
+                <td class="value">{{ top_customer.user__username|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <td>Most Ordered Product</td>
+                <td class="value">{{ top_product.variant__product__name|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <td>Top Category</td>
+                <td class="value">{{ top_category.variant__product__category__name|default:"N/A" }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Generated automatically by MedAT eCommerce Admin System
+    </div>
+</body>
+
+</html>
