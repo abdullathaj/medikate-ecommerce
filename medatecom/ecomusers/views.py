@@ -248,6 +248,9 @@ def users_profile_update_page(request):
     address_form = UserAddressForm(initial={'user': user})
     password_form=UserPasswordChangeForm(user=user)
     email_form=EmailChangeForm()
+    
+    # Capture 'next' from GET or POST to persist it
+    next_url = request.GET.get('next') or request.POST.get('next')
 
     if request.method == 'POST':
         if 'update_profile' in request.POST:
@@ -267,6 +270,8 @@ def users_profile_update_page(request):
                 address_form.save()
                 print(f'{user} is Created new Address.')
                 messages.success(request, "Address saved.")
+                if next_url:
+                    return redirect(next_url)
                 return redirect('user_profile_page')
             
         elif 'update_password' in request.POST:
@@ -320,7 +325,9 @@ def users_profile_update_page(request):
         'address_form': address_form,
         'password_form':password_form,
         'email_form': email_form,
-        'breadcrumbs': breadcrumbs}
+        'breadcrumbs': breadcrumbs,
+        'next_url': next_url # Pass to template to include in form action or hidden field
+    }
     
     return render(request, 'user/profile_edit.html', context)
 

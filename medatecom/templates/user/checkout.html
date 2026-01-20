@@ -1,27 +1,28 @@
 {% extends 'auth/navbar.html' %}
 {% block content %}
 <div class="container mt-5">
-    
+
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
         {% if messages %}
-            {% for message in messages %}
-                <div class="toast align-items-center text-white 
+        {% for message in messages %}
+        <div class="toast align-items-center text-white 
                     {% if message.tags == 'error' %}bg-danger
                     {% elif message.tags == 'success' %}bg-success
                     {% elif message.tags == 'info' %}bg-info
                     {% elif message.tags == 'warning' %}bg-warning
                     {% else %}bg-primary{% endif %} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                    <div class="d-flex">
-                        <div class="toast-body">
-                            {{ message }}
-                        </div>
-                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                    </div>
+            <div class="d-flex">
+                <div class="toast-body">
+                    {{ message }}
                 </div>
-            {% endfor %}
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
+            </div>
+        </div>
+        {% endfor %}
         {% endif %}
     </div>
-    
+
     <h2>Checkout</h2>
 
     <div class="card mb-4">
@@ -39,31 +40,34 @@
                 </thead>
                 <tbody>
                     {% for item in cart_items %}
-                        <tr>
-                            <td>
-                                {% with product_image=item.variant.product.product_image.first %}
-                                    {% if product_image %}
-                                        <img src="{{ product_image.image.url }}" alt="{{ item.variant.product.name }}" class="img-fluid" style="max-height: 50px; object-fit: cover; display: inline-block; vertical-align: middle; margin-right: 10px;">
-                                    {% else %}
-                                        <img src="https://via.placeholder.com/50" class="img-fluid" style="max-height: 50px; margin-right: 10px;">
-                                    {% endif %}
-                                {% endwith %}
-                                {{ item.variant.product.name }} - {{ item.variant.variant_name }}
-                            </td>
-                            <td>{{ item.quantity }}</td>
-                            <td>₹{{ item.total_original_price|floatformat:2 }}</td>
-                            <td>₹{{ item.total_selling_price|floatformat:2 }}</td>
-                            <td>₹{{ item.item_discount|floatformat:2 }}</td>
-                        </tr>
+                    <tr>
+                        <td>
+                            {% with product_image=item.variant.product.product_image.first %}
+                            {% if product_image %}
+                            <img src="{{ product_image.image.url }}" alt="{{ item.variant.product.name }}"
+                                class="img-fluid"
+                                style="max-height: 50px; object-fit: cover; display: inline-block; vertical-align: middle; margin-right: 10px;">
+                            {% else %}
+                            <img src="https://via.placeholder.com/50" class="img-fluid"
+                                style="max-height: 50px; margin-right: 10px;">
+                            {% endif %}
+                            {% endwith %}
+                            {{ item.variant.product.name }} - {{ item.variant.variant_name }}
+                        </td>
+                        <td>{{ item.quantity }}</td>
+                        <td>₹{{ item.total_original_price|floatformat:2 }}</td>
+                        <td>₹{{ item.total_selling_price|floatformat:2 }}</td>
+                        <td>₹{{ item.item_discount|floatformat:2 }}</td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
             <hr>
-            
+
             <p><strong>Original Total:</strong> ₹{{ original_total_price|floatformat:2 }}</p>
             <p><strong>Amount Payable:</strong> ₹{{ amount_payable|floatformat:2 }}</p>
             <p><strong>Estimated Delivery:</strong> {{ estimated_delivery_date }}</p>
-            
+
             <div class="card mt-3">
                 <div class="card-body">
                     <h5>Apply Coupon</h5>
@@ -72,9 +76,9 @@
                         <select id="coupon-dropdown" class="form-select">
                             <option value="">-- Select a Coupon --</option>
                             {% for c in available_coupons %}
-                                <option value="{{ c.coupon_code }}">
-                                    {{ c.coupon_code }} ({{ c.discount_percentage }}% OFF)
-                                </option>
+                            <option value="{{ c.coupon_code }}">
+                                {{ c.coupon_code }} ({{ c.discount_percentage }}% OFF)
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
@@ -86,14 +90,13 @@
                     <p><strong>Offer Discount:</strong> ₹{{ discount_total|floatformat:2 }}</p>
                     <p><strong>Coupon Discount:</strong> ₹
                         <span id="coupon-discount">
-                            {% if request.session.applied_coupon %}{{ request.session.applied_coupon.coupon_discount }}{% else %}0.00{% endif %}
+                            {% if request.session.applied_coupon %}{{ request.session.applied_coupon.coupon_discount}}{% else %}0.00{% endif %}
                         </span>
                     </p>
                     <p><strong>Final Payable:</strong> ₹<span id="final-payable">
-                            {% if request.session.applied_coupon %}
-                                {{ request.session.applied_coupon.final_amount|floatformat:2 }}
+                            {% if request.session.applied_coupon %}{{ request.session.applied_coupon.final_amount|floatformat:2 }}
                             {% else %}
-                                {{ amount_payable |floatformat:2 }}
+                            {{ amount_payable |floatformat:2 }}
                             {% endif %}
                         </span>
                     </p>
@@ -110,13 +113,13 @@
                 <select class="form-select" name="address_id" required>
                     <option value="" {% if not default_address %}selected{% endif %}>Select an address</option>
                     {% for address in addresses %}
-                        <option value="{{ address.id }}" {% if address == default_address %}selected{% endif %}>
-                            {{ address.addressline_1 }}{% if address.addressline_2 %}, {{ address.addressline_2 }}{% endif %}, 
-                            {{ address.city }}, {{ address.state }}, {{ address.nation }} - {{ address.postal_code }}
-                        </option>
+                    <option value="{{ address.id }}" {% if address == default_address %}selected{% endif %}>{{ address.addressline_1 }}{% if address.addressline_2 %}, {{ address.addressline_2 }}{% endif%},
+                        {{ address.city }}, {{ address.state }}, {{ address.nation }} - {{ address.postal_code }}
+                    </option>
                     {% endfor %}
                 </select>
-                <a href="{% url 'user_profile_update' %}" class="btn btn-outline-secondary btn-sm mt-2 float-end">Add new Address</a>
+                <a href="{% url 'user_profile_update' %}?next={{ request.path }}"
+                    class="btn btn-outline-secondary btn-sm mt-2 float-end">Add new Address</a>
             </div>
         </div>
 
@@ -129,27 +132,27 @@
 
 <!-- JavaScript to Initialize Toasts -->
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
-    var toastList = toastElList.map(function (toastEl) {
-        return new bootstrap.Toast(toastEl, {
-            autohide: true,
-            delay: 5000 // Toast auto-hides after 5 seconds
+    document.addEventListener('DOMContentLoaded', function () {
+        var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+        var toastList = toastElList.map(function (toastEl) {
+            return new bootstrap.Toast(toastEl, {
+                autohide: true,
+                delay: 5000 // Toast auto-hides after 5 seconds
+            });
+        });
+        toastList.forEach(function (toast) {
+            toast.show();
         });
     });
-    toastList.forEach(function (toast) {
-        toast.show();
-    });
-});
 
-function showToast(message, status){
-    let bgClass = "bg-primary";
-    if (status === 'success') bgClass = 'bg-success';
-    else if (status === 'error') bgClass = 'bg-danger';
-    else if (status === 'warning') bgClass = 'bg-warning';
-    else if (status === 'info') bgClass = 'bg-info';
+    function showToast(message, status) {
+        let bgClass = "bg-primary";
+        if (status === 'success') bgClass = 'bg-success';
+        else if (status === 'error') bgClass = 'bg-danger';
+        else if (status === 'warning') bgClass = 'bg-warning';
+        else if (status === 'info') bgClass = 'bg-info';
 
-    let toastHTML = `
+        let toastHTML = `
         <div class="toast align-items-center text-white ${bgClass} border-0" role="alert">
             <div class="d-flex">
                 <div class="toast-body">${message}</div>
@@ -158,87 +161,88 @@ function showToast(message, status){
             </div>
         </div>`;
 
-    $(".toast-container").append(toastHTML);
-    new bootstrap.Toast($(".toast-container .toast").last()[0]).show();
-}
-$(document).ready(function() {
+        $(".toast-container").append(toastHTML);
+        new bootstrap.Toast($(".toast-container .toast").last()[0]).show();
+    }
+    $(document).ready(function () {
 
-    // SELECT COUPON → Auto-fill input box
-    $("#coupon-dropdown").change(function() {
-        let selected = $(this).val();
-        $("#coupon-code").val(selected);
-    });
+        // SELECT COUPON → Auto-fill input box
+        $("#coupon-dropdown").change(function () {
+            let selected = $(this).val();
+            $("#coupon-code").val(selected);
+        });
 
-    // APPLY COUPON
-    $("#apply-coupon-btn").click(function() {
-        let code = $("#coupon-code").val().trim();
-        if (!code) {
-            showToast("Please enter or select a coupon.", "warning");
-            return;
-        }
+        // APPLY COUPON
+        $("#apply-coupon-btn").click(function () {
+            let code = $("#coupon-code").val().trim();
+            if (!code) {
+                showToast("Please enter or select a coupon.", "warning");
+                return;
+            }
 
-        $.ajax({
-            url: "{% url 'apply_coupon' %}",
-            method: "POST",
-            data: {
-                coupon_code: code,
-                checkout_type: 'cart',
-                csrfmiddlewaretoken: "{{ csrf_token }}"
-            },
-            success: function(response) {
+            $.ajax({
+                url: "{% url 'apply_coupon' %}",
+                method: "POST",
+                data: {
+                    coupon_code: code,
+                    checkout_type: 'cart',
+                    csrfmiddlewaretoken: "{{ csrf_token }}"
+                },
+                success: function (response) {
 
-                if (response.status === "error") {
-                    showToast(response.message, "error");
-                    return;
+                    if (response.status === "error") {
+                        showToast(response.message, "error");
+                        return;
+                    }
+
+                    // SUCCESS
+                    $("#coupon-discount").text(response.discount);
+                    $("#final-payable").text(response.final_amount);
+
+                    showToast(response.message, "success");
+
+                    $("#apply-coupon-btn").addClass("d-none");
+                    $("#remove-coupon-btn").removeClass("d-none");
                 }
-
-                // SUCCESS
-                $("#coupon-discount").text(response.discount);
-                $("#final-payable").text(response.final_amount);
-
-                showToast(response.message, "success");
-
-                $("#apply-coupon-btn").addClass("d-none");
-                $("#remove-coupon-btn").removeClass("d-none");
-            }
+            });
         });
-    });
 
-    // REMOVE COUPON
-    $("#remove-coupon-btn").click(function() {
+        // REMOVE COUPON
+        $("#remove-coupon-btn").click(function () {
 
-        $.ajax({
-            url: "{% url 'remove_coupon' %}",
-            method: "POST",
-            data: { csrfmiddlewaretoken: "{{ csrf_token }}",
+            $.ajax({
+                url: "{% url 'remove_coupon' %}",
+                method: "POST",
+                data: {
+                    csrfmiddlewaretoken: "{{ csrf_token }}",
                     checkout_type: 'cart'
-                    },
-            
-            success: function(response) {
+                },
 
-                $("#coupon-discount").text("0");
-                $("#final-payable").text(response.final_amount);
+                success: function (response) {
 
-                showToast(response.message, "info");
+                    $("#coupon-discount").text("0");
+                    $("#final-payable").text(response.final_amount);
 
-                $("#apply-coupon-btn").removeClass("d-none");
-                $("#remove-coupon-btn").addClass("d-none");
+                    showToast(response.message, "info");
 
-                $("#coupon-code").val("");
-                $("#coupon-dropdown").val("");
-            }
+                    $("#apply-coupon-btn").removeClass("d-none");
+                    $("#remove-coupon-btn").addClass("d-none");
+
+                    $("#coupon-code").val("");
+                    $("#coupon-dropdown").val("");
+                }
+            });
         });
-    });
 
-    // Show correct button on page load
-    {% if request.session.applied_coupon %}
+        // Show correct button on page load
+        {% if request.session.applied_coupon %}
         $("#apply-coupon-btn").addClass("d-none");
         $("#remove-coupon-btn").removeClass("d-none");
-    {% else %}
+        {% else %}
         $("#remove-coupon-btn").addClass("d-none");
-    {% endif %}
+        {% endif %}
 
-});
+    });
 
 </script>
 {% endblock %}

@@ -10,7 +10,8 @@
                     <h5>Product Summary</h5>
                     <div class="d-flex align-items-center">
                         {% with img=variant.product.product_image.first %}
-                            <img src="{{ img.image.url }}" style="width: 80px; height: 80px; object-fit: cover;" class="me-3">
+                        <img src="{{ img.image.url }}" style="width: 80px; height: 80px; object-fit: cover;"
+                            class="me-3">
                         {% endwith %}
                         <div>
                             <h6>{{ variant.product.name }}</h6>
@@ -32,12 +33,13 @@
                         <h5>Select Delivery Address</h5>
                         <select class="form-select" name="address_id" required>
                             {% for addr in addresses %}
-                                <option value="{{ addr.id }}" {% if addr == default_address %}selected{% endif %}>
-                                    {{ addr.addressline_1 }}, {{ addr.city }} - {{ addr.postal_code }}
-                                </option>
+                            <option value="{{ addr.id }}" {% if addr==default_address %}selected{% endif %}>
+                                {{ addr.addressline_1 }}, {{ addr.city }} - {{ addr.postal_code }}
+                            </option>
                             {% endfor %}
                         </select>
-                        <a href="{% url 'user_profile_update' %}" class="btn btn-link btn-sm mt-2">Add New Address</a>
+                        <a href="{% url 'user_profile_update' %}?next={{ request.path }}"
+                            class="btn btn-link btn-sm mt-2">Add New Address</a>
                     </div>
                 </div>
                 <div class="d-flex gap-2">
@@ -54,31 +56,42 @@
                     <h5>Price Details</h5>
                     <hr>
                     <div class="d-flex justify-content-between mb-2">
-                        <span>Subtotal</span>
-                        <span>₹{{ subtotal }}</span>
+                        <span>Total MRP</span>
+                        <span>₹{{ mrp_total }}</span>
                     </div>
                     <div class="d-flex justify-content-between mb-2">
+                        <span>Product Discount</span>
+                        <span class="text-success">- ₹{{ product_offer_discount }}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-2">
                         <span>Coupon Discount</span>
-                        <span class="text-danger">- ₹ <span id="coupon-discount">{{ request.session.applied_coupon.coupon_discount|default:"0.00" }}</span>
-                            </span>
+                        <span class="text-success">- ₹ <span id="coupon-discount">{{ coupon_discount }}</span>
+                        </span>
                     </div>
                     <hr>
                     <div class="d-flex justify-content-between mb-3">
                         <strong>Total Amount</strong>
                         <strong>₹<span id="final-payable">{{ final_payable }}</span></strong>
                     </div>
+                    <div class="d-flex justify-content-between mb-3 text-success">
+                        <strong>You will save</strong>
+                        <strong>₹<span id="total-savings">{{ total_discount }}</span> on this order</strong>
+                    </div>
 
                     <div class="coupon-section mt-4">
                         <h6>Apply Coupon</h6>
                         <div class="input-group mb-2">
                             <input type="text" id="coupon-code" class="form-control" placeholder="Code">
-                            <button class="btn btn-outline-dark {% if request.session.applied_coupon %}d-none{% endif %}" 
-                                    type="button" id="apply-coupon-btn">
+                            <button
+                                class="btn btn-outline-dark {% if request.session.applied_coupon %}d-none{% endif %}"
+                                type="button" id="apply-coupon-btn">
                                 Apply
                             </button>
 
-                            <button class="btn btn-outline-danger {% if not request.session.applied_coupon %}d-none{% endif %}" 
-                                    type="button" id="remove-coupon-btn">
+                            <button
+                                class="btn btn-outline-danger {% if not request.session.applied_coupon %}d-none{% endif %}"
+                                type="button" id="remove-coupon-btn">
                                 Remove
                             </button>
 
@@ -86,7 +99,8 @@
                         <select id="coupon-dropdown" class="form-select form-select-sm">
                             <option value="">View Available Coupons</option>
                             {% for c in available_coupons %}
-                                <option value="{{ c.coupon_code }}">{{ c.coupon_code }} ({{ c.discount_percentage }}% OFF)</option>
+                            <option value="{{ c.coupon_code }}">{{ c.coupon_code }} ({{ c.discount_percentage }}% OFF)
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
@@ -94,80 +108,96 @@
             </div>
         </div>
     </div>
-</div> 
+</div>
 
 <script src="https://code.jquery.com/jquery-3.7.1.js"> </script>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("DOMContentLoaded", function () {
 
-    const applyBtn = document.getElementById("apply-coupon-btn");
-    const removeBtn = document.getElementById("remove-coupon-btn");
-    const couponInput = document.getElementById("coupon-code");
-    const couponDropdown = document.getElementById("coupon-dropdown");
+        const applyBtn = document.getElementById("apply-coupon-btn");
+        const removeBtn = document.getElementById("remove-coupon-btn");
+        const couponInput = document.getElementById("coupon-code");
+        const couponDropdown = document.getElementById("coupon-dropdown");
 
-    const discountEl = document.getElementById("coupon-discount");
-    const finalPayableEl = document.getElementById("final-payable");
+        const discountEl = document.getElementById("coupon-discount");
+        const finalPayableEl = document.getElementById("final-payable");
 
-    function toggleButtons(applied) {
-        applyBtn.classList.toggle("d-none", applied);
-        removeBtn.classList.toggle("d-none", !applied);
-    }
+        function toggleButtons(applied) {
+            applyBtn.classList.toggle("d-none", applied);
+            removeBtn.classList.toggle("d-none", !applied);
+        }
 
-    /* Apply coupon */
-    applyBtn.addEventListener("click", function () {
-        const code = couponInput.value.trim();
-        if (!code) return alert("Enter coupon code");
+        /* Apply coupon */
+        applyBtn.addEventListener("click", function () {
+            const code = couponInput.value.trim();
+            if (!code) return alert("Enter coupon code");
 
-        fetch("{% url 'apply_coupon' %}", {
-            method: "POST",
-            headers: {
-                "X-CSRFToken": "{{ csrf_token }}",
-                "Content-Type": "application/x-www-form-urlencoded"
-            },
-            body: new URLSearchParams({
-                 coupon_code: code,
-                checkout_type: 'buy_now' })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === "success") {
-                discountEl.textContent = data.discount;
-                finalPayableEl.textContent = data.final_amount;
-                toggleButtons(true);
-            } else {
-                alert(data.message);
-            }
+            fetch("{% url 'apply_coupon' %}", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: new URLSearchParams({
+                    coupon_code: code,
+                    checkout_type: 'buy_now'
+                })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === "success") {
+                        discountEl.textContent = data.discount;
+                        finalPayableEl.textContent = data.final_amount;
+
+                        // Update Total Savings
+                        const totalMrp = parseFloat("{{ mrp_total }}");
+                        const finalAmount = parseFloat(data.final_amount);
+                        const totalSavings = (totalMrp - finalAmount).toFixed(2);
+                        document.getElementById("total-savings").textContent = totalSavings;
+
+                        toggleButtons(true);
+                    } else {
+                        alert(data.message);
+                    }
+                });
         });
-    });
 
-    /* Remove coupon */
-    removeBtn.addEventListener("click", function () {
-        fetch("{% url 'remove_coupon' %}", {
-            method: "POST",
-            headers: {
-                "X-CSRFToken": "{{ csrf_token }}"
-            },
-            body: new URLSearchParams({ 
-            checkout_type: 'buy_now'})
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === "success") {
-                discountEl.textContent = "0.00";
-                finalPayableEl.textContent = data.final_amount;
-                couponInput.value = "";
-                toggleButtons(false);
-            }
+        /* Remove coupon */
+        removeBtn.addEventListener("click", function () {
+            fetch("{% url 'remove_coupon' %}", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: new URLSearchParams({
+                    checkout_type: 'buy_now'
+                })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === "success") {
+                        discountEl.textContent = "0.00";
+                        finalPayableEl.textContent = data.final_amount;
+
+                        // Update Total Savings
+                        const totalMrp = parseFloat("{{ mrp_total }}");
+                        const finalAmount = parseFloat(data.final_amount);
+                        const totalSavings = (totalMrp - finalAmount).toFixed(2);
+                        document.getElementById("total-savings").textContent = totalSavings;
+
+                        couponInput.value = "";
+                        toggleButtons(false);
+                    }
+                });
         });
-    });
 
-    /* Dropdown auto-fill */
-    couponDropdown.addEventListener("change", function () {
-        couponInput.value = this.value;
-    });
+        /* Dropdown auto-fill */
+        couponDropdown.addEventListener("change", function () {
+            couponInput.value = this.value;
+        });
 
-});
+    });
 </script>
 
 

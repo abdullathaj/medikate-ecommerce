@@ -65,8 +65,9 @@
             <tr>
                 <th>Product & Variant</th>
                 <th>Quantity</th>
-                <th>Unit Price</th>
-                <th>Total Price</th>
+                <th>MRP (Unit)</th>
+                <th>Paid (Unit)</th>
+                <th>Total Paid</th>
             </tr>
         </thead>
         <tbody>
@@ -74,6 +75,7 @@
             <tr>
                 <td>{{ item.variant.product.name }} ({{ item.variant.variant_name }})</td>
                 <td>{{ item.quantity }}</td>
+                <td>Rs.{{ item.unit_mrp|floatformat:2 }}</td>
                 <td>Rs.{{ item.unit_price|floatformat:2 }}</td>
                 <td>Rs.{{ item.total_price|floatformat:2 }}</td>
             </tr>
@@ -82,6 +84,8 @@
     </table>
 
     <div class="total-section">
+        <p>Total MRP: Rs.{{ total_mrp|floatformat:2 }}</p>
+        <p>Total Savings: Rs.{{ total_savings|floatformat:2 }}</p>
         <h3>Grand Total: Rs.{{ order.total_amount }}</h3>
     </div>
 </body>

@@ -32,7 +32,7 @@ def buy_now(request, variant_id):
             return redirect(request.META.get('HTTP_REFERER', 'product_listing'))
         
         if request.method =='GET':
-            request.session.pop('coupon_applied',None)
+            request.session.pop('applied_coupon',None)
             request.session.pop('order_data',None)
 
         if request.method == 'POST':
@@ -86,7 +86,7 @@ def buynow_checkout(request):
         return redirect('product_listing')
     
     if request.method=='GET':
-        request.session.pop('coupon_appled',None)
+        request.session.pop('applied_coupon',None)
         request.session.pop('order_data',None)
 
     variant = get_object_or_404(ProductVariant, id=bn_data['variant_id'], is_active=True)
@@ -157,6 +157,10 @@ def buynow_checkout(request):
         'variant': variant,
         'quantity': quantity,
         'original_unit_price': bn_data['original_unit_price'],  # item price
+        'mrp_total': variant.price * quantity, # Total MRP
+        'product_offer_discount': (variant.price * quantity) - total_before_coupon, # Product Offer Discount
+        'coupon_discount': Decimal(applied_coupon['coupon_discount']) if applied_coupon else Decimal('0.00'), # Coupon Discount
+        'total_discount': (variant.price * quantity) - final_payable, # Total Savings
         'subtotal': total_before_coupon,       # Item final price * qty
         'final_payable': final_payable,       # User paid price for Total Order.
         'addresses': addresses,
@@ -179,8 +183,8 @@ def checkout(request):
         messages.error(request, "Your cart is empty. Add items to proceed.")
         return redirect('user_cart_page')
     
-    if request.method =='GET':
-        request.session.pop('coupon_applied',None)
+    if request.method == 'POST':
+        request.session.pop('applied_coupon',None)
         request.session.pop('order_data',None)
     
     cart_price_data = request.session.get('cart_price_data', {})
@@ -586,8 +590,20 @@ def order_success(request, order_id):
     same_items = list(same_items.values())
     print(same_items)
 
+    total_mrp = Decimal('0.00')
+    for item in order.items.all():
+        # Ideally we should have stored original MRP in OrderItem, but using current variant price as fallback/proxy
+        # The user wants "how much discount he got", so we compare Paid Price vs Current MRP (or stored if we had it)
+        # Using variant.price (Current MRP)
+        total_mrp += item.variant.price * item.quantity
+
+    total_savings = total_mrp - order.total_amount
+
     context = {
-        'order': order,'same_items':same_items,
+        'order': order,
+        'same_items':same_items,
+        'total_mrp': total_mrp,
+        'total_savings': total_savings,
     }
     return render(request, 'user/order_success.html', context)
 
@@ -608,7 +624,7 @@ def download_invoice_pdf(request,order_id):
 
     order_items= OrderItem.objects.filter(order=order)
     
-    # Group items by variant
+    
     grouped_items = {}
     for item in order_items:
         var_id = item.variant.id
@@ -620,13 +636,31 @@ def download_invoice_pdf(request,order_id):
                 'total_price': Decimal('0.00')
             }
         grouped_items[var_id]['quantity'] += item.quantity
-        # Use simple multiplication for total since we want the aggregated cost
+        
         grouped_items[var_id]['total_price'] += (item.price * item.quantity)
+
+    # Calculate totals for invoice
+    total_mrp = Decimal('0.00')
+    for item in order_items:
+         total_mrp += item.variant.price * item.quantity
+    
+    total_savings = total_mrp - order.total_amount
+    
+    # Enrich grouped_items with specific discount info per item group if needed, 
+    # but the invoice template usually iterates nicely. 
+    # Let's just pass the totals and let the template calculation display per-row if needed.
+    # Actually, for the table rows, we might want 'unit_mrp' which is item.variant.price
+    for val in grouped_items.values():
+        val['unit_mrp'] = val['variant'].price
+        val['total_mrp'] = val['variant'].price * val['quantity']
+        val['savings'] = val['total_mrp'] - val['total_price']
 
     data = {
         'order': order,
         'order_items': list(grouped_items.values()),
         'customer_name': request.user.get_full_name() or request.user.username,
+        'total_mrp': total_mrp,
+        'total_savings': total_savings,
     }
     pdf= render_to_pdf('user/invoice_pdf.html', data)
 

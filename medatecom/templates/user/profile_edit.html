@@ -5,21 +5,22 @@
 <!-- Toast Container -->
 <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055;">
     {% if messages %}
-        {% for message in messages %}
-            <div class="toast align-items-center text-white 
+    {% for message in messages %}
+    <div class="toast align-items-center text-white 
                 {% if message.tags == 'error' %}bg-danger
                 {% elif message.tags == 'success' %}bg-success
                 {% elif message.tags == 'info' %}bg-info
                 {% elif message.tags == 'warning' %}bg-warning
                 {% else %}bg-primary{% endif %} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="d-flex">
-                    <div class="toast-body">
-                        {{ message }}
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
+        <div class="d-flex">
+            <div class="toast-body">
+                {{ message }}
             </div>
-        {% endfor %}
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                aria-label="Close"></button>
+        </div>
+    </div>
+    {% endfor %}
     {% endif %}
 </div>
 
@@ -34,39 +35,44 @@
                     <!-- Tabs Navigation -->
                     <ul class="nav nav-tabs" id="profileTabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="personal-tab" data-bs-toggle="tab" data-bs-target="#personal" 
-                            type="button" role="tab" aria-controls="personal" aria-selected="true">Personal Info</button>
+                            <button class="nav-link active" id="personal-tab" data-bs-toggle="tab"
+                                data-bs-target="#personal" type="button" role="tab" aria-controls="personal"
+                                aria-selected="true">Personal Info</button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="address-tab" data-bs-toggle="tab" data-bs-target="#address"
-                            type="button" role="tab" aria-controls="address" aria-selected="false">Add Address</button>
+                                type="button" role="tab" aria-controls="address" aria-selected="false">Add
+                                Address</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="password-tab" data-bs-toggle="tab" data-bs-target="#password" 
-                            type="button" role="tab" aria-controls="password" aria-selected="false">New Password</button>
+                            <button class="nav-link" id="password-tab" data-bs-toggle="tab" data-bs-target="#password"
+                                type="button" role="tab" aria-controls="password" aria-selected="false">New
+                                Password</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="email-tab" data-bs-toggle="tab" data-bs-target="#email" 
-                            type="button" role="tab" aria-controls="email" aria-selected="false">New Email</button>
+                            <button class="nav-link" id="email-tab" data-bs-toggle="tab" data-bs-target="#email"
+                                type="button" role="tab" aria-controls="email" aria-selected="false">New Email</button>
                         </li>
                     </ul>
 
                     <!-- Tabs Content -->
                     <div class="tab-content mt-3" id="profileTabsContent">
                         <!-- Personal Info Form -->
-                        <div class="tab-pane fade show active" id="personal" role="tabpanel" aria-labelledby="personal-tab">
+                        <div class="tab-pane fade show active" id="personal" role="tabpanel"
+                            aria-labelledby="personal-tab">
                             <form method="post">
                                 {% csrf_token %}
                                 {% for field in user_form %}
-                                    <div class="mb-3">
-                                        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                        {{ field }}
-                                        {% if field.errors %}
-                                            <div class="text-danger small">{{ field.errors|striptags }}</div>
-                                        {% endif %}
-                                    </div>
+                                <div class="mb-3">
+                                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    {{ field }}
+                                    {% if field.errors %}
+                                    <div class="text-danger small">{{ field.errors|striptags }}</div>
+                                    {% endif %}
+                                </div>
                                 {% endfor %}
-                                <button type="submit" name="update_profile" class="btn btn-success text-white">Update Info</button>
+                                <button type="submit" name="update_profile" class="btn btn-success text-white">Update
+                                    Info</button>
                             </form>
                         </div>
 
@@ -75,15 +81,19 @@
                             <form method="post">
                                 {% csrf_token %}
                                 {% for field in address_form %}
-                                    <div class="mb-1">
-                                        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                        {{ field }}
-                                        {% if field.errors %}
-                                            <div class="text-danger small">{{ field.errors|striptags }}</div>
-                                        {% endif %}
-                                    </div>
+                                <div class="mb-1">
+                                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    {{ field }}
+                                    {% if field.errors %}
+                                    <div class="text-danger small">{{ field.errors|striptags }}</div>
+                                    {% endif %}
+                                </div>
                                 {% endfor %}
-                                <button type="submit" name="update_address" class="btn btn-success">Save Address</button>
+                                {% if next_url %}
+                                <input type="hidden" name="next" value="{{ next_url }}">
+                                {% endif %}
+                                <button type="submit" name="update_address" class="btn btn-success">Save
+                                    Address</button>
                             </form>
                         </div>
 
@@ -92,39 +102,41 @@
                             <form method="post">
                                 {% csrf_token %}
                                 {% for field in password_form %}
-                                    <div class="mb-3">
-                                        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                        {{ field }}
-                                        <button type="button" class="btn btn-outline-warning btn-sm toggle-password m-1" 
-                                                data-target="{{ field.id_for_label }}">
-                                            Show
-                                        </button>
-                                        {% if field.help_text %}
-                                            <div class="form-text">{{ field.help_text|safe }}</div>
-                                        {% endif %}
-                                        {% if field.errors %}
-                                            <div class="text-danger small">{{ field.errors|striptags }}</div>
-                                        {% endif %}
-                                    </div>
+                                <div class="mb-3">
+                                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    {{ field }}
+                                    <button type="button" class="btn btn-outline-warning btn-sm toggle-password m-1"
+                                        data-target="{{ field.id_for_label }}">
+                                        Show
+                                    </button>
+                                    {% if field.help_text %}
+                                    <div class="form-text">{{ field.help_text|safe }}</div>
+                                    {% endif %}
+                                    {% if field.errors %}
+                                    <div class="text-danger small">{{ field.errors|striptags }}</div>
+                                    {% endif %}
+                                </div>
                                 {% endfor %}
-                                <button type="submit" name="update_password" class="btn btn-success">Change Password</button>
+                                <button type="submit" name="update_password" class="btn btn-success">Change
+                                    Password</button>
                             </form>
                         </div>
 
-                    <!-- Email Change Form -->
+                        <!-- Email Change Form -->
                         <div class="tab-pane fade" id="email" role="tabpanel" aria-labelledby="email-tab">
                             <form method="post">
                                 {% csrf_token %}
                                 {% for field in email_form %}
-                                    <div class="mb-3">
-                                        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                        {{ field }}
-                                        {% if field.errors %}
-                                            <div class="text-danger small">{{ field.errors|striptags }}</div>
-                                        {% endif %}
-                                    </div>
+                                <div class="mb-3">
+                                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    {{ field }}
+                                    {% if field.errors %}
+                                    <div class="text-danger small">{{ field.errors|striptags }}</div>
+                                    {% endif %}
+                                </div>
                                 {% endfor %}
-                                <button type="submit" name="request_email_otp" class="btn btn-success">Request OTP</button>
+                                <button type="submit" name="request_email_otp" class="btn btn-success">Request
+                                    OTP</button>
                             </form>
                         </div>
                     </div>
@@ -136,31 +148,31 @@
 
 <!-- JavaScript to Initialize Toasts -->
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
-    var toastList = toastElList.map(function (toastEl) {
-        return new bootstrap.Toast(toastEl, {
-            autohide: true,
-            delay: 5000 // Toast auto-hides after 5 seconds
+    document.addEventListener('DOMContentLoaded', function () {
+        var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+        var toastList = toastElList.map(function (toastEl) {
+            return new bootstrap.Toast(toastEl, {
+                autohide: true,
+                delay: 5000 // Toast auto-hides after 5 seconds
+            });
+        });
+        toastList.forEach(function (toast) {
+            toast.show();
         });
     });
-    toastList.forEach(function (toast) {
-        toast.show();
-    });
-});
-document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('.toggle-password').forEach(function(button) {
-        button.addEventListener('click', function () {
-            const input = document.getElementById(this.dataset.target);
-            if (input.type === "password") {
-                input.type = "text";
-                this.textContent = "Hide";
-            } else {
-                input.type = "password";
-                this.textContent = "Show";
-            }
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.toggle-password').forEach(function (button) {
+            button.addEventListener('click', function () {
+                const input = document.getElementById(this.dataset.target);
+                if (input.type === "password") {
+                    input.type = "text";
+                    this.textContent = "Hide";
+                } else {
+                    input.type = "password";
+                    this.textContent = "Show";
+                }
+            });
         });
     });
-});
 </script>
 {% endblock %}
