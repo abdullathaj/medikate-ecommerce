@@ -24,7 +24,16 @@ import random
 # HOME PAGE BEFORE AND AFTER LOGIN AND PRODUCT LIST AND PRODUCT DETAILS
 # -------------------------------------------------------------------------
 
+def show_details(request):
+
+    context={}
+
+    return render(request,'extra/details.html',context)
+
+
 def userhomeview(request):
+    if request.user.is_authenticated:
+        return redirect('login_home')
 
     active_variant_prefetch= Prefetch('product_variant',queryset=ProductVariant.objects.filter(is_active=True),
                                                                             to_attr='active_variants')

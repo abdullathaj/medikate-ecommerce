@@ -183,7 +183,7 @@ def checkout(request):
         messages.error(request, "Your cart is empty. Add items to proceed.")
         return redirect('user_cart_page')
     
-    if request.method == 'POST':
+    if request.method == 'GET':
         request.session.pop('applied_coupon',None)
         request.session.pop('order_data',None)
     
@@ -461,7 +461,7 @@ def payment_method(request):
 
         elif payment_method == 'RAZORPAY':
             currency = 'INR'
-            amount = int(total_amount * 100)  # Amount in paise
+            amount = int(total_amount * 100)  #  paise convert
 
             client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
             razorpay_order = client.order.create(dict(amount=amount, currency=currency, payment_capture='1'))

@@ -359,6 +359,9 @@ def resend_password_otp_view(request):
 # Usre Login
 @never_cache
 def loginview(request):
+    if request.user.is_authenticated:
+        return redirect('login_home')
+    
     if request.method == 'POST':
         email = request.POST['email']
         password = request.POST['password']

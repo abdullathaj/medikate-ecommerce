@@ -33,7 +33,7 @@
                         <h5>Select Delivery Address</h5>
                         <select class="form-select" name="address_id" required>
                             {% for addr in addresses %}
-                            <option value="{{ addr.id }}" {% if addr==default_address %}selected{% endif %}>
+                            <option value="{{ addr.id }}" {% if addr == default_address %}selected{% endif %}>
                                 {{ addr.addressline_1 }}, {{ addr.city }} - {{ addr.postal_code }}
                             </option>
                             {% endfor %}
