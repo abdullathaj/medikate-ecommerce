@@ -115,7 +115,13 @@ def buynow_checkout(request):
         if not address_id:
             messages.error(request, "Please select an address.")
             return redirect('buynow_checkout')
-
+        selected_address=get_object_or_404(UserAddress,id=address_id,user=request.user)
+        shipping_charge=Decimal('0.00')
+        free_delivery_location=['Kerala']
+        if selected_address.state not in free_delivery_location:
+            shipping_charge=Decimal('40.00')
+        
+        
         
         effective_unit_price = (final_payable / quantity).quantize(Decimal('0.01')) # User Paid price per item
 
@@ -130,7 +136,9 @@ def buynow_checkout(request):
             'total_amount': str(final_payable),           # User paid price for Total Order
             'coupon': applied_coupon['coupon_code'] if applied_coupon else None,
             'is_cart_checkout': False,
+            'shipping_charge': shipping_charge,
         }
+
         dictt={
             'cart_items': [{
                 'variant_id': variant.id,
@@ -219,11 +227,13 @@ def checkout(request):
     
     
     addresses = UserAddress.objects.filter(user=request.user)
+    print(f'address: {addresses}')
     if not addresses.exists():
         messages.warning(request, "Please add a delivery address before checkout.")
         return redirect('user_profile_update')  
 
     default_address = addresses.filter(is_default=True).first()
+    print(f'default address: {default_address}')
 
     if request.method == 'POST':
         address_id = request.POST.get('address_id')
@@ -232,6 +242,15 @@ def checkout(request):
             return redirect('checkout')
             
         selected_address = get_object_or_404(UserAddress, id=address_id, user=request.user)
+        print(f'selected address: {selected_address}')
+
+        delivery_free_location=['Kerala']
+        
+        if selected_address.state in delivery_free_location:
+            shipping_charge=Decimal('0.00')
+        else:
+            shipping_charge=Decimal('40.00')
+
 
         
         applied_coupon = request.session.get('applied_coupon')
@@ -262,13 +281,15 @@ def checkout(request):
             })
 
         final_amount=calaculated_total.quantize(Decimal('0.01'))  
+        
 
         request.session['order_data'] = {
             'cart_items': order_items,
             'address_id': address_id,
             'total_amount': str(final_amount),   # sum of all distributed item prices
             'coupon': coupon_code,
-            'is_cart_checkout': True
+            'is_cart_checkout': True,
+            'shipping_charge':str(shipping_charge),
         }
         
         
@@ -294,7 +315,8 @@ def checkout(request):
         'estimated_delivery_date': (datetime.now() + timedelta(days=7)).strftime('%B %d, %Y'),
         'addresses': addresses,
         'default_address': default_address,
-        'available_coupons': available_coupons
+        'available_coupons': available_coupons,
+        
     }
     return render(request, 'user/checkout.html', context)
 
@@ -380,7 +402,9 @@ def payment_method(request):
     order_data = request.session['order_data']
     is_cart_checkout = order_data.get('is_cart_checkout', False)
     address = get_object_or_404(UserAddress,id=order_data['address_id'],user=request.user)
+    shipping_charge = Decimal(order_data.get('shipping_charge','0'))
     total_amount = Decimal(order_data.get('total_amount','0'))       # Sum of all distributed item prices
+    total_amount += shipping_charge
     applied_coupon=request.session.get('applied_coupon')
 
     ordering_items = order_data.get('cart_items',[])
@@ -480,7 +504,8 @@ def payment_method(request):
         'variants': variants,
         'total_amount': total_amount,
         'address': address,
-        'is_cart_checkout': is_cart_checkout
+        'is_cart_checkout': is_cart_checkout,
+        'shipping_charge': shipping_charge,
     })
 
 
