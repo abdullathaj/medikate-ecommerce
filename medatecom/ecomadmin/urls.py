@@ -40,6 +40,7 @@ urlpatterns = [
 
     path('admin_sales_report/', views.admin_sales_report, name='admin_sales_report'),
     path('admin_sales_report_pdf/', views.admin_sales_report_pdf, name='admin_sales_report_pdf'),
-
+    path('admin_wallet_transactions/', views.admin_wallet_transactions, name='admin_wallet_transactoins'),
+    path('admin_wallet_details/<int:transaction_id>/', views.admin_wallet_details, name='admin_wallet_details'),
 
 ]

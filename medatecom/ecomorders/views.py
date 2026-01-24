@@ -435,19 +435,11 @@ def payment_method(request):
                             messages.error(request, f"Insufficient stock for {item['variant']}.")
                             return redirect('cart_checkout' if is_cart_checkout else 'buy_now', variant_id=item['variant'].id)
 
+                    wallet = None
                     if payment_method == 'WALLET':
                         wallet, _ = Wallet.objects.get_or_create(user=request.user)
                         if wallet.balance < total_amount:
-                            messages.error(request, 'Insufficient wallet balance.')
-                            return redirect('user_wallet_page')
-                        wallet.balance -= total_amount
-                        wallet.save()
-                        WalletTransaction.objects.create(
-                            wallet= wallet,
-                            transaction_type= 'DEBIT',
-                            amount= total_amount,
-                            description= 'Wallet Payment '
-                        )
+                            raise ValueError("Insufficient wallet balance")
 
                     order = Order.objects.create(
                         user=request.user,
@@ -462,7 +454,7 @@ def payment_method(request):
                             OrderItem.objects.create(
                                 order=order,
                                 variant=item['variant'],
-                                quantity=1, 
+                                # quantity=1, 
                                 price=item['price'], 
                                 status='ACTIVE',
                                 delivery_status='PENDING'
@@ -471,6 +463,18 @@ def payment_method(request):
                         item['variant'].stock -= item['quantity']
                         item['variant'].save()
 
+                        if payment_method == 'WALLET':
+                            wallet.balance -= total_amount
+                            wallet.save()
+
+                            WalletTransaction.objects.create(
+                                wallet=wallet,
+                                transaction_type='DEBIT',
+                                amount=total_amount,
+                                description=f'WALLET PAYMENT - Order #{order.id}',
+                                transaction_source='WALLET',
+                                order=order
+                            )
 
                     if is_cart_checkout:
                         CartProducts.objects.filter(user=request.user).delete()
@@ -777,7 +781,7 @@ def order_details(request, order_id, item_id):
 def cancel_order_item(request, order_id, item_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
     item = get_object_or_404(OrderItem, id=item_id, order=order)
-    wallet,created= Wallet.objects.get_or_create(user= request.user)
+    
 
     if request.method == 'POST':
         selected_reason = request.POST.get("reason")
@@ -785,18 +789,7 @@ def cancel_order_item(request, order_id, item_id):
 
         try:
             with transaction.atomic():
-                
-                item.variant.stock += item.quantity
-                item.variant.save()
-
-                item_total = item.quantity * item.price
-                actual_order_total= sum(it.price * it.quantity for it in order.items.all()) # BEFORE COUPON APPLIED
-                paid_order_total= order.total_amount  # AFTER ANY COUPON APPLIED
-            # PAID AMOUNT OF EACH ITEM IF COUPON IS APPLIED
-                refund_amount= (item_total/actual_order_total)* paid_order_total if actual_order_total > 0 else 0
-                refund_amount = Decimal(refund_amount).quantize(Decimal("0.01"))
-
-                order.total_amount = max(0, order.total_amount - refund_amount)
+                wallet,created= Wallet.objects.get_or_create(user= request.user)
 
                 item.status = 'CANCELLED'
                 item.delivery_status = 'CANCELLED'
@@ -804,6 +797,19 @@ def cancel_order_item(request, order_id, item_id):
                 if selected_reason == "OTHER":
                     item.other_reason = other_reason_text
                 item.save()
+
+                variant = ProductVariant.objects.select_for_update().get(id=item.variant.id)
+                variant.stock += item.quantity
+                variant.save()
+
+                item_total = item.quantity * item.price
+                actual_order_total= sum(it.price * it.quantity for it in order.items.filter(status='ACTIVE')) # BEFORE COUPON APPLIED
+                paid_order_total= order.total_amount  # AFTER ANY COUPON APPLIED
+            # PAID AMOUNT OF EACH ITEM IF COUPON IS APPLIED
+                refund_amount= (item_total/actual_order_total)* paid_order_total if actual_order_total > 0 else 0
+                refund_amount = Decimal(refund_amount).quantize(Decimal("0.01"))
+
+                order.total_amount = max(0, order.total_amount - refund_amount)
         # WALLET REFUND IF THE PAYMENT VIA WALLET OR RAZORPAY
                 if order.payment_method in ['WALLET', 'RAZORPAY']:
                     wallet.balance += Decimal(refund_amount).quantize(Decimal("0.01"))
@@ -813,11 +819,14 @@ def cancel_order_item(request, order_id, item_id):
                         wallet= wallet,
                         transaction_type= 'CREDIT',
                         amount= Decimal(refund_amount),
-                        description= 'Order Cancel Refund'
+                        description= 'CANCEL REFUND',
+                        transaction_source= 'CANCEL',
+                        order= order,
+                        order_item= item
                     )
                 
                 if not order.items.filter(status='ACTIVE').exists():
-                    order.status = 'CANCELLED'
+                    
                     order.total_amount = Decimal('0.00')
                     order.save()
                     messages.success(request, "Order cancelled as all items were removed.")

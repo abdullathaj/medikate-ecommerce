@@ -94,18 +94,29 @@ class Wallet(models.Model):
         return f'{self.user.username}s Wallet; Balance- {self.balance}'
     
 class WalletTransaction(models.Model):
+
     TRANSACTION_TYPES= (
         ('CREDIT','Credit'),
         ('DEBIT','Debit'),
+    )
+
+    TRANSACTION_SOURCES = (
+        ('WALLET', 'Wallet Payment'),
+        ('REFERRAL', 'Referral Reward'),
+        ('CANCEL', 'Cancel Refund'),
+        ('RETURN', 'Return Refund'),
     )
     wallet = models.ForeignKey('Wallet', on_delete=models.CASCADE, related_name='transactions')
     transaction_type= models.CharField(max_length=6, choices=TRANSACTION_TYPES)
     amount= models.DecimalField(max_digits=10, decimal_places=2)
     description= models.CharField(max_length=255, blank=True, null=True)
+    transaction_source= models.CharField(max_length=15, choices=TRANSACTION_SOURCES, null=True,blank=True)
+    order= models.ForeignKey('ecomorders.Order',on_delete=models.SET_NULL, null=True, blank=True)
+    order_item= models.ForeignKey('ecomorders.OrderItem', on_delete=models.SET_NULL, null=True, blank=True)
     created_at= models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'{self.wallet.user.username} - {self.transaction_type} ₹{self.amount}'
+        return f'{self.wallet.user.username} - {self.transaction_type} ₹{self.amount} {self.description} {self.created_at} {self.transaction_source}'
 
 
 # MODEL FOR REFERAL SYSTEM

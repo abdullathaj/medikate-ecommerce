@@ -1,0 +1,107 @@
+{% extends 'admin/base_admin.html' %}
+{% load humanize %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <h2 class="mb-4 text-center">
+        Wallet Transactions ({{ transactions|length }})
+    </h2>
+
+    <!-- Transactions Table -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped text-center">
+            <thead class="table-success">
+                <tr>
+                    <th class="px-2 py-2 text-uppercase text-secondary">ID</th>
+                    <th class="px-2 py-2 text-uppercase text-secondary">Date</th>
+                    <th class="px-2 py-2 text-uppercase text-secondary">User</th>
+                    <th class="px-2 py-2 text-uppercase text-secondary"> Type</th>
+                    <th class="px-2 py-2 text-uppercase text-secondary">Amount</th>
+                    <th class="px-2 py-2 text-uppercase text-secondary">Description</th>
+                    <th class="px-2 py-2 text-uppercase text-secondary">Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for trans in transactions %}
+                <tr>
+                    <td class="px-2 py-2 fw-medium text-dark">{{ trans.id }}</td>
+                    <td class="px-2 py-2 text-muted">{{ trans.created_at|date:"M d, Y" }}</td>
+                    <td class="px-2 py-2 text-muted">{{ trans.wallet.user }}</td>
+                    <td class="px-2 py-2">
+                        {% if trans.transaction_type == 'CREDIT' %}
+                            <span class="badge bg-success">Credit</span>
+                        {% elif trans.transaction_type == 'DEBIT' %}
+                            <span class="badge bg-danger">Debit</span>
+                        {% else %}
+                            <span class="badge bg-secondary">
+                                {{ trans.transaction_type }}
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-2 py-2 text-muted">₹{{ trans.amount|intcomma }}</td>
+                    <td class="px-2 py-2 text-muted">{{ trans.description|default:"—" }}</td>
+                    <td class="px-2 py-2 text-muted">
+                        <button class="btn btn-outline-primary btn-sm text-decoration-none">View</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-2 py-3 text-center text-muted">
+                        No transactions found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+     <div class="d-flex justify-content-center mt-4">
+        <nav aria-label='Page navigation'>
+            <ul class="pagination"> 
+                {% if transactions.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ transactions.previous_page_number }}{% if query %}&q={{ query }}{% endif %}">Previous</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Previous</span>
+                    </li>
+                {% endif %}
+
+                {% for num in transactions.paginator.page_range %}
+                    {% if transactions.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if transactions.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ transactions.next_page_number }}{% if query %}&q={{ query }}{% endif %}">Next</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Next</span>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+     </div>
+</div>
+
+<style>
+thead.table-success th {
+    position: sticky;
+    top: 0;
+    background-color: #d4edda !important;
+    z-index: 1;
+}
+</style>
+{% endblock %}

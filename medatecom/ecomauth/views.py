@@ -153,13 +153,15 @@ def otp_verify_view(request):
                             wallet= user.wallet,
                             transaction_type= 'CREDIT',
                             amount= Decimal('10.00'),
-                            description= 'Referral Reward'
+                            description= 'REFERRAL REWARD',
+                            transaction_source= 'REFERRAL'
                         )
                         WalletTransaction.objects.create(
                             wallet= referrer.wallet,
                             transaction_type= 'CREDIT',
                             amount= Decimal('10.00'),
-                            description= 'Referral Reward'
+                            description= 'REFERRAL REWARD',
+                            transaction_source= 'REFERRAL'
                         )
                         messages.success(request,'Referral successfull. You have credited with ₹10 in your wallet.')
                     else:

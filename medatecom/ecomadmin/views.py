@@ -557,6 +557,13 @@ def admin_return_approval(request,request_id):
     item=return_request.order_item
     order= item.order
 
+    if return_request.status != 'PENDING':
+        messages.warning(request, 'This return request is already processed.')
+        return redirect('admin_request_list')
+    
+    if item.order.user != order.user:
+        raise PermissionError("Invalid return request context")
+
     if request.method=='POST':
         action= request.POST.get('action')
         try:
@@ -597,7 +604,10 @@ def admin_return_approval(request,request_id):
                         wallet= wallet,
                         transaction_type= 'CREDIT',
                         amount= Decimal(refund_amount),
-                        description= 'Order Return Refund'
+                        description= 'RETURN REFUND',
+                        transaction_source= 'RETURN',
+                        order=order,
+                        order_item= item
                     )
                     messages.success(request, f'The return request for # {item.id} is approved. Amount of {refund_amount} is added to the users wallet')
                 elif action == 'DENY':
@@ -942,4 +952,21 @@ def admin_sales_report_pdf(request):
         return response
     return HttpResponse('Error generating PDF', status=500)
 
+@staff_member_required
+def admin_wallet_transactions(request):
+    transactions = WalletTransaction.objects.all().order_by('-created_at')
 
+    paginator = Paginator(transactions,12)
+    page_num = request.GET.get('page')
+    page_obj = paginator.get_page(page_num)
+
+    context={'transactions': page_obj,'transaction_count': paginator.count}
+    return render(request,'admin/wallet_transactions.html',context)
+
+@staff_member_required
+def admin_wallet_details(request,transaction_id):
+    wallet_transaction = get_object_or_404(wallet_transaction,id=transaction_id)
+
+
+    
+    return render(request,'admin/wallet_details.html' )
