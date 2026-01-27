@@ -1,7 +1,104 @@
 {% extends 'admin/base_admin.html' %}
-{% load static %}
 {% load humanize %}
 
 {% block content %}
-<h2> This Wallet Details </h2>
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold">Transaction #{{ wallet_transaction.id }}</h5>
+                    <span class="badge {% if wallet_transaction.transaction_type == 'CREDIT' %}bg-success{% else %}bg-danger{% endif %} fs-6">
+                        {{ wallet_transaction.get_transaction_type_display }}
+                    </span>
+                </div>
+                
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6 border-end">
+                            <label class="text-muted small text-uppercase fw-bold">Amount</label>
+                            <h2 class="{% if wallet_transaction.transaction_type == 'CREDIT' %}text-success{% else %}text-danger{% endif %} fw-bold">
+                                {% if wallet_transaction.transaction_type == 'CREDIT' %}+{% else %}-{% endif %}₹{{ wallet_transaction.amount|intcomma }}
+                            </h2>
+                            <p class="text-muted mb-0">Processed on {{ wallet_transaction.created_at|date:"d M Y, h:i A" }}</p>
+                        </div>
+                        
+                        <div class="col-md-6 ps-md-4">
+                            <label class="text-muted small text-uppercase fw-bold">Source</label>
+                            <p class="fs-5 mb-2">
+                                <i class="bi bi-info-circle me-1"></i> {{ wallet_transaction.get_transaction_source_display|default:"Manual Adjustment" }}
+                            </p>
+                            <label class="text-muted small text-uppercase fw-bold">User Account</label>
+                            <p class="mb-0 fw-medium text-primary">{{ user.username }}</p>
+                            <small class="text-muted">{{ user.email }} | {{ user.phone|default:"No Phone" }}</small>
+                        </div>
+                    </div>
+
+                    <hr class="text-muted opacity-25">
+
+                    <div class="mb-4">
+                        <label class="text-muted small text-uppercase fw-bold mb-2 d-block">Description</label>
+                        <div class="p-3 bg-light rounded border">
+                            {{ wallet_transaction.description|default:"No description provided for this transaction." }}
+                        </div>
+                    </div>
+
+                    {% if wallet_transaction.transaction_source == 'REFERRAL' %}
+                        <div class="card border-info bg-light-info">
+                            <div class="card-body">
+                                <h6 class="text-info fw-bold mb-3"><i class="bi bi-people-fill me-2"></i>Referral Information</h6>
+                                {% with referral=user.referral_used %}
+                                    {% if referral %}
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <small class="text-muted d-block">Referred By</small>
+                                                <strong>{{ referral.referrer.username }}</strong>
+                                            </div>
+                                            <div class="col-6 text-end">
+                                                <small class="text-muted d-block">Referral Code Used</small>
+                                                <span class="badge bg-secondary">{{ referral.referrer.referral_code }}</span>
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <p class="small mb-0">User was rewarded as a <strong>Referrer</strong> for inviting a new member.</p>
+                                    {% endif %}
+                                {% endwith %}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    {% if wallet_transaction.order %}
+                        <div class="mt-4 p-3 border rounded d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1 fw-bold">Linked Order Details</h6>
+                                <p class="small text-muted mb-0">Order ID: #{{ wallet_transaction.order.id }} | Item: {{ wallet_transaction.order_item.product.name|default:"Package" }}</p>
+                            </div>
+                            <a href="{% url 'admin_order_item_list' wallet_transaction.order.id %}" class="btn btn-outline-primary btn-sm">
+                                View Order Details
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="card-footer bg-white py-3">
+                    <a href="javascript:history.back()" class="btn btn-light border btn-sm">
+                        <i class="bi bi-arrow-left"></i> Back to Transactions
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-light-info { 
+        background-color: #e3f2fd; }
+    .text-primary { 
+        color: #0d6efd !important; }
+    .card { 
+        border-radius: 12px; }
+    .badge { 
+        padding: 0.5em 0.8em; }
+   
+</style>
 {% endblock %}

@@ -77,6 +77,7 @@
                 </div>
                 <div class="col-md-6 text-md-end">
                     <p class="mb-1">Total MRP: ₹{{ total_mrp|floatformat:2 }}</p>
+                    {% comment %} <p class="mb-1 text-success">Shipping: ₹{{ |floatformat:2 }}</p> {% endcomment %}
                     <p class="mb-1 text-success">You Saved: ₹{{ total_savings|floatformat:2 }}</p>
                     <h4><strong>Total Paid: ₹{{ order.total_amount|floatformat:2 }}</strong></h4>
                 </div>

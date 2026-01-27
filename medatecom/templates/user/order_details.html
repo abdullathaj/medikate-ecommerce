@@ -74,6 +74,8 @@
                     
                     {% elif order_item.return_request.status == 'DENIED'%}
                         <p class="mb-1 text-danger"><strong>You cannot return this product.</strong></p>
+                    {% elif item.status == 'RETURN_REQUESTED' %}
+                        <span class="badge bg-warning text-dark">Return Requested</span>
                     {% endif %}
                 </div>
             </div>
@@ -82,12 +84,35 @@
             <p><strong>Expected Delivery Date:</strong> {{ order_item.order.expected_delivery_date|date:"F d, Y" }}</p>
             <p><strong>Payment Method:</strong> {{ order_item.order.payment_method }}</p>
             <p><strong>Delivery Address:</strong> {{ order_item.order.address.addressline_1 }}{% if order_item.order.address.addressline_2 %}, {{ order_item.order.address.addressline_2 }}{% endif %}, {{ order_item.order.address.city }}, {{ order_item.order.address.state }}, {{ order_item.order.address.nation }} - {{ order_item.order.address.postal_code }}</p>
-           {% comment %} <p><strong>Paid Order Total:</strong> 
+           <p><strong>Whole Order Total:</strong> 
             <span style="color: #0b9637ff; font-weight: bold; font-size: 1.1em;">
                 ₹{{ order_item.order.total_amount|floatformat:2 }}
             </span> 
             (Including coupons and offers.)
-            </p> {% endcomment %}
+            </p>
+            {% if can_cancel_all and order_item.order.total_amount > 0 %}
+<div class="alert alert-warning d-flex justify-content-between align-items-center border-2">
+    <span>Want to cancel everything in this order?</span>
+    <a href="{% url 'cancel_whole_order' order_item.order.id %}" class="btn btn-outline-danger btn-sm">Cancel Entire Order</a>
+</div>
+{% endif %}
+
+{% if other_items %}
+<div class="mt-5">
+    <h5>Other items in this order</h5>
+    <div class="list-group">
+        {% for other in other_items %}
+        <div class="list-group-item d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <img src="{{ other.variant.product.product_image.first.image.url }}" style="width:40px; margin-right:10px;">
+                <span>{{ other.variant.product.name }} (Qty: {{ other.quantity }})</span>
+            </div>
+            <a href="{% url 'order_details' order_id=other.order.id item_id=other.id %}" class="btn btn-sm btn-link">View Details</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
 
         </div>
     </div>

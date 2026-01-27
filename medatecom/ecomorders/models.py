@@ -41,6 +41,8 @@ class Order(models.Model):
             return 'Cancelled'
         if all(status == 'DELIVERED' for status in item_statuses):
             return 'Delivered'
+        if any(status == 'RETURN_REQUESTED' for status in item_statuses):
+            return 'Return Action Required' 
         if any(status == 'SHIPPED' for status in item_statuses):
             return 'Shipped'
         if any(status == 'PROCESSING' for status in item_statuses):
@@ -56,6 +58,7 @@ class OrderItem(models.Model):
         ('ACTIVE','Active'),
         ('CANCELLED','Cancelled'),
         ('RETURNED','Returned'),
+        ('RETURN_REQUESTED', 'Return Requested'),
     ]
 
     DELIVERY_STATUS_CHOICES = [
@@ -66,6 +69,7 @@ class OrderItem(models.Model):
         ('DELIVERED', 'Delivered'),
         ('CANCELLED', 'Cancelled'),
         ('RETURNED','Returned'),
+        ('RETURN_REQUESTED', 'Return Requested'),
     ]
 
     CANCELLATION_REASON_CHOICES = [
@@ -100,7 +104,7 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.variant} x {self.quantity}"
-
+ 
     @property
     def total_price(self):
         return self.quantity * self.price
@@ -141,6 +145,7 @@ class ReturnRequest(models.Model):
         ('APPROVED','Approved'),
         ('DENIED','Denied')
     ]
+    
     order_item= models.OneToOneField(OrderItem, on_delete=models.CASCADE, related_name='return_request')
     status=models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     reason= models.CharField(max_length=50, choices=OrderItem.RETURN_REASON_CHOICES, blank=True, null=True)

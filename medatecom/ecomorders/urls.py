@@ -13,6 +13,7 @@ urlpatterns = [
     path('remove_coupon/', views.remove_coupon, name='remove_coupon'),
     path('cancel-order-item/<int:order_id>/<int:item_id>/', views.cancel_order_item, name='cancel_order_item'),
     path('return-order-item/<int:order_id>/<int:item_id>/', views.return_order_item, name='return_order_item'),
+    path('cancel_whole_order/<int:order_id>/', views.cancel_whole_order, name='cancel_whole_order'),
     path('razorpay_success/',views.razorpay_success,name='razorpay_success'),
     path('order_error/',views.order_error,name='order_error'),
     path('download_invoice/<int:order_id>/', views.download_invoice_pdf, name='download_invoice'),

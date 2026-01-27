@@ -1,41 +1,56 @@
 {% extends 'auth/navbar.html' %}
-{% load static %}
-
 {% block content %}
 <div class="container mt-5">
     <h3>Return Item</h3>
-    <p><strong>Product:</strong> {{ item.variant.product.name }} - {{ item.variant.variant_name }}</p>
-    <p><strong>Price:</strong> ₹{{ item.price }}</p>
+    <div class="card p-4 shadow-sm">
+        <p><strong>Product:</strong> {{ item.variant.product.name }} - {{ item.variant.variant_name }}</p>
+        <p><strong>Available to Return:</strong> {{ item.quantity }} units</p>
 
-    <form method="POST">
-        {% csrf_token %}
-        <div class="mb-3">
-            <label for="reason" class="form-label">Select Return Reason</label>
-            <select name="reason" id="reason" class="form-select" required>
-                <option value="" disabled selected>Select reason</option>
-                {% for value, label in item.RETURN_REASON_CHOICES %}
-                    <option value="{{ value }}">{{ label }}</option>
-                {% endfor %}
-            </select>
-        </div>
+        <form method="POST">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <label for="quantity" class="form-label">Quantity to Return</label>
+                <select name="quantity" id="quantity" class="form-select" style="max-width: 200px;">
+                    {% for i in "x"|rjust:item.quantity %}
+                        <option value="{{ forloop.counter }}" {% if forloop.last %}selected{% endif %}>
+                            {{ forloop.counter }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
 
-        <div class="mb-3" id="other-reason-box" style="display:none;">
-            <label for="other_reason" class="form-label">Other Reason</label>
-            <textarea name="other_reason" id="other_reason" class="form-control"></textarea>
-        </div>
+            <div class="mb-3">
+                <label for="reason" class="form-label">Select Return Reason</label>
+                <select name="reason" id="reason" class="form-select" required>
+                    <option value="" disabled selected>Select reason</option>
+                    {% for value, label in item.RETURN_REASON_CHOICES %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-        <button type="submit" class="btn btn-warning">Submit Return</button>
-        <a href="{% url 'order_details' order.id item.id %}" class="btn btn-secondary">Cancel</a>
-    </form>
+            <div class="mb-3" id="other-reason-box" style="display:none;">
+                <label for="other_reason" class="form-label">Please specify reason</label>
+                <textarea name="other_reason" id="other_reason" class="form-control" rows="3"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-warning">Submit Return Request</button>
+            <a href="{% url 'order_details' order.id item.id %}" class="btn btn-secondary">Go Back</a>
+        </form>
+    </div>
 </div>
 
 <script>
 document.getElementById("reason").addEventListener("change", function() {
     let otherBox = document.getElementById("other-reason-box");
+    let otherInput = document.getElementById("other_reason");
     if (this.value === "OTHER") {
         otherBox.style.display = "block";
+        otherInput.setAttribute('required', 'true');
     } else {
         otherBox.style.display = "none";
+        otherInput.removeAttribute('required');
     }
 });
 </script>

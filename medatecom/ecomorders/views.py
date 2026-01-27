@@ -136,20 +136,11 @@ def buynow_checkout(request):
             'total_amount': str(final_payable),           # User paid price for Total Order
             'coupon': applied_coupon['coupon_code'] if applied_coupon else None,
             'is_cart_checkout': False,
-            'shipping_charge': shipping_charge,
+            'shipping_charge': str(shipping_charge),
         }
 
         dictt={
-            'cart_items': [{
-                'variant_id': variant.id,
-                'quantity': quantity,
-                'unit_price': str(effective_unit_price), 
-                'line_total': str(final_payable),
-            }],
-            'address_id': address_id,
-            'total_amount': str(final_payable),
-            'coupon': applied_coupon['coupon_code'] if applied_coupon else None,
-            'is_cart_checkout': False,
+           
         }
         print(f'Session Order data for buynow \n {dictt}')
 
@@ -244,14 +235,6 @@ def checkout(request):
         selected_address = get_object_or_404(UserAddress, id=address_id, user=request.user)
         print(f'selected address: {selected_address}')
 
-        delivery_free_location=['Kerala']
-        
-        if selected_address.state in delivery_free_location:
-            shipping_charge=Decimal('0.00')
-        else:
-            shipping_charge=Decimal('40.00')
-
-
         
         applied_coupon = request.session.get('applied_coupon')
         if applied_coupon:
@@ -264,6 +247,14 @@ def checkout(request):
             final_amount = amount_payable       # sum of item final price * qty
             coupon_code = None
             discount_percent=Decimal('0.00')
+
+        delivery_free_location=['Kerala']
+        
+        if selected_address.state in delivery_free_location:
+            shipping_charge=Decimal('0.00')
+        else:
+            shipping_charge=Decimal('40.00')
+
 
         order_items=[]
         calaculated_total=Decimal('0.00')
@@ -440,6 +431,8 @@ def payment_method(request):
                         wallet, _ = Wallet.objects.get_or_create(user=request.user)
                         if wallet.balance < total_amount:
                             raise ValueError("Insufficient wallet balance")
+                            
+                        
 
                     order = Order.objects.create(
                         user=request.user,
@@ -450,31 +443,30 @@ def payment_method(request):
                     )
                     
                     for item in variants:
-                        for _ in range(item['quantity']):
-                            OrderItem.objects.create(
-                                order=order,
-                                variant=item['variant'],
-                                # quantity=1, 
-                                price=item['price'], 
-                                status='ACTIVE',
-                                delivery_status='PENDING'
-                            )
+                        OrderItem.objects.create(
+                            order=order,
+                            variant=item['variant'],
+                            quantity=item['quantity'],
+                            price=item['price'],
+                            status='ACTIVE',
+                            delivery_status='PENDING'
+                        )
                        
                         item['variant'].stock -= item['quantity']
                         item['variant'].save()
 
-                        if payment_method == 'WALLET':
-                            wallet.balance -= total_amount
-                            wallet.save()
+                    if payment_method == 'WALLET':
+                        wallet.balance -= total_amount
+                        wallet.save()
 
-                            WalletTransaction.objects.create(
-                                wallet=wallet,
-                                transaction_type='DEBIT',
-                                amount=total_amount,
-                                description=f'WALLET PAYMENT - Order #{order.id}',
-                                transaction_source='WALLET',
-                                order=order
-                            )
+                        WalletTransaction.objects.create(
+                            wallet=wallet,
+                            transaction_type='DEBIT',
+                            amount=total_amount,
+                            description=f'WALLET PAYMENT - Order #{order.id}',
+                            transaction_source='WALLET',
+                            order=order
+                        )
 
                     if is_cart_checkout:
                         CartProducts.objects.filter(user=request.user).delete()
@@ -485,7 +477,11 @@ def payment_method(request):
 
             except Exception as e:
                 messages.error(request, f"Error processing order: {str(e)}")
-                return redirect('cart_checkout' if is_cart_checkout else 'buy_now', variant_id=variants[0]['variant'].id)
+                if is_cart_checkout:
+                    return redirect('checkout')
+                else:
+                    return redirect('buy_now', variant_id=variants[0]['variant'].id)
+
 
         elif payment_method == 'RAZORPAY':
             currency = 'INR'
@@ -575,15 +571,14 @@ def razorpay_success(request):
                 )
 
                 for item in variants:
-                    for _ in range(item['quantity']):
-                        OrderItem.objects.create(
-                            order=order,
-                            variant=item['variant'],
-                            quantity=1, 
-                            price=item['price'], 
-                            status='ACTIVE',
-                            delivery_status='PENDING'
-                        )
+                    OrderItem.objects.create(
+                        order=order,
+                        variant=item['variant'],
+                        quantity=item['quantity'],
+                        price=item['price'],
+                        status='ACTIVE',
+                        delivery_status='PENDING'
+                    )
                 
                     item['variant'].stock -= item['quantity']
                     item['variant'].save()
@@ -615,15 +610,13 @@ def order_success(request, order_id):
                 'unit_price': item.price,
                 'image': item.variant.product.product_image.first(),
             }
-        same_items[varid]['quantity'] += 1
+        same_items[varid]['quantity'] += item.quantity
     same_items = list(same_items.values())
     print(same_items)
 
     total_mrp = Decimal('0.00')
     for item in order.items.all():
-        # Ideally we should have stored original MRP in OrderItem, but using current variant price as fallback/proxy
-        # The user wants "how much discount he got", so we compare Paid Price vs Current MRP (or stored if we had it)
-        # Using variant.price (Current MRP)
+        
         total_mrp += item.variant.price * item.quantity
 
     total_savings = total_mrp - order.total_amount
@@ -675,10 +668,6 @@ def download_invoice_pdf(request,order_id):
     
     total_savings = total_mrp - order.total_amount
     
-    # Enrich grouped_items with specific discount info per item group if needed, 
-    # but the invoice template usually iterates nicely. 
-    # Let's just pass the totals and let the template calculation display per-row if needed.
-    # Actually, for the table rows, we might want 'unit_mrp' which is item.variant.price
     for val in grouped_items.values():
         val['unit_mrp'] = val['variant'].price
         val['total_mrp'] = val['variant'].price * val['quantity']
@@ -760,122 +749,210 @@ def orderlist(request):
         'breadcrumbs': breadcrumbs
     })
 
-
 @login_required(login_url='login')
 def order_details(request, order_id, item_id):
     order_item = get_object_or_404(OrderItem, id=item_id, order__user=request.user, order__id=order_id)
+    other_items = order_item.order.items.exclude(id=item_id)
     
-    breadcrumbs=[
-        {'name': 'Home', 'url':'login_home'},
-        {'name': 'Orders', 'url': 'order_list'},
-        {'name': 'Order details', 'url':''}
-    ]
+    is_restricted = order_item.order.items.filter(delivery_status__in=['DELIVERED', 'RETURNED']).exists()
+
+    has_active_items = order_item.order.items.filter(status='ACTIVE').exists()
+    
+    can_cancel_all = not is_restricted and has_active_items
+    
     context = {
         'order_item': order_item,
-        'breadcrumbs': breadcrumbs
+        'other_items': other_items,
+        'can_cancel_all': can_cancel_all, 
+        'breadcrumbs': [
+            {'name': 'Home', 'url':'login_home'},
+            {'name': 'Orders', 'url': 'order_list'},
+            {'name': 'Order details', 'url':''}
+        ]
     }
     return render(request, 'user/order_details.html', context)
 
-@never_cache
-@login_required(login_url='login')
+@login_required
+@transaction.atomic
 def cancel_order_item(request, order_id, item_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
     item = get_object_or_404(OrderItem, id=item_id, order=order)
-    
 
     if request.method == 'POST':
+        cancel_qty = int(request.POST.get('quantity', item.quantity))
         selected_reason = request.POST.get("reason")
-        other_reason_text = request.POST.get("other_reason", "").strip()
+        
+        if cancel_qty > item.quantity or cancel_qty <= 0:
+            messages.error(request, "Invalid quantity.")
+            return redirect('order_details', order_id=order.id, item_id=item.id)
 
-        try:
-            with transaction.atomic():
-                wallet,created= Wallet.objects.get_or_create(user= request.user)
+        if cancel_qty < item.quantity:
+            cancelled_item = OrderItem.objects.create(
+                order=order,
+                variant=item.variant,
+                quantity=cancel_qty,
+                price=item.price,
+                status='CANCELLED',
+                delivery_status='CANCELLED',
+                cancellation_reason=selected_reason
+            )
+           
+            item.quantity -= cancel_qty
+            item.save()
+            target_item = cancelled_item 
+        else:
+            # Full cancellation of this OrderItem
+            item.status = 'CANCELLED'
+            item.delivery_status = 'CANCELLED'
+            item.cancellation_reason = selected_reason
+            item.save()
+            target_item = item
 
-                item.status = 'CANCELLED'
-                item.delivery_status = 'CANCELLED'
-                item.cancellation_reason = selected_reason
-                if selected_reason == "OTHER":
-                    item.other_reason = other_reason_text
-                item.save()
+        variant = target_item.variant
+        variant.stock += cancel_qty
+        variant.save()
 
-                variant = ProductVariant.objects.select_for_update().get(id=item.variant.id)
-                variant.stock += item.quantity
-                variant.save()
+       
+        item_refund_basis = cancel_qty * item.price
+        # Total value of all items that WERE active before this cancellation
+        actual_order_total = sum(it.price * it.quantity for it in order.items.filter(status='ACTIVE')) + item_refund_basis
+        
+        refund_amount = (item_refund_basis / actual_order_total) * order.total_amount if actual_order_total > 0 else 0
+        refund_amount = Decimal(refund_amount).quantize(Decimal("0.01"))
 
-                item_total = item.quantity * item.price
-                actual_order_total= sum(it.price * it.quantity for it in order.items.filter(status='ACTIVE')) # BEFORE COUPON APPLIED
-                paid_order_total= order.total_amount  # AFTER ANY COUPON APPLIED
-            # PAID AMOUNT OF EACH ITEM IF COUPON IS APPLIED
-                refund_amount= (item_total/actual_order_total)* paid_order_total if actual_order_total > 0 else 0
-                refund_amount = Decimal(refund_amount).quantize(Decimal("0.01"))
-
-                order.total_amount = max(0, order.total_amount - refund_amount)
-        # WALLET REFUND IF THE PAYMENT VIA WALLET OR RAZORPAY
-                if order.payment_method in ['WALLET', 'RAZORPAY']:
-                    wallet.balance += Decimal(refund_amount).quantize(Decimal("0.01"))
-                    wallet.save()
-
-                    WalletTransaction.objects.create(
+        if order.payment_method in ['WALLET', 'RAZORPAY']:
+            wallet, _ = Wallet.objects.get_or_create(user=request.user)
+            wallet.balance += refund_amount
+            wallet.save()
+            WalletTransaction.objects.create(
                         wallet= wallet,
                         transaction_type= 'CREDIT',
                         amount= Decimal(refund_amount),
-                        description= 'CANCEL REFUND',
+                        description= 'Refund on Order Cancellation',
                         transaction_source= 'CANCEL',
-                        order= order,
-                        order_item= item
+                        order=order,
+                        order_item= target_item
                     )
-                
-                if not order.items.filter(status='ACTIVE').exists():
-                    
-                    order.total_amount = Decimal('0.00')
-                    order.save()
-                    messages.success(request, "Order cancelled as all items were removed.")
-                    return redirect('order_list')                
 
-                order.save()
-                messages.success(request, f"Item {item.variant} cancelled successfully.")
-                return redirect('order_details', order_id=order.id, item_id=item.id)
+        order.total_amount -= refund_amount
+        order.save()
 
-        except Exception as e:
-            messages.error(request, f"Error cancelling item: {str(e)}")
-            return redirect('order_details', order_id=order.id, item_id=item.id)
+        messages.success(request, f"Cancelled {cancel_qty} units of {item.variant}")
+        return redirect('order_list')
 
-    return render(request, "user/cancel_order_item.html", {"item": item, "order": order})
+    return render(request, "user/cancel_order_item.html", {"item": item, "order": order, 'is_full_order': False})
+
+
+@login_required
+@transaction.atomic
+def cancel_whole_order(request, order_id):
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+    
+    if order.items.filter(delivery_status__in=['DELIVERED', 'RETURNED']).exists():
+        messages.error(request, "Order cannot be cancelled as some items are already processed.")
+        return redirect('order_list')
+
+    if request.method == 'POST':
+        selected_reason = request.POST.get("reason")
+        other_text = request.POST.get("other_reason", "").strip()
+        final_reason = other_text if selected_reason == "OTHER" else selected_reason
+
+        active_items = order.items.filter(status='ACTIVE')
+        if not active_items.exists():
+            messages.warning(request, "No active items to cancel.")
+            return redirect('order_list')
+        
+        for item in active_items:
+            item.status = 'CANCELLED'
+            item.delivery_status = 'CANCELLED'
+            item.cancellation_reason = selected_reason
+            if selected_reason == "OTHER":
+                item.other_reason = other_text
+            item.save()
+
+            item.variant.stock += item.quantity
+            item.variant.save()
+
+        # Refund 
+        if order.payment_method in ['WALLET', 'RAZORPAY'] and order.total_amount > 0:
+            wallet, _ = Wallet.objects.get_or_create(user=request.user)
+            refund_val = order.total_amount
+            wallet.balance += refund_val
+            wallet.save()
+
+            WalletTransaction.objects.create(
+                wallet=wallet,
+                transaction_type='CREDIT',
+                amount=refund_val,
+                transaction_source='CANCEL',
+                description=f'Full Order #{order.id} Refund',
+                order=order
+            )
+
+        order.total_amount = Decimal('0.00')
+        order.save()
+        
+        messages.success(request, "The entire order has been cancelled and refunded.")
+        return redirect('order_list')
+
+    return render(request, "user/cancel_order_item.html", {"order": order, "is_full_order": True})
 
 @never_cache
 @login_required(login_url='login')
+@transaction.atomic
 def return_order_item(request, order_id, item_id):
-    
     order = get_object_or_404(Order, id=order_id, user=request.user)
     item = get_object_or_404(OrderItem, id=item_id, order=order)
 
-    
     if item.delivery_status != 'DELIVERED':
-        messages.error(request, "This item cannot be returned as it has not been delivered.")
-        return redirect('order_details', order_id=order.id,item_id=item.id)
-
+        messages.error(request, "Item must be delivered before returning.")
+        return redirect('order_details', order_id=order.id, item_id=item.id)
     
+    if item.status in ['RETURNED', 'RETURN_REQUESTED']:
+        messages.warning(request, "A return is already in progress or completed for this item.")
+        return redirect('order_details', order_id=order.id, item_id=item.id)
+
     if request.method == 'POST':
-        reason=request.POST.get('reason')
-        other_reason= request.POST.get('other_reason')
+        return_qty = int(request.POST.get('quantity', item.quantity))
+        reason = request.POST.get('reason')
+        other_reason = request.POST.get('other_reason', '')
+
+        if return_qty > item.quantity or return_qty <= 0:
+            messages.error(request, "Invalid quantity selected.")
+            return redirect('order_details', order_id=order.id, item_id=item.id)
+
         try:
-            with transaction.atomic():
-            
-                if ReturnRequest.objects.filter(order_item=item).exists():
-                    messages.warning(request,'The return request for the same product is already made.')
-                    return redirect('order_details', order_id=order.id, item_id=item.id)
-                
-                ReturnRequest.objects.create(
-                    order_item= item,
-                    reason= reason,
-                    other_reason= other_reason,
-                    status='PENDING'
+          
+            if return_qty < item.quantity:
+                # Create the split item
+                target_item = OrderItem.objects.create(
+                    order=order,
+                    variant=item.variant,
+                    quantity=return_qty,
+                    price=item.price,
+                    status='RETURN_REQUESTED',      
+                    delivery_status='RETURN_REQUESTED'
                 )
-                messages.success(request, f'The return request for {item.variant} is submitted and waiting for the Admin approval')
-                return redirect('order_details', order_id=order.id, item_id=item.id)
-        
+                item.quantity -= return_qty
+                item.save()
+            else:
+                # Entire item is being returned
+                target_item = item
+                target_item.status = 'RETURN_REQUESTED'
+                target_item.delivery_status = 'RETURN_REQUESTED'
+                target_item.save()
+
+            ReturnRequest.objects.create(
+                order_item=target_item,
+                reason=request.POST.get('reason'),
+                other_reason=request.POST.get('other_reason', ''),
+                status='PENDING'
+            )
+            return redirect('order_list')
+
         except Exception as e:
-            messages.error(request, f"Error returning item: {str(e)}")
+            print(f'Exception occured as {e}')
+            messages.error(request, f"Error: {str(e)}")
             return redirect('order_details', order_id=order.id, item_id=item.id)
 
     return render(request, "user/return_order_item.html", {"order": order, "item": item})

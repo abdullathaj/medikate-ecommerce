@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from ecomproducts.models import Product,ProductVariant,ProductImage,Categories
 from django.core.exceptions import ValidationError
 import uuid
+from decimal import Decimal
 
 
 class User(AbstractUser):
@@ -88,7 +89,7 @@ class CartProducts(models.Model):
 # MODEL FOR USER WALLET
 class Wallet(models.Model):
     user=models.OneToOneField(User,on_delete=models.CASCADE,related_name='wallet')
-    balance=models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    balance=models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
 
     def __str__(self):
         return f'{self.user.username}s Wallet; Balance- {self.balance}'
@@ -117,6 +118,11 @@ class WalletTransaction(models.Model):
 
     def __str__(self):
         return f'{self.wallet.user.username} - {self.transaction_type} ₹{self.amount} {self.description} {self.created_at} {self.transaction_source}'
+
+    def clean(self):
+        if self.transaction_source in ['CANCEL', 'RETURN']:
+            if not self.order or not self.order_item:
+                raise ValidationError("Cancel/Return must be linked to order and item")
 
 
 # MODEL FOR REFERAL SYSTEM

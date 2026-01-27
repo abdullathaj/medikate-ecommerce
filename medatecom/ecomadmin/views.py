@@ -19,6 +19,8 @@ from django.db.models import Q,Sum, Count, F, DecimalField, ExpressionWrapper
 from django.db.models.functions import TruncDay, TruncWeek, TruncMonth, TruncYear
 from ecomorders.utils import render_to_pdf
 from django.http import HttpResponse
+from datetime import datetime
+import json
 
 
 
@@ -26,6 +28,7 @@ from django.http import HttpResponse
 # Create your views here.
 
 # DASHBOARD for Admin
+
 
 @staff_member_required
 @never_cache
@@ -86,6 +89,65 @@ def admin_dashboard(request):
         }
     return render(request,'admin/dashboard_admin.html',context)
 
+def dashboard_sales_chart(request):
+
+    filter_type = request.GET.get('filter', 'yearly')
+    now = timezone.now()
+
+    # 1. Date Filtering Logic
+    if filter_type == 'monthly':
+        start_date = now.replace(day=1, hour=0, minute=0, second=0)
+    elif filter_type == 'weekly':
+        start_date = now - timedelta(days=7)
+    else:  # Yearly
+        start_date = now.replace(month=1, day=1, hour=0, minute=0, second=0)
+
+    # Base queryset for active/delivered sales
+    sold_items = OrderItem.objects.filter(
+        order__created_at__gte=start_date,
+        status='ACTIVE', # Adjust based on your status logic (e.g., exclude cancelled)
+        order__is_paid=True
+    )
+
+    
+    top_products = sold_items.values(
+        'variant__product__name'
+    ).annotate(
+        total_sold=Sum('quantity'),
+        total_revenue=Sum(
+            ExpressionWrapper(
+                F('price') * F('quantity'),
+                output_field=DecimalField(max_digits=12, decimal_places=2)
+            )
+        )
+    ).order_by('-total_sold')[:10]
+    print('top products',top_products)
+
+   
+    top_categories = sold_items.values(
+        'variant__product__category__name'
+    ).annotate(
+        total_sold=Sum('quantity')
+    ).order_by('-total_sold')[:10]
+    print('top categories',top_categories)
+
+   
+    top_brands = sold_items.values(
+        'variant__product__brand'
+    ).annotate(
+        total_sold=Sum('quantity')
+    ).order_by('-total_sold')[:10]
+
+    print('top brands',top_brands)
+
+    context = {
+        'filter_type': filter_type,
+        'top_products': top_products,
+        'top_categories': top_categories,
+        'top_brands': top_brands,
+    }
+
+    return render(request,'admin/dashboard_sales_chart.html',context)
 # ---------------------------------------------------------------------------------------------------
 # USER MANAGEMENT FOR ADMIN                                                                          
 # ---------------------------------------------------------------------------------------------------
@@ -549,80 +611,78 @@ def admin_request_list(request):
 
 @never_cache
 @staff_member_required(login_url='admin_login')
-def admin_return_approval(request,request_id):
-    
+def admin_return_approval(request, request_id):
     """ ADMIN CAN APPROVE OR DENY THE RETURN REQUESTS. """
-
-    return_request=get_object_or_404(ReturnRequest,id=request_id)
-    item=return_request.order_item
-    order= item.order
+    return_request = get_object_or_404(ReturnRequest, id=request_id)
+    item = return_request.order_item  
+    order = item.order
 
     if return_request.status != 'PENDING':
         messages.warning(request, 'This return request is already processed.')
         return redirect('admin_request_list')
-    
-    if item.order.user != order.user:
-        raise PermissionError("Invalid return request context")
 
-    if request.method=='POST':
-        action= request.POST.get('action')
+    if request.method == 'POST':
+        action = request.POST.get('action')
         try:
             with transaction.atomic():
-                if action=='APPROVE':
-                    # Update return request
+                if action == 'APPROVE':
                     return_request.status = 'APPROVED'
                     return_request.save()
 
-                    # Update Order item
                     item.status = 'RETURNED'
                     item.delivery_status = 'RETURNED'
                     item.return_reason = return_request.reason
                     item.return_other_reason = return_request.other_reason
                     item.save()
 
-                    # Restore stock
                     item.variant.stock += item.quantity
                     item.variant.save()
 
-                    # SHARING PRICE OF EACH ITEM IN THE ORDER
-                    item_total = item.quantity * item.price
-                    actual_order_total= sum(it.price * it.quantity for it in order.items.all()) # BEFORE COUPON APPLIED
-                    paid_order_total= order.total_amount  # AFTER ANY COUPON APPLIED
-                # PAID AMOUNT OF EACH ITEM IF COUPON IS APPLIED
-                    refund_amount= (item_total/actual_order_total)* paid_order_total if actual_order_total > 0 else 0
+                    original_subtotal = sum(it.price * it.quantity for it in order.items.all())
+                    
+                    item_refund_basis = item.quantity * item.price
+
+                    if original_subtotal > 0:
+                        refund_amount = item_refund_basis
+                    else:
+                        refund_amount = 0
+                    
                     refund_amount = Decimal(refund_amount).quantize(Decimal("0.01"))
 
                     order.total_amount = max(0, order.total_amount - refund_amount)
                     order.save()
 
-                    # Credit refund to Users Wallet
-                    wallet,created= Wallet.objects.get_or_create(user=order.user)
-                    wallet.balance += Decimal(refund_amount).quantize(Decimal("0.01"))
+                    wallet, _ = Wallet.objects.get_or_create(user=order.user)
+                    wallet.balance += refund_amount
                     wallet.save()
 
                     WalletTransaction.objects.create(
-                        wallet= wallet,
-                        transaction_type= 'CREDIT',
-                        amount= Decimal(refund_amount),
-                        description= 'RETURN REFUND',
-                        transaction_source= 'RETURN',
+                        wallet=wallet,
+                        transaction_type='CREDIT',
+                        amount=refund_amount,
+                        description=f'Return Refund for Order Return',
+                        transaction_source='RETURN',
                         order=order,
-                        order_item= item
+                        order_item=item
                     )
-                    messages.success(request, f'The return request for # {item.id} is approved. Amount of {refund_amount} is added to the users wallet')
+                    messages.success(request, f'Approved. ₹{refund_amount} refunded to wallet.')
+
                 elif action == 'DENY':
                     return_request.status = 'DENIED'
                     return_request.save()
-                    messages.warning(request, f'The request for item # {item.id} is denied.')
+  
+                    item.status = 'ACTIVE' 
+                    item.delivery_status = 'DELIVERED'
+                    item.save()
+                    messages.warning(request, f'Return request denied.')
 
                 return redirect('admin_request_list')
         except Exception as e:
-            messages.error(request, f'Error occured in Return request: {str(e)}')
-            return redirect('admin_request_list')     
-        
-           
-    
-    return render(request,'admin/return_approval.html',{'return_request':return_request, 'item':item, 'order':order} )
+            print(f'Exception occured as {e}')
+            messages.error(request, f'Error: {str(e)}')
+            return redirect('admin_request_list')
+
+    return render(request, 'admin/return_approval.html', {'return_request': return_request, 'item': item, 'order': order})
 
 #################################################################################################################################
 
@@ -841,7 +901,7 @@ def admin_sales_report(request):
     
     
     items = OrderItem.objects.filter(order__in=orders)
-    total_items = items.count()
+    total_items = items.aggregate(total=Sum('quantity'))['total'] or 0
     
     
     pendings = items.filter(delivery_status='PENDING').count()
@@ -965,8 +1025,13 @@ def admin_wallet_transactions(request):
 
 @staff_member_required
 def admin_wallet_details(request,transaction_id):
-    wallet_transaction = get_object_or_404(wallet_transaction,id=transaction_id)
+    wallet_transaction = get_object_or_404(WalletTransaction,id=transaction_id)
+    user= wallet_transaction.wallet.user
 
+    context={
+        'wallet_transaction': wallet_transaction,
+        'user': user
+    }
 
     
-    return render(request,'admin/wallet_details.html' )
+    return render(request,'admin/wallet_details.html',context )

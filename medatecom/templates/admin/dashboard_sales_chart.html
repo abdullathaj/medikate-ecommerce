@@ -1,0 +1,129 @@
+{% extends 'admin/base_admin.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="container-fluid px-4 mt-4">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Sales Analytics</h2>
+            <p class="text-muted mb-0">Overview of best performing products, categories, and brands</p>
+        </div>
+
+        <form method="GET" class="d-flex align-items-center gap-2">
+            <label class="fw-semibold mb-0">Time Range</label>
+            <select name="filter" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+                <option value="yearly" {% if filter_type == 'yearly' %}selected{% endif %}>This Year</option>
+                <option value="monthly" {% if filter_type == 'monthly' %}selected{% endif %}>This Month</option>
+                <option value="weekly" {% if filter_type == 'weekly' %}selected{% endif %}>This Week</option>
+            </select>
+        </form>
+    </div>
+
+    <div class="row g-4">
+
+        <!-- Top Products -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0 fw-semibold">Top 10 Best Selling Products</h6>
+                </div>
+
+                <div class="card-body p-0">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Product</th>
+                                <th class="text-center">Units Sold</th>
+                                <th class="text-end">Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for prod in top_products %}
+                            <tr>
+                                <td class="fw-semibold">
+                                    {{ prod.variant__product__name }}
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-primary-subtle text-primary px-3">
+                                        {{ prod.total_sold }}
+                                    </span>
+                                </td>
+                                <td class="text-end fw-semibold text-success">
+                                    ₹{{ prod.total_revenue|floatformat:2 }}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-4">
+                                    No sales data available
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side -->
+        <div class="col-lg-5">
+
+            <!-- Categories -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0 fw-semibold">Top Categories</h6>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        {% for cat in top_categories %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span class="fw-semibold">
+                                {{ cat.variant__product__category__name }}
+                            </span>
+                            <span class="badge bg-success rounded-pill">
+                                {{ cat.total_sold }} units
+                            </span>
+                        </li>
+                        {% empty %}
+                        <li class="list-group-item text-center text-muted py-3">
+                            No category data found
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Brands -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h6 class="mb-0 fw-semibold">Top Brands</h6>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        {% for brand in top_brands %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span class="fw-semibold">
+                                {{ brand.variant__product__brand|default:"Unknown Brand" }}
+                            </span>
+                            <span class="badge bg-dark rounded-pill">
+                                {{ brand.total_sold }} units
+                            </span>
+                        </li>
+                        {% empty %}
+                        <li class="list-group-item text-center text-muted py-3">
+                            No brand data found
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

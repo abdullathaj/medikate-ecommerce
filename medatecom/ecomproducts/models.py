@@ -70,7 +70,7 @@ class ProductVariant(models.Model):
 
         if not offers:
             return None
-        
+         
         return max(offers, key=lambda x: x.discount_percentage)
 
     @property
@@ -82,11 +82,6 @@ class ProductVariant(models.Model):
             discounted_price = self.price * (Decimal(1) - discount)
             return discounted_price.quantize(Decimal("1"), rounding=ROUND_HALF_UP)
         return self.price
-
-    # @property
-    # def original_price(self):
-    #     """For display the striked original price if no offer is availavle """
-    #     return self.price
            
 
 class ProductImage(models.Model): # related_name SHOULD HAVE TO CHANGE TO product_image

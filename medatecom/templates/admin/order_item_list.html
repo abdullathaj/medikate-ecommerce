@@ -16,6 +16,7 @@
                     <th class="px-3 py-2 text-uppercase text-secondary">Image</th>
                     <th class="px-3 py-2 text-uppercase text-secondary">Product & Variant</th>
                     <th class="px-3 py-2 text-uppercase text-secondary">Item Price</th>
+                    <th class="px-3 py-2 text-uppercase text-secondary">Qty</th>
                     <th class="px-3 py-2 text-uppercase text-secondary">Delivery Status</th>
                     <th class="px-3 py-2 text-uppercase text-secondary">Cancel/ Return Reason </th>
                     <th class="px-3 py-2 text-uppercase text-secondary">Actions</th>
@@ -38,6 +39,7 @@
                     </td>
                     <td class="px-3 py-2 text-muted">{{ item.variant.product.name }} - {{ item.variant.variant_name }}</td>
                     <td class="px-3 py-2 text-muted">₹{{ item.price|intcomma }}</td>
+                    <td class="px-3 py-2 text-muted">{{ item.quantity|intcomma }}</td>
                     <td class="px-3 py-2 text-muted">{{ item.display_status }}</td>
                     <td class="px-3 py-2 text-muted">
                         {% if item.status == 'CANCELLED' %}

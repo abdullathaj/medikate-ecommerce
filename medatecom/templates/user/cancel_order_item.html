@@ -1,12 +1,18 @@
 {% extends "auth/navbar.html" %}
 {% block content %}
 <div class="container mt-4">
-    <h4>Cancel {{ item.variant }}</h4>
+    {% if is_full_order %}
+        <h4>Cancel Entire Order #{{ order.id }}</h4>
+        <p class="text-muted">This will cancel all items in this order and refund the total amount.</p>
+    {% else %}
+        <h4>Cancel {{ item.variant }}</h4>
+    {% endif %}
+
     <form method="post">
         {% csrf_token %}
         
         <div class="mb-3">
-            <label for="reason" class="form-label">Select a reason</label>
+            <label for="reason" class="form-label">Select a reason for cancellation</label>
             <select id="reason" name="reason" class="form-select" required onchange="toggleOtherReason(this)">
                 <option value="">-- Select Reason --</option>
                 <option value="DELAY">Delivery taking too long</option>
@@ -16,25 +22,43 @@
                 <option value="OTHER">Other reason</option>
             </select>
         </div>
+        
+        {% if not is_full_order %}
+        <div class="mb-3">
+            <label class="form-label">How many units do you want to cancel?</label>
+            <select name="quantity" class="form-select">
+                {% for i in "x"|rjust:item.quantity %}
+                    <option value="{{ forloop.counter }}" {% if forloop.last %}selected{% endif %}>
+                        {{ forloop.counter }}
+                    </option>
+                {% endfor %}
+            </select>
+            <small class="text-muted">Currently ordered: {{ item.quantity }} units</small>
+        </div>
+        {% else %}
+        <input type="hidden" name="full_cancel" value="true">
+        {% endif %}
 
         <div class="mb-3" id="other-reason-box" style="display: none;">
-            <label for="other_reason" class="form-label">Other Reason</label>
+            <label for="other_reason" class="form-label">Please specify</label>
             <textarea name="other_reason" id="other_reason" class="form-control" rows="3"></textarea>
         </div>
 
-        <button type="submit" class="btn btn-danger">Confirm Cancel</button>
-        <a href="{% url 'order_details' order.id item.id %}" class="btn btn-secondary">Back</a>
+        <button type="submit" class="btn btn-danger">Confirm Cancellation</button>
+        
+        {% if is_full_order %}
+            <a href="{% url 'order_list' %}" class="btn btn-secondary">Back to List</a>
+        {% else %}
+            <a href="{% url 'order_details' order.id item.id %}" class="btn btn-secondary">Back</a>
+        {% endif %}
     </form>
 </div>
 
 <script>
 function toggleOtherReason(select) {
     let otherBox = document.getElementById("other-reason-box");
-    if (select.value === "OTHER") {
-        otherBox.style.display = "block";
-    } else {
-        otherBox.style.display = "none";
-    }
+    document.getElementById("other_reason").required = (select.value === "OTHER");
+    otherBox.style.display = (select.value === "OTHER") ? "block" : "none";
 }
 </script>
 {% endblock %}

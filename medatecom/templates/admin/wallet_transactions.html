@@ -42,7 +42,10 @@
                     <td class="px-2 py-2 text-muted">₹{{ trans.amount|intcomma }}</td>
                     <td class="px-2 py-2 text-muted">{{ trans.description|default:"—" }}</td>
                     <td class="px-2 py-2 text-muted">
-                        <button class="btn btn-outline-primary btn-sm text-decoration-none">View</button>
+                        <a href="{% url "admin_wallet_details" trans.id %}">
+                            <button class="btn btn-outline-primary btn-sm text-decoration-none">View</button>
+                        </a>
+                        
                     </td>
                 </tr>
                 {% empty %}
