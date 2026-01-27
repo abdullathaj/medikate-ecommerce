@@ -897,8 +897,20 @@ def admin_sales_report(request):
 
     
     total_order = orders.count()
-    total_revenue = orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
-    
+    valid_orders = orders.exclude(
+        order_items__delivery_status__in=['CANCELLED', 'RETURNED']
+    ).distinct()
+
+    total_revenue = (
+        valid_orders.aggregate(total=Sum('total_amount'))['total'] or 0
+    )
+    total_offer_discount = (
+        valid_orders.aggregate(total=Sum('offer_discount'))['total'] or 0
+        )
+
+    total_coupon_discount = (
+        valid_orders.aggregate(total=Sum('coupon_discount'))['total'] or 0
+        )
     
     items = OrderItem.objects.filter(order__in=orders)
     total_items = items.aggregate(total=Sum('quantity'))['total'] or 0
@@ -931,6 +943,8 @@ def admin_sales_report(request):
         'total_items': total_items,
         'total_revenue': total_revenue,
         'average_order_value': avg_order_value,
+        'total_offer_discount': total_offer_discount,
+        'total_coupon_discount': total_coupon_discount,
         'pendings': pendings, 
         'deliveries': deliveries,
         'cancelled': cancelled, 
@@ -968,7 +982,21 @@ def admin_sales_report_pdf(request):
         orders = orders.filter(created_at__date__range=[start_date, end_date])
 
     total_order = orders.count()
-    total_revenue = orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+    valid_orders = orders.exclude(
+        order_items__delivery_status__in=['CANCELLED', 'RETURNED']
+    ).distinct() 
+
+    total_revenue = (
+        valid_orders.aggregate(total=Sum('total_amount'))['total'] or 0
+    )
+
+    total_offer_discount = (
+        valid_orders.aggregate(total=Sum('offer_discount'))['total'] or 0
+    )
+
+    total_coupon_discount = (
+        valid_orders.aggregate(total=Sum('coupon_discount'))['total'] or 0
+    )
     items = OrderItem.objects.filter(order__in=orders)
     total_items = items.count()
 
@@ -988,6 +1016,8 @@ def admin_sales_report_pdf(request):
         'total_order': total_order,
         'total_items': total_items,
         'total_revenue': total_revenue,
+        'total_offer_discount': total_offer_discount,
+        'total_coupon_discount': total_coupon_discount,
         'average_order_value': avg_order_value,
         'pendings': pendings, 
         'deliveries': deliveries,

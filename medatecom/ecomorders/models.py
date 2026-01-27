@@ -3,6 +3,7 @@ from ecomproducts.models import Categories,Product,ProductVariant,ProductImage
 from ecomusers.models import User,UserAddress,CartProducts
 from datetime import timedelta
 from django.utils import timezone
+from decimal import Decimal
 
 
 # Create your models here.
@@ -17,6 +18,8 @@ class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
     address = models.ForeignKey(UserAddress, on_delete=models.SET_NULL, null=True, blank=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    offer_discount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    coupon_discount = models.DecimalField(max_digits=10, decimal_places=2, default= Decimal('0.00'))
     payment_method = models.CharField(max_length=20, default='COD')  # Always 'COD' for now
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -124,6 +124,8 @@ def buynow_checkout(request):
         
         
         effective_unit_price = (final_payable / quantity).quantize(Decimal('0.01')) # User Paid price per item
+        product_offer_discount= Decimal((variant.price * quantity) - total_before_coupon) # Product Offer Discount
+        coupon_discount = Decimal(applied_coupon['coupon_discount']) if applied_coupon else Decimal('0.00') # Coupon Discount
 
         request.session['order_data'] = {
             'cart_items': [{
@@ -137,6 +139,8 @@ def buynow_checkout(request):
             'coupon': applied_coupon['coupon_code'] if applied_coupon else None,
             'is_cart_checkout': False,
             'shipping_charge': str(shipping_charge),
+            'offer_discount': str(product_offer_discount),
+            'coupon_discount': str(coupon_discount)
         }
 
         dictt={
@@ -196,6 +200,8 @@ def checkout(request):
     discount_total = Decimal(cart_price_data.get('discount_total', '0'))
     amount_payable = Decimal(cart_price_data.get('amount_payable', '0'))             # Amount payable == selling totla price
     
+    offer_discount = (original_total_price - selling_total_price).quantize(Decimal('0.01'))
+
     cart_item_details = cart_price_data.get('cart_item_details', [])
 
     
@@ -272,7 +278,8 @@ def checkout(request):
             })
 
         final_amount=calaculated_total.quantize(Decimal('0.01'))  
-        
+
+        coupon_discount = (selling_total_price - final_amount).quantize(Decimal('0.01'))
 
         request.session['order_data'] = {
             'cart_items': order_items,
@@ -281,6 +288,8 @@ def checkout(request):
             'coupon': coupon_code,
             'is_cart_checkout': True,
             'shipping_charge':str(shipping_charge),
+            'offer_discount': str(offer_discount),
+            'coupon_discount': str(coupon_discount)
         }
         
         
@@ -397,6 +406,8 @@ def payment_method(request):
     total_amount = Decimal(order_data.get('total_amount','0'))       # Sum of all distributed item prices
     total_amount += shipping_charge
     applied_coupon=request.session.get('applied_coupon')
+    offer_discount = Decimal(order_data.get('offer_discount','0'))
+    coupon_discount = Decimal(order_data.get('coupon_discount','0'))
 
     ordering_items = order_data.get('cart_items',[])
 
@@ -439,7 +450,9 @@ def payment_method(request):
                         address=address,
                         total_amount=total_amount,
                         payment_method=payment_method,
-                        is_paid=(payment_method == 'WALLET')
+                        is_paid=(payment_method == 'WALLET'),
+                        offer_discount= offer_discount,
+                        coupon_discount= coupon_discount
                     )
                     
                     for item in variants:
@@ -540,7 +553,9 @@ def razorpay_success(request):
             is_cart_checkout = order_data.get('is_cart_checkout', False)
             address = get_object_or_404(UserAddress, id=order_data['address_id'], user=request.user)
             total_amount = Decimal(order_data.get('total_amount', '0'))
-            
+            offer_discount = Decimal(order_data.get('offer_discount','0'))
+            coupon_discount = Decimal(order_data.get('coupon_discount','0'))
+
             ordering_items = order_data.get('cart_items', [])
             variants = []
             for item in ordering_items:
@@ -563,6 +578,8 @@ def razorpay_success(request):
                     user=request.user,
                     address=address,
                     total_amount=total_amount,
+                    offer_discount= offer_discount,
+                    coupon_discount= coupon_discount,
                     payment_method='RAZORPAY',
                     is_paid=True, 
                     razorpay_order_id=razorpay_order_id,
