@@ -23,58 +23,139 @@
         {% endif %}
     </div>
                 <!-- Search Bar Section -->
-                            <section class="search-section container mt-0 mb-3">
+                            <section class="search-section container mt-0 mb-1">
                                 {% include 'auth/search_bar.html' %}
                             </section>
     
 <!-- Main Content-->
 <div class="main-content">
-    <!-- Hero Section: Carousel -->
+
+     <!-- Hero Section: Carousel -->
     <section class="hero-section my-1">
-        <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
-            <!-- Carousel Indicators -->
-            <div class="carousel-indicators">
-                <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
-                <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
-                <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
-                <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="3" aria-label="Slide 4"></button>
-            </div>
+        <div class="hero-wrapper">
+            <div id="heroCarousel" class="carousel slide corousal-fade" data-bs-ride="carousel">
+                <!-- Carousel Indicators -->
+                <div class="carousel-indicators">
+                    <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+                    <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
+                    <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
+                    <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="3" aria-label="Slide 4"></button>
+                </div>
 
-            <!-- Carousel Images with sliding -->
-            <div class="carousel-inner">
-                <div class="carousel-item active">
-                    <div class="carousel-overlay"></div>
-                    <img src="{% static 'home/images/cosmeticsbanner.jpg' %}" class="d-block w-100" alt="Oral Care Products">
+                <!-- Carousel Images with sliding -->
+                <div class="carousel-inner">
+                    <div class="carousel-item active">
+                        <div class="carousel-overlay"></div>
+                        <img src="{% static 'home/images/cosmeticsbanner4.jpg' %}" class="d-block w-100" alt="Oral Care Products">
+                    </div>
+                    <div class="carousel-item">
+                        <div class="carousel-overlay"></div>
+                        <img src="{% static 'home/images/oralbanner.jpg' %}" class="d-block w-100" alt="Hair Care Products">
+                    </div>
+                    <div class="carousel-item">
+                        <div class="carousel-overlay"></div>
+                        <img src="{% static 'home/images/healthbanner.png' %}" class="d-block w-100" alt="Skin Care Products">
+                    </div>
+                    <div class="carousel-item">
+                        <div class="carousel-overlay"></div>
+                        <img src="{% static 'home/images/cosmeticsbanner5.jpg' %}" class="d-block w-100" alt="Baby Care Products">
+                    </div>
                 </div>
-                <div class="carousel-item">
-                    <div class="carousel-overlay"></div>
-                    <img src="{% static 'home/images/haircarebanner.jpg' %}" class="d-block w-100" alt="Hair Care Products">
-                </div>
-                <div class="carousel-item">
-                    <div class="carousel-overlay"></div>
-                    <img src="{% static 'home/images/cosmeticsbanner4.jpg' %}" class="d-block w-100" alt="Skin Care Products">
-                </div>
-                <div class="carousel-item">
-                    <div class="carousel-overlay"></div>
-                    <img src="{% static 'home/images/cosmeticsbanner5.jpg' %}" class="d-block w-100" alt="Baby Care Products">
-                </div>
-            </div>
 
-            
-            <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
-                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Previous</span>
-            </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
-                <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Next</span>
-            </button>
+                
+                <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Next</span>
+                </button>
+            </div>
         </div>
     </section>
 
-    <!-- Product Listing Section -->
+     <!-- Category Section-->
+    <section class="category-section container my-1">
+        <h2 class="heading text-center mb-4">Popular Categories</h2>
+        <div class="categories-container d-flex justify-content-center align-items-center flex-wrap gap-5">
+            
+            <div class="category-card text-center">
+                <div class="category-logo">
+                    <img src="{% static 'home/images/skin care logo.webp' %}" alt="Ctgry 1" class="ctgry-img">
+                </div>
+                <h6 class="ctgry-name mt-2">Skin Care</h6>
+            </div>
+
+            <div class="category-card text-center">
+                <div class="category-logo">
+                    <img src="{% static "home/images/hair care logo.jpg" %}" alt="Ctgry 2" class="ctgry-img">
+                </div>
+                <h6 class="ctgry-name mt-2">Hair Care</h6>
+            </div>
+
+            <div class="category-card text-center">
+                <div class="category-logo">
+                    <img src="{% static "home/images/face care logo.jpg" %}" alt="Ctgry 3" class="ctgry-img">
+                </div>
+                <h6 class="ctgry-name mt-2">Face Care</h6>
+            </div>
+
+             <div class="category-card text-center">
+                <div class="category-logo">
+                    <img src="{% static "home/images/health supplement logo.jpg" %}" alt="Ctgry 4" class="ctgry-img">
+                </div>
+                <h6 class="ctgry-name mt-2">Supplements</h6>
+            </div>
+
+             <div class="category-card text-center">
+                <div class="category-logo">
+                    <img src="{% static "home/images/baby care logo.webp" %}" alt="Ctgry 5" class="ctgry-img">
+                </div>
+                <h6 class="ctgry-name mt-2">Baby Care</h6>
+            </div>
+
+             <div class="category-card text-center">
+                <div class="category-logo">
+                    <img src="{% static "home/images/health devices logo.webp" %}" alt="Ctgry 6" class="ctgry-img">
+                </div>
+                <h6 class="ctgry-name mt-2">Health devices</h6>
+            </div>
+            <div class="category-card text-center">
+            <div class="category-logo">
+                <img src="{% static 'home/images/oral care logo.jpg' %}" alt="Ctgry 7" class="ctgry-img">
+            </div>
+            <h6 class="ctgry-name mt-2">Oral Care</h6>
+        </div>
+        <div class="category-card text-center">
+            <div class="category-logo">
+                <img src="{% static "home/images/pain relief logo.webp" %}" alt="Ctgry 8" class="ctgry-img">
+            </div>
+            <h6 class="ctgry-name mt-2">Pain Relief</h6>
+        </div>
+        </div>
+    <section>
+    
+    <div class="coupon-line">
+        <i class="fas fa-gift"></i>
+        <span>
+            Refer friends & earn exciting rewards —
+            <strong>exclusive coupons await!</strong>
+        </span>
+        <a href="#" class="coupon-cta">Refer Now</a>
+    </div>
+
+     <!-- Single Banner Section -->
+    <section class="single-banner-section container my-1">
+        <div class="single-banner">
+            <div class="banner-overlay"></div>
+            <img src="{% static 'home/images/healthdevicebanner.jpg' %}" class="d-block w-100" alt="Promotional Banner">
+        </div>
+    </section>  
+
+      <!-- Product Listing Section -->
     <section id='product-listing' class="product-listing-section container my-1">
-         <h2 class="text-center mb-4">Latest Products</h2>
+         <h2 class="heading text-center my-4">Latest Products</h2>
         <div class="row row-cols-3 row-cols-md-3 row-cols-lg-4 g-3 mx-1">
             {% for product in products %}
                 <!-- Product Card -->
@@ -135,12 +216,11 @@
                 </div>
             {% endfor %}
         </div>
-
     </section>
 
     <!-- Brands Section -->
     <section class="brands-section container my-1">
-        <h2 class="text-center mb-4">Our Brands</h2>
+        <h2 class="heading text-center mb-4">Trusted Brands</h2>
         <div class="brands-container d-flex justify-content-center align-items-center flex-wrap gap-4">
             <div class="brand-logo">
                 <img src="{% static 'home/images/colgate-logo.png' %}" alt="Brand 1 Logo" class="brand-img">
@@ -169,74 +249,6 @@
         </div>
     </section>
 
-     <!-- Single Banner Section -->
-     {% comment %} <section class="single-banner-section container my-1">
-        <div class="single-banner">
-            <div class="banner-overlay"></div>
-            <img src="{% static 'home/images/supplementbanner.jpg' %}" class="d-block w-100" alt="Promotional Banner">
-        </div>
-    </section>  {% endcomment %}
-
-    <!-- Category Section-->
-    <section class="category-section container my-1">
-        <h2 class="text-center mb-4">Product Categories</h2>
-        <div class="categories-container d-flex justify-content-center align-items-center flex-wrap gap-5">
-            
-            <div class="category-card text-center">
-                <div class="category-logo">
-                    <img src="{% static 'home/images/skin care logo.webp' %}" alt="Ctgry 1" class="ctgry-img">
-                </div>
-                <h6 class="ctgry-name mt-2">Skin Care</h6>
-            </div>
-
-            <div class="category-card text-center">
-                <div class="category-logo">
-                    <img src="{% static "home/images/hair care logo.jpg" %}" alt="Ctgry 2" class="ctgry-img">
-                </div>
-                <h6 class="ctgry-name mt-2">Hair Care</h6>
-            </div>
-
-            <div class="category-card text-center">
-                <div class="category-logo">
-                    <img src="{% static "home/images/face care logo.jpg" %}" alt="Ctgry 3" class="ctgry-img">
-                </div>
-                <h6 class="ctgry-name mt-2">Face Care</h6>
-            </div>
-
-             <div class="category-card text-center">
-                <div class="category-logo">
-                    <img src="{% static "home/images/health supplement logo.jpg" %}" alt="Ctgry 4" class="ctgry-img">
-                </div>
-                <h6 class="ctgry-name mt-2">Supplements</h6>
-            </div>
-
-             <div class="category-card text-center">
-                <div class="category-logo">
-                    <img src="{% static "home/images/baby care logo.webp" %}" alt="Ctgry 5" class="ctgry-img">
-                </div>
-                <h6 class="ctgry-name mt-2">Baby Care</h6>
-            </div>
-
-             <div class="category-card text-center">
-                <div class="category-logo">
-                    <img src="{% static "home/images/health devices logo.webp" %}" alt="Ctgry 6" class="ctgry-img">
-                </div>
-                <h6 class="ctgry-name mt-2">Health devices</h6>
-            </div>
-            <div class="category-card text-center">
-            <div class="category-logo">
-                <img src="{% static 'home/images/oral care logo.jpg' %}" alt="Ctgry 7" class="ctgry-img">
-            </div>
-            <h6 class="ctgry-name mt-2">Oral Care</h6>
-        </div>
-        <div class="category-card text-center">
-            <div class="category-logo">
-                <img src="{% static "home/images/pain relief logo.webp" %}" alt="Ctgry 8" class="ctgry-img">
-            </div>
-            <h6 class="ctgry-name mt-2">Pain Relief</h6>
-        </div>
-        </div>
-    <section>
 </div>
 
 
@@ -253,91 +265,189 @@
 body {
     background-color: #edececee;
 }
+.heading {
+    font-weight: bold; 
+    color: #084d31;
+}
+
+/* =============================
+   REFERRAL / COUPON STRIP
+============================= */
+
+        .coupon-line {
+            max-width: 1100px;
+            margin: 1.5rem auto;
+            padding: 12px 20px;
+            background: linear-gradient(90deg, #e6f4f2, #f8fffe);
+            border: 1px dashed #26a69a;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            font-size: 14px;
+            color: #004d47;
+            text-align: center;
+        }
+
+        .coupon-line i {
+            color: #00675c;
+            font-size: 18px;
+        }
+
+        .coupon-line strong {
+            color: #00675c;
+            font-weight: 600;
+        }
+
+        .coupon-cta {
+            margin-left: auto;
+            padding: 6px 14px;
+            background: #00675c;
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 20px;
+            text-decoration: none;
+            transition: background 0.25s ease, transform 0.2s ease;
+        }
+
+        .coupon-cta:hover {
+            background: #004d47;
+            transform: translateY(-1px);
+        }
+
+
+        @media (max-width: 768px) {
+            .coupon-line {
+                flex-direction: column;
+                gap: 8px;
+                font-size: 13px;
+            }
+
+            .coupon-cta {
+                margin-left: 0;
+            }
+        }
+
 
 /* =============================
    HERO SECTION
 ============================= */
         .hero-section {
-            margin-bottom: 2rem;
-            margin-left: 1rem;
-            margin-right: 1rem;
-            position: relative;
+            margin-top: 1rem;
+            margin-bottom: 2.5rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .hero-wrapper {
+            width: 100%;
+            max-width: 1100px;   /* 🔥 controls width */
+            padding: 0 1rem;
         }
 
         .carousel {
-            max-height: 480px;
-            min-height: 200px;
+            height: 420px;
             overflow: hidden;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 18px;
+            background: #f5f7f6;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
         }
 
         .carousel-item {
+            height: 420px;
             position: relative;
-            transition: transform 0.5s ease-in-out;
         }
 
         .carousel-item img {
-            object-fit: cover;
-            max-height: 480px;
-            width: 100%;
-            display: block;
-            margin: 0 auto;
-        }
-
-        .carousel-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.3));
+            object-fit: cover; /* 🔥 MOST IMPORTANT FIX */
+            object-position: center;
+        }
+
+        /* Overlay for depth */
+        .carousel-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                to bottom,
+                rgba(0, 0, 0, 0.05),
+                rgba(0, 0, 0, 0.35)
+            );
             z-index: 1;
         }
 
+        /* Controls */
         .carousel-control-prev,
         .carousel-control-next {
-            width: 5%;
-            background: rgba(0, 0, 0, 0.3);
-            transition: background 0.3s ease;
+            width: 50px;
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 50%;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 50px;
+        }
+
+        .carousel-control-prev {
+            left: 15px;
+        }
+
+        .carousel-control-next {
+            right: 15px;
         }
 
         .carousel-control-prev:hover,
         .carousel-control-next:hover {
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        /* Indicators */
+        .carousel-indicators {
+            bottom: 12px;
         }
 
         .carousel-indicators [data-bs-target] {
             width: 10px;
             height: 10px;
             border-radius: 50%;
-            background-color: #fff;
+            background-color: #ffffff;
             opacity: 0.5;
-            transition: opacity 0.3s ease;
+            transition: all 0.3s ease;
         }
 
         .carousel-indicators .active {
             opacity: 1;
-            background-color: #26A69A;
+            background-color: #00675c;
+            transform: scale(1.2);
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .carousel {
-                max-height: 300px;
-                min-height: 150px;
-            }
-            .carousel-item img {
-                max-height: 300px;
+        @media (max-width: 992px) {
+            .carousel,
+            .carousel-item {
+                height: 360px;
             }
         }
-        @media (max-width: 480px) {
-            .carousel {
-                max-height: 250px;
-                min-height: 120px;
+
+        @media (max-width: 768px) {
+            .carousel,
+            .carousel-item {
+                height: 300px;
+                border-radius: 14px;
             }
-            .carousel-item img {
-                max-height: 250px;
+        }
+
+        @media (max-width: 480px) {
+            .carousel,
+            .carousel-item {
+                height: 240px;
+                border-radius: 12px;
+            }
+
+            .carousel-control-prev,
+            .carousel-control-next {
+                display: none; /* cleaner mobile UX */
             }
         }
 
@@ -521,7 +631,7 @@ body {
 /* =============================
    SINGLE BANNER SECTION
 ============================= */
-        {% comment %} .single-banner-section {
+        .single-banner-section {
             padding: 2rem 0;
         }
 
@@ -570,7 +680,7 @@ body {
             .single-banner img {
                 max-height: 250px;
             }
-        } {% endcomment %}
+        } 
 
 /* =============================
    PRODUCT LISTING SECTION

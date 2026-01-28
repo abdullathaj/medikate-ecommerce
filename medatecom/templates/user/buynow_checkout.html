@@ -10,7 +10,7 @@
                     <h5>Product Summary</h5>
                     <div class="d-flex align-items-center">
                         {% with img=variant.product.product_image.first %}
-                        <img src="{{ img.image.url }}" style="width: 80px; height: 80px; object-fit: cover;"
+                        <img src="{{ img.image.url }}" style="width: 80px; height: 80px; object-fit: contain;"
                             class="me-3">
                         {% endwith %}
                         <div>
@@ -19,7 +19,7 @@
                             <strong>Qty: {{ quantity }}</strong>
                         </div>
                         <div class="ms-auto">
-                            <span class="text-muted"><del>₹{{ original_unit_price }}</del></span><br>
+                            <span class="text-danger"><del>₹{{ original_unit_price }}</del></span><br>
                             <span class="text-success">₹{{ variant.final_price }} each</span>
                         </div>
                     </div>

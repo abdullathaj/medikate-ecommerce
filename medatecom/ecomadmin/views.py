@@ -898,7 +898,7 @@ def admin_sales_report(request):
     
     total_order = orders.count()
     valid_orders = orders.exclude(
-        order_items__delivery_status__in=['CANCELLED', 'RETURNED']
+        items__delivery_status__in=['CANCELLED', 'RETURNED']
     ).distinct()
 
     total_revenue = (
@@ -983,7 +983,7 @@ def admin_sales_report_pdf(request):
 
     total_order = orders.count()
     valid_orders = orders.exclude(
-        order_items__delivery_status__in=['CANCELLED', 'RETURNED']
+        items__delivery_status__in=['CANCELLED', 'RETURNED']
     ).distinct() 
 
     total_revenue = (
