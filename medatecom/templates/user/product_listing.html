@@ -96,8 +96,8 @@
                             </div>
                         </div>
                             <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-success w-100">Apply Filters</button>
-                                <a href="{% url 'product_listing' %}" class="btn btn-warning w-100">Clear Filters</a>
+                                <button type="submit" class="filterbtn btn btn-outline-success w-100">Apply Filters</button>
+                                <a href="{% url 'product_listing' %}" class="filterbtn btn btn-outline-danger w-100">Clear Filters</a>
                             </div>
                     </form>
                 </div>
@@ -289,8 +289,8 @@
             border-radius: 8px;
         }
 
-        .btn-success,
-        .btn-warning {
+        .filterbtn
+         {
            
             border-radius: 8px;
             font-size: 13px;
@@ -298,10 +298,8 @@
             transition: background-color 0.3s ease, transform 0.2s ease;
         }
 
-        .btn-success:hover,
-        .btn-warning:hover {
-            background-color: #8c9d8d;
-            border-color: #000000;
+        .filterbtn:hover{
+           
             transform: translateY(-1px);
         }
 

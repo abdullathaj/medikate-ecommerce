@@ -104,43 +104,11 @@
                 <p>Original Price: ₹{{ original_total_price|floatformat:2 }}</p>
                 <p>Discount: <span class="text-success text-decoration-line-through">-₹{{ discount_total|floatformat:2 }}</span></p>
                 <p>Subtotal: ₹{{ selling_total_price|floatformat:2 }}</p>
-           {% comment %} {% if coupon_applied %}
-                <p>After Coupon: ₹{{ payable_amount|floatformat:2 }}</p>
-            {% endif %} {% endcomment %}
-
-
                 <hr>
                 <h5>Payable Amount: ₹{{ payable_amount|floatformat:2 }}</h5>
                 <p class="text-muted">Estimated Delivery: {{ estimated_delivery_date }}</p>
-        <!-- Coupon Section -->
-            {% comment %} {% if coupon_applied %}
-                <p>Coupon Discount ({{ coupon_applied.coupon_code }}) 
-                    <a href="{% url 'remove_coupon' %}" class="text-danger text-decoration-none">Remove</a>: 
-                    <span class="text-success text-decoration-line-through">-₹{{ coupon_discount|floatformat:2 }}</span>
-                </p>
-            {% else %}
-                {% if valid_coupons %}
-                    <h6 class="my-3">Available Coupons:</h6>
-                    <form method="POST" action="{% url 'apply_coupon' %}">
-                        {% csrf_token %}
-                        <div class="input-group">
-                            <select class="form-select" name="coupon_code" required>
-                                <option value="">-- Select Coupon --</option>
-                                {% for coupon in valid_coupons %}
-                                    <option value="{{ coupon.coupon_code }}">
-                                        {{ coupon.coupon_code }} - {{ coupon.discount_percentage }}% OFF 
-                                        (Min ₹{{ coupon.minimum_purchase_amount|floatformat:2 }})
-                                    </option>
-                                {% endfor %}
-                            </select>
-                            <button class="btn btn-outline-success" type="submit">Apply</button>
-                        </div>
-                    </form>
-                {% else %}
-                    <p class="text-muted">No valid coupons available for this order.</p>
-                {% endif %}
-            {% endif %} {% endcomment %}
-                <a href="{% url 'checkout' %}" class="btn btn-primary w-100 my-3">Proceed to Checkout</a>
+
+                <a href="{% url 'checkout' %}" class="btn btn-outline-success w-100 my-3">Proceed to Checkout</a>
             </div>
         </div>
     </div>
