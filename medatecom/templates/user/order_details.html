@@ -74,7 +74,7 @@
                     
                     {% elif order_item.return_request.status == 'DENIED'%}
                         <p class="mb-1 text-danger"><strong>You cannot return this product.</strong></p>
-                    {% elif item.status == 'RETURN_REQUESTED' %}
+                    {% elif order_item.status == 'RETURN_REQUESTED' %}
                         <span class="badge bg-warning text-dark">Return Requested</span>
                     {% endif %}
                 </div>

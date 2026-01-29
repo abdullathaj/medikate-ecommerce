@@ -1,27 +1,8 @@
 {% extends 'auth/navbar.html' %}
 {% block content %}
 <div class="container my-4">
-
-    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
-        {% if messages %}
-        {% for message in messages %}
-        <div class="toast align-items-center text-white 
-                    {% if message.tags == 'error' %}bg-danger
-                    {% elif message.tags == 'success' %}bg-success
-                    {% elif message.tags == 'info' %}bg-info
-                    {% elif message.tags == 'warning' %}bg-warning
-                    {% else %}bg-primary{% endif %} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="d-flex">
-                <div class="toast-body">
-                    {{ message }}
-                </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
-                    aria-label="Close"></button>
-            </div>
-        </div>
-        {% endfor %}
-        {% endif %}
-    </div>
+<!-- TOAST MESSAGE -->
+    {% include "extra/toast.html"%}
 
     <h2 class="mb-4 fw-semibold">Checkout</h2>
 
@@ -205,7 +186,7 @@
 
 <!-- JavaScript to Initialize Toasts -->
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    {% comment %} document.addEventListener('DOMContentLoaded', function () {
         var toastElList = [].slice.call(document.querySelectorAll('.toast'));
         var toastList = toastElList.map(function (toastEl) {
             return new bootstrap.Toast(toastEl, {
@@ -236,7 +217,7 @@
 
         $(".toast-container").append(toastHTML);
         new bootstrap.Toast($(".toast-container .toast").last()[0]).show();
-    }
+    } {% endcomment %}
     $(document).ready(function () {
 
         // SELECT COUPON → Auto-fill input box
@@ -296,7 +277,7 @@
                     $("#coupon-discount").text("0");
                     $("#final-payable").text(response.final_amount);
 
-                    showToast(response.message, "info");
+                    showToast(response.message, "error");
 
                     $("#apply-coupon-btn").removeClass("d-none");
                     $("#remove-coupon-btn").addClass("d-none");

@@ -3,28 +3,25 @@
 
 {% block content %}
 <!-- Toast Container -->
-<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
-    {% if messages %}
-        {% for message in messages %}
-            <div class="toast align-items-center text-white 
-                {% if message.tags == 'error' %}bg-danger
-                {% elif message.tags == 'success' %}bg-success
-                {% elif message.tags == 'info' %}bg-info
-                {% elif message.tags == 'warning' %}bg-warning
-                {% else %}bg-primary{% endif %} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="d-flex">
-                    <div class="toast-body">{{ message }}</div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-            </div>
-        {% endfor %}
-    {% endif %}
-</div>
+{% include 'extra/toast.html'%}
 
 <!-- WALLET PAGE LAYOUT -->
 <div class="container my-5">
     <div class="row g-4 justify-content-center align-items-start">
-        
+        <div class="alert alert-secondary d-flex align-items-center gap-3 mt-3 rounded-3">
+          
+            <div class="flex-grow-1 text-start">
+                <div class="fw-semibold">Refer friends & earn rewards  <span> <i class="fa-solid fa-gift"></i> </span></div>
+                
+                <small class="text-muted">
+                    Surprise coupons will be credited to your wallet.
+                </small>
+            </div>
+            <a href="#" class="btn btn-sm btn-outline-primary">
+                Refer Now
+            </a>
+        </div>
+
         <!-- LEFT: Wallet Balance -->
         <div class="col-md-4 col-12">
             <div class="card shadow-lg border-0 rounded-4">
@@ -33,6 +30,15 @@
                     <div class="bg-light p-4 rounded-3">
                         <h5 class="mb-2">Current Balance</h5>
                         <p class="display-6 fw-bold text-success">₹{{ wallet.balance }}</p>
+                    </div>
+                    <p class="small text-muted mb-3">
+                        Wallet balance can be used during checkout for eligible orders.
+                        Non-transferable and non-withdrawable.
+                    </p>
+                     <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary" disabled>
+                            <i class="bi bi-plus-circle"></i> Add Money 
+                        </button>
                     </div>
                 </div>
             </div>
@@ -75,12 +81,6 @@
 
 <!-- Toast Initialization -->
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
-    toastElList.map(function (toastEl) {
-        var t = new bootstrap.Toast(toastEl, { autohide: true, delay: 5000 });
-        t.show();
-    });
-});
+
 </script>
 {% endblock %}

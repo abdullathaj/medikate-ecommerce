@@ -82,6 +82,10 @@ class CartProducts(models.Model):
     def __str__(self):
         return f"{self.user.username}'s Cart: {self.variant}: Qty: {self.quantity}"
     @property
+    def original_total_price(self):
+        return self.quantity * self.variant.price
+    
+    @property
     def total_price(self):
         return self.quantity * self.variant.final_price
 
@@ -117,7 +121,7 @@ class WalletTransaction(models.Model):
     created_at= models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'{self.wallet.user.username} - {self.transaction_type} ₹{self.amount} {self.description} {self.created_at} {self.transaction_source}'
+        return f'{self.wallet.user.username} - {self.transaction_type} ₹{self.amount}'
 
     def clean(self):
         if self.transaction_source in ['CANCEL', 'RETURN']:

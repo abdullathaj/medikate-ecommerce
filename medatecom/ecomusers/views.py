@@ -7,7 +7,7 @@ from .models import UserAddress,User,WishlistProducts,CartProducts,Wallet,Referr
 from ecomproducts.models import Product,ProductVariant,ProductImage,Categories,Coupon
 from django.core.paginator import Paginator
 from django.db import models
-from django.db.models import Min,Q,F,Sum,FloatField,Prefetch
+from django.db.models import Min,Q,F,Sum,FloatField,Prefetch,ExpressionWrapper,DecimalField
 from .forms import UserProfileForm,UserAddressForm,UserPasswordChangeForm,EmailChangeForm
 from django.core.mail import send_mail
 from django.conf import settings
@@ -494,6 +494,8 @@ def remove_from_wishlist(request):
 # --------------------------------------------------------------------
 # USER CART MANAGEMENT , ADDING PRODUCTS FOR AUTHENTICATED USERS
 # ---------------------------------------------------------------------
+
+
 @never_cache
 @login_required(login_url='login')
 def add_to_cart(request, variant_id):
@@ -627,6 +629,52 @@ def users_cart_page(request):
     return render(request, 'user/cart_page.html', context)
 
 
+def refresh_cart_session(request):
+    """
+    Recalculate cart totals and per-item details and refresh `cart_price_data`
+    in session so checkout/payment flows always see correct prices.
+    """
+    cart_items = CartProducts.objects.filter(
+        user=request.user,
+        variant__is_active=True,
+    ).select_related('variant__product')
+
+    original_total_price = Decimal('0')
+    selling_total_price = Decimal('0')
+    discount_total = Decimal('0')
+    cart_item_details = []
+
+    for item in cart_items:
+        original_item_price = item.variant.price * item.quantity
+        selling_item_price = item.total_price
+        item_discount = original_item_price - selling_item_price
+
+        original_total_price += original_item_price
+        selling_total_price += selling_item_price
+        discount_total += item_discount
+
+        cart_item_details.append({
+            'variant_id': item.variant.id,
+            'quantity': item.quantity,
+            'unit_price': str(item.variant.final_price),
+            'item_total': str(item.total_price),
+            'item_discount': str(item_discount),
+        })
+
+    amount_payable = selling_total_price
+
+    data = {
+        'original_total_price': str(original_total_price),
+        'selling_total_price': str(selling_total_price),
+        'discount_total': str(discount_total),
+        'amount_payable': str(amount_payable),
+        'cart_item_details': cart_item_details,
+    }
+
+    request.session['cart_price_data'] = data
+    return data
+
+
 @never_cache
 @login_required(login_url='login')
 def update_cart_quantity(request, cart_item_id):
@@ -639,47 +687,52 @@ def update_cart_quantity(request, cart_item_id):
             if cart_item.quantity >=5:
                 print('You can only select maximum of 5 products for each product.')
                 return JsonResponse({
-                    'status':'warning','message':'You can only select maximum of 5 products for each product.',
+                    'status':'warning',
+                    'message':'Maximum 5 Units are allowed to add.',
                     'cart_item_id':cart_item_id,
-                })
-                
-            elif cart_item.quantity  >= cart_item.variant.stock:
+                }) 
+            if cart_item.quantity  >= cart_item.variant.stock:
                 print('Cannot increase quantity. Stock limit reached.')
                 return JsonResponse({
-                    'status':'error','message':'Cannot increase quantity. Stock limit reached.',
+                    'status':'error',
+                    'message':'Stock limit reached.',
                     'cart_item_id':cart_item_id,
                 })
-              
-            else:
-                cart_item.quantity += 1
-                cart_item.save()
-                print(f"Quantity updated for {cart_item.variant} as {cart_item.quantity}.")
-                return JsonResponse({
-                    'status':'success','message':f"Quantity updated for {cart_item.variant} as {cart_item.quantity}.",
-                    'cart_item_id':cart_item_id,'new_quantity':cart_item.quantity,
-                })
+            cart_item.quantity += 1
 
         elif action == 'decrease':
-            if cart_item.quantity > 1:
-                cart_item.quantity -= 1
-                cart_item.save()
-                print(f"Quantity updated for {cart_item.variant} as {cart_item.quantity}.")
-                return JsonResponse({
-                    'status':'success','message':f"Quantity updated for {cart_item.variant} as {cart_item.quantity}.",
-                    'cart_item_id':cart_item_id,'new_quantity':cart_item.quantity,
-                })
-                                        
-            else:
-                return JsonResponse({
-                    'status':'warning','message': "Quantity must be at least 1.",
+            if cart_item.quantity <= 1:
+               return JsonResponse({
+                    'status':'warning',
+                    'message': "Quantity must be at least 1.",
                     'cart_item_id':cart_item_id,
-                })
+                })                              
+            cart_item.quantity -=1     
+
         else:
             return JsonResponse({
-                    'status':'error','message':'Invalid action.',
+                    'status':'error',
+                    'message':'Invalid action.',
                     'cart_item_id':cart_item_id,
                 })
+        cart_item.save()
 
+        print(f"Quantity updated for {cart_item.variant} as {cart_item.quantity}.")
+        session_data = refresh_cart_session(request)
+        cart_totals = {
+            'original_total_price': session_data['original_total_price'],
+            'selling_total_price': session_data['selling_total_price'],
+            'discount_total': session_data['discount_total'],
+            'amount_payable': session_data['amount_payable'],
+        }
+        return JsonResponse({
+                'status': 'success',
+                'message': f"Quantity updated for {cart_item.variant} as {cart_item.quantity}.",
+                'cart_item_id': cart_item_id,
+                'new_quantity': cart_item.quantity,
+                'item_total': str(cart_item.total_price),
+                'cart_totals': cart_totals,
+            })
     except Exception as e:
         return JsonResponse({
                     'status':'error','message':f"Unexpected error occurred: {str(e)}",
@@ -694,11 +747,22 @@ def remove_cart_item(request,cart_item_id):
     """ REMOVING AN ITEM FROM THE CART """
 
     cart_item=get_object_or_404(CartProducts,user=request.user,id=cart_item_id)
+    variant = cart_item.variant
     cart_item.delete()
-    print(f'{cart_item.variant} {cart_item.variant.variant_name} has removed successfully.')
+
+    print(f'{variant} {variant.variant_name} has removed successfully.')
+    session_data = refresh_cart_session(request)
+    cart_totals = {
+        'original_total_price': session_data['original_total_price'],
+        'selling_total_price': session_data['selling_total_price'],
+        'discount_total': session_data['discount_total'],
+        'amount_payable': session_data['amount_payable'],
+    }
     return JsonResponse({
-        'status':'success', 'message':f'{cart_item.variant} {cart_item.variant.variant_name} has removed successfully.',
+        'status':'success', 
+        'message':f'{variant} {variant.variant_name} has removed successfully.',
         'cart_item_id':cart_item_id,
+        'cart_totals': cart_totals,
     })
 
 
@@ -712,18 +776,37 @@ def save_for_later(request,cart_item_id):
     if WishlistProducts.objects.filter(user=request.user,variant=variant).exists():
         print(f'{variant.product.name} {variant.variant_name} has already in the wishlist.')
         cart_item.delete()
+        session_data = refresh_cart_session(request)
+        cart_totals = {
+            'original_total_price': session_data['original_total_price'],
+            'selling_total_price': session_data['selling_total_price'],
+            'discount_total': session_data['discount_total'],
+            'amount_payable': session_data['amount_payable'],
+        }
         return JsonResponse({
-            'status':'warning','message':f'{variant.product.name} {variant.variant_name} has already in the wishlist.',
-            'cart_item_id':cart_item_id,
+            'status':'warning',
+            'message':f'{variant.product.name} {variant.variant_name} has already in the wishlist.',
+            'cart_item_id': cart_item_id,
+            'cart_totals': cart_totals,
         })
-    else:
-        WishlistProducts.objects.create(user=request.user,variant=variant)
-        cart_item.delete()
-        print(f'{variant.product.name} {variant.variant_name} has added to wishlist.')
-        return JsonResponse({
-            'status':'success','message':f'{variant.product.name} {variant.variant_name} has added to wishlist.',
-            'cart_item_id':cart_item_id,
-        })
+    
+    WishlistProducts.objects.create(user=request.user,variant=variant)
+    cart_item.delete()
+   
+    print(f'{variant.product.name} {variant.variant_name} has added to wishlist.')
+    session_data = refresh_cart_session(request)
+    cart_totals = {
+        'original_total_price': session_data['original_total_price'],
+        'selling_total_price': session_data['selling_total_price'],
+        'discount_total': session_data['discount_total'],
+        'amount_payable': session_data['amount_payable'],
+    }
+    return JsonResponse({
+        'status':'success',
+        'message':f'{variant.product.name} {variant.variant_name} has added to wishlist.',
+        'cart_item_id':cart_item_id,
+        'cart_totals': cart_totals,
+    })
     
 
 # ----------------------------------------------------------------------------
