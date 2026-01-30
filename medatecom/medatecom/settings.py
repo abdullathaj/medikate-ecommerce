@@ -68,32 +68,15 @@ AUTHENTICATION_BACKENDS = [
 SITE_ID = 2  # make sure Site with id=2 exists in django_site table
 
 
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/'
-
-# Allauth settings
-#ACCOUNT_EMAIL_REQUIRED = True 
-#ACCOUNT_USERNAME_REQUIRED = False 
-ACCOUNT_LOGIN_METHODS = {'email'}
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
+ACCOUNT_EMAIL_REQUIRED = True 
 ACCOUNT_UNIQUE_EMAIL = True
-
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
 SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_LOGIN_ON_GET = True
 
+LOGIN_REDIRECT_URL = 'login_home'
 
-SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'SCOPE': ['profile', 'email'],
-        'AUTH_PARAMS': {'access_type': 'online'},
 
-        # 'APP': {
-        #     'client_id': os.getenv('GOOGLE_CLIENT_ID', "1093804396164-flrutqfcmm7qhlfgusdc7705bogc6osm.apps.googleusercontent.com"),
-        #     'secret': os.getenv('GOOGLE_CLIENT_SECRET', "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"),
-        #     'key': ''
-        # }
-}
-}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
