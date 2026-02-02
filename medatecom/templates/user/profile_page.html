@@ -3,25 +3,7 @@
 
 {% block content %}
 <!-- Toast Container -->
-<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055;">
-    {% if messages %}
-        {% for message in messages %}
-            <div class="toast align-items-center text-white 
-                {% if message.tags == 'error' %}bg-danger
-                {% elif message.tags == 'success' %}bg-success
-                {% elif message.tags == 'info' %}bg-info
-                {% elif message.tags == 'warning' %}bg-warning
-                {% else %}bg-primary{% endif %} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="d-flex">
-                    <div class="toast-body">
-                        {{ message }}
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-            </div>
-        {% endfor %}
-    {% endif %}
-</div>
+    {% include 'extra/toast.html' %}
 
 <div class="container my-4">
     <div class="row justify-content-center">
@@ -57,7 +39,7 @@
                         <div class="card-body">
                             <p class="mb-2">
                                 <strong>Your Referral Code:</strong>
-                                <span class="badge bg-warning fs-6 ms-2">{{ user.referral_code }}</span>
+                                <span class="badge bg-danger fs-6 ms-2">{{ user.referral_code }}</span>
                             </p>
 
                             <p class="text-muted small mb-2">
@@ -151,7 +133,7 @@
 
 <!-- JavaScript to Initialize Toasts -->
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+{% comment %} document.addEventListener('DOMContentLoaded', function () {
     var toastElList = [].slice.call(document.querySelectorAll('.toast'));
     var toastList = toastElList.map(function (toastEl) {
         return new bootstrap.Toast(toastEl, {
@@ -162,6 +144,6 @@ document.addEventListener('DOMContentLoaded', function () {
     toastList.forEach(function (toast) {
         toast.show();
     });
-});
+}); {% endcomment %}
 </script>
 {% endblock %}

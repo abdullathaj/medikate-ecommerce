@@ -100,7 +100,21 @@
                         {% for variant in variants %}
                             <!-- Variant Card -->
                             <div class="col">
-                                <div class="product-card">  <a href="{% url 'product_details' variant.id %}" class="text-decoration-none">
+                                <div class="product-card {% if variant.stock == 0 %}out-of-stock {% endif %} position-relative"> 
+                                    <!-- STOCK OUT BADGE -->
+                                        {% if variant.stock == 0 %}
+                                            <span class="stock-out-badge">Stock Out</span>
+                                        {% endif %}
+
+                                        <!-- OFFER BADGE -->
+                                        {% if variant.active_offer and variant.stock > 0 %}
+                                            <span class="offer-badge">
+                                                {{ variant.active_offer.discount_percentage }}% OFF
+                                            </span>
+                                        {% endif %}
+
+                                     <a href="{% url 'product_details' variant.id %}" class="text-decoration-none">
+
                                     <div class="product-thumb">
                                         {% with product_image=variant.product.product_image.first %}
                                             {% if product_image %}
@@ -113,6 +127,7 @@
                                     <div class="product-details">
                                         <div class="product-catagory-line">
                                             <span class="product-catagory">{{ variant.product.category.name }}</span>
+                                            
                                         </div>
                                         <h4><a href="{% url 'product_details' variant.id %}" class="text-decoration-none">{{ variant.product.name|truncatechars:20 }} - {{ variant.variant_name|truncatechars:10 }}</a></h4>
                                         
@@ -137,9 +152,18 @@
                                                         <i class="fas fa-heart"></i>
                                                 </a>
 
-                                                <a href="#" title="Add to Cart" data-id='{{variant.id}}'
-                                                    class="add-to-cart cart-btn"><i class="fas fa-shopping-cart"></i>
-                                                </a>
+                                                {% if variant.stock > 0 %}
+                                                    <a href="#"
+                                                    title="Add to Cart"
+                                                    data-id="{{ variant.id }}"
+                                                    class="add-to-cart cart-btn">
+                                                        <i class="fas fa-shopping-cart"></i>
+                                                    </a>
+                                                {% else %}
+                                                    <span class="cart-btn disabled-cart" title="Out of stock">
+                                                        <i class="fas fa-shopping-cart"></i>
+                                                    </span>
+                                                {% endif %}
                                             </div>
                                         </div>
                                     </div>
@@ -510,6 +534,45 @@
         .wishlist-btn:hover,
         .cart-btn:hover {
             color: #4b6cb7;
+        }
+
+
+        /* STOCK OUT BADGE */
+        .stock-out-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: #ef4444;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 4px;
+            z-index: 2;
+        }
+
+        /* OFFER BADGE (top-right) */
+        .offer-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #22c55e;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 4px;
+            z-index: 2;
+        }
+        .product-card.out-of-stock {
+            opacity: 0.7;
+        }
+
+        /* DISABLED CART */
+        .disabled-cart {
+            color: #9ca3af;
+            cursor: not-allowed;
+            opacity: 0.6;
         }
 
 

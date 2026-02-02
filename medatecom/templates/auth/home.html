@@ -3,25 +3,7 @@
 
 {% block content %}
 <!-- Toast Container -->
-    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055;">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="toast align-items-center text-white 
-                    {% if message.tags == 'error' %}bg-danger
-                    {% elif message.tags == 'success' %}bg-success
-                    {% elif message.tags == 'info' %}bg-info
-                    {% elif message.tags == 'warning' %}bg-warning
-                    {% else %}bg-primary{% endif %} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                    <div class="d-flex">
-                        <div class="toast-body">
-                            {{ message }}
-                        </div>
-                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                    </div>
-                </div>
-            {% endfor %}
-        {% endif %}
-    </div>
+   {% include 'extra/toast.html' %}
                 <!-- Search Bar Section -->
                             <section class="search-section container mt-0 mb-1">
                                 {% include 'auth/search_bar.html' %}
@@ -142,7 +124,7 @@
             Refer friends & earn exciting rewards —
             <strong>exclusive coupons await!</strong>
         </span>
-        <a href="#" class="coupon-cta">Refer Now</a>
+        <a href="{% url "user_profile_page" %}" class="coupon-cta">Refer Now</a>
     </div>
 
      <!-- Single Banner Section -->
@@ -866,38 +848,7 @@
 <script src="https://code.jquery.com/jquery-3.7.1.js"> </script>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
-    var toastList = toastElList.map(function (toastEl) {
-        return new bootstrap.Toast(toastEl, {
-            autohide: true,
-            delay: 3000 // Toast auto-hides after 5 seconds
-        });
-    });
-    toastList.forEach(function (toast) {
-        toast.show();
-    });
-});
 
-function showToast(message, status){
-    let bgClass = "bg-primary";
-    if (status === 'success') bgClass = 'bg-success';
-    else if (status === 'error') bgClass = 'bg-danger';
-    else if (status === 'warning') bgClass = 'bg-warning';
-    else if (status === 'info') bgClass = 'bg-info';
-
-    let toastHTML = `
-        <div class="toast align-items-center text-white ${bgClass} border-0" role="alert">
-            <div class="d-flex">
-                <div class="toast-body">${message}</div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto"
-                        data-bs-dismiss="toast"></button>
-            </div>
-        </div>`;
-
-    $(".toast-container").append(toastHTML);
-    new bootstrap.Toast($(".toast-container .toast").last()[0]).show();
-}
 
 $(document).on("click", ".add-to-wishlist", function (e) {
     e.preventDefault();

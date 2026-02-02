@@ -4,25 +4,8 @@
 {% block content %}
 
     <!-- Toast Container -->
-    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055;">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="toast align-items-center text-white 
-                    {% if message.tags == 'error' %}bg-danger
-                    {% elif message.tags == 'success' %}bg-success
-                    {% elif message.tags == 'info' %}bg-info
-                    {% elif message.tags == 'warning' %}bg-warning
-                    {% else %}bg-primary{% endif %} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                    <div class="d-flex">
-                        <div class="toast-body">
-                            {{ message }}
-                        </div>
-                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                    </div>
-                </div>
-            {% endfor %}
-        {% endif %}
-    </div>
+        {% include 'extra/toast.html' %}
+
                             <!-- Search Bar Section -->
                                     <section class="search-section container my-3">
                                         {% include 'auth/search_bar.html' %}
@@ -105,7 +88,7 @@
                         </select>
                     </div>
 
-        <!-- Price and Stock Display -->
+         <!-- Price and Stock Display -->
             <div class="product-price m-3">
                 <span class="current-price fs-4 fw-bold text-primary" id="currentPrice">₹{{ selected_variant.final_price|floatformat:2 }}</span>
                 <small class="original-price text-muted text-decoration-line-through ms-2" id="originalPrice">
@@ -567,39 +550,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // updateInfo();
 });
 
-
-document.addEventListener('DOMContentLoaded', function () {
-    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
-    var toastList = toastElList.map(function (toastEl) {
-        return new bootstrap.Toast(toastEl, {
-            autohide: true,
-            delay: 5000 
-        });
-    });
-    toastList.forEach(function (toast) {
-        toast.show();
-    });
-});
-
-function showToast(message, status){
-    let bgClass = "bg-primary";
-    if (status === 'success') bgClass = 'bg-success';
-    else if (status === 'error') bgClass = 'bg-danger';
-    else if (status === 'warning') bgClass = 'bg-warning';
-    else if (status === 'info') bgClass = 'bg-info';
-
-    let toastHTML = `
-        <div class="toast align-items-center text-white ${bgClass} border-0" role="alert">
-            <div class="d-flex">
-                <div class="toast-body">${message}</div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto"
-                        data-bs-dismiss="toast"></button>
-            </div>
-        </div>`;
-
-    $(".toast-container").append(toastHTML);
-    new bootstrap.Toast($(".toast-container .toast").last()[0]).show();
-}
 
 $(document).on("click", ".add-to-wishlist", function (e) {
     e.preventDefault();
