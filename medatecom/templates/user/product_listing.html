@@ -3,102 +3,91 @@
 
 {% block content %}
     <!-- Toast Container -->
-        <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055;">
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="toast align-items-center text-white 
-                        {% if message.tags == 'error' %}bg-danger
-                        {% elif message.tags == 'success' %}bg-success
-                        {% elif message.tags == 'info' %}bg-info
-                        {% elif message.tags == 'warning' %}bg-warning
-                        {% else %}bg-primary{% endif %} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                        <div class="d-flex">
-                            <div class="toast-body">
-                                {{ message }}
-                            </div>
-                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                        </div>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        </div>
-                            <!-- Search Bar Section -->
-                            <section class="search-section container my-1">
-                                {% include 'auth/search_bar.html' %}
-                            </section>
+        {% include 'extra/toast.html' %}
+
+    <!-- Search Bar Section -->
+        <section class="search-section container my-1">
+            {% include 'auth/search_bar.html' %}
+        </section>
 
     <div class="container-fluid my-3">
         <div class="row">
             <!-- Sidebar for Filters and Sorting -->
             <div class="col-lg-2 col-md-3">
                 <div class="sidebar">
-                    <form method="GET" action="{% url 'product_listing' %}">
-                        <!-- Sorting Section -->
-                        <div class="sort-section">
-                            <h4>Sort By</h4>
-                            <select name="sort" class="form-select" onchange="this.form.submit()">
-                                <option value="" {% if not sort %}selected{% endif %}>Default</option>
-                                <option value="price_low" {% if sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
-                                <option value="price_high" {% if sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
-                                <option value="name_asc" {% if sort == 'name_asc' %}selected{% endif %}>Name: A to Z</option>
-                                <option value="name_desc" {% if sort == 'name_desc' %}selected{% endif %}>Name: Z to A</option>
-                            </select>
+                    <form method="GET" action="{% url 'product_listing' %}" class="filter-form">
+                        
+                        <div class="filter-content">
+                            <!-- Sorting Section -->
+                            <div class="sort-section">
+                                <h4>Sort By</h4>
+                                <select name="sort" class="form-select" onchange="this.form.submit()">
+                                    <option value="" {% if not sort %}selected{% endif %}>Default</option>
+                                    <option value="price_low" {% if sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                                    <option value="price_high" {% if sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                                    <option value="name_asc" {% if sort == 'name_asc' %}selected{% endif %}>Name: A to Z</option>
+                                    <option value="name_desc" {% if sort == 'name_desc' %}selected{% endif %}>Name: Z to A</option>
+                                </select>
+                            </div>
+
+                         <!-- Filter by Category -->
+                            <div class="filter-section">
+                                <button class="filter-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#categoryCollapse" aria-expanded="false">
+                                    Categories <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="collapse mt-1 filter-scroll" id="categoryCollapse">
+                                    {% for category in categories %}
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" name="category" value="{{ category.id }}"
+                                                {% if category.id|stringformat:"s" in selected_categories %}checked{% endif %} >
+                                            <label class="form-check-label">{{ category.name }}</label>
+                                        </div>
+                                    {% empty %}
+                                        <p class="text-muted small">No categories</p>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                         <!-- Filter by Brand -->
+                            <div class="filter-section">
+                                <button class="filter-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#brandCollapse" aria-expanded="false">
+                                    Brands <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="collapse mt-1 filter-scroll" id="brandCollapse">
+                                    {% for brand in brands %}
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" name="brand" value="{{ brand }}"
+                                                {% if brand in selected_brands %}checked{% endif %} >
+                                            <label class="form-check-label">{{ brand }}</label>
+                                        </div>
+                                    {% empty %}
+                                        <p class="text-muted small">No brands</p>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                         <!-- Filter by Price Range -->
+                            <div class="filter-section">
+                                <h4>Price Range</h4>
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text">₹</span>
+                                    <input type="number" class="form-control" name="price_min" placeholder="Min"
+                                        value="{{ price_min|default_if_none:'' }}" min="0" step="1">
+                                </div>
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text">₹</span>
+                                    <input type="number" class="form-control" name="price_max" placeholder="Max"
+                                        value="{{ price_max|default_if_none:'' }}" min="0" step="1">
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Filter by Category -->
-                        <div class="filter-section">
-                             <button class="filter-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#categoryCollapse" aria-expanded="false">
-                                Categories <i class="fas fa-chevron-down"></i>
-                            </button>
-                            <div class="collapse mt-1" id="categoryCollapse">
-                                {% for category in categories %}
-                                    <div class="form-check">
-                                        <input type="checkbox" class="form-check-input" name="category" value="{{ category.id }}"
-                                            {% if category.id|stringformat:"s" in selected_categories %}checked{% endif %} >
-                                        <label class="form-check-label">{{ category.name }}</label>
-                                    </div>
-                                {% empty %}
-                                    <p class="text-muted small">No categories</p>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-                        <!-- Filter by Brand -->
-                        <div class="filter-section">
-                            <button class="filter-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#brandCollapse" aria-expanded="false">
-                                Brands <i class="fas fa-chevron-down"></i>
-                            </button>
-                            <div class="collapse mt-1" id="brandCollapse">
-                                {% for brand in brands %}
-                                    <div class="form-check">
-                                        <input type="checkbox" class="form-check-input" name="brand" value="{{ brand }}"
-                                            {% if brand in selected_brands %}checked{% endif %} >
-                                        <label class="form-check-label">{{ brand }}</label>
-                                    </div>
-                                {% empty %}
-                                    <p class="text-muted small">No brands</p>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-                        <!-- Filter by Price Range -->
-                        <div class="filter-section">
-                            <h4>Price Range</h4>
-                            <div class="input-group mb-2">
-                                <span class="input-group-text">₹</span>
-                                <input type="number" class="form-control" name="price_min" placeholder="Min"
-                                       value="{{ price_min|default_if_none:'' }}" min="0" step="1">
-                            </div>
-                            <div class="input-group mb-2">
-                                <span class="input-group-text">₹</span>
-                                <input type="number" class="form-control" name="price_max" placeholder="Max"
-                                       value="{{ price_max|default_if_none:'' }}" min="0" step="1">
-                            </div>
-                        </div>
-                            <div class="d-grid gap-2">
-                                <button type="submit" class="filterbtn btn btn-outline-success w-100">Apply Filters</button>
-                                <a href="{% url 'product_listing' %}" class="filterbtn btn btn-outline-danger w-100">Clear Filters</a>
-                            </div>
+                            <div class="filter-actions">
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="filterbtn btn btn-outline-success w-100">Apply Filters</button>
+                                    <a href="{% url 'product_listing' %}" class="filterbtn btn btn-outline-danger w-100">Clear Filters</a>
+                                </div>
+                            </div>   
                     </form>
                 </div>
             </div>
@@ -223,11 +212,14 @@
         .sidebar {
             background: #ffffff;
             position:sticky;
+            top: 80px;
             border-radius: 10px;
             padding: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            height: fit-content;
+            max-height: calc(100vh - 100px);
             width: auto;
+            display: flex;
+            flex-direction: column;
         }
 
         .filter-section,
@@ -241,6 +233,25 @@
             font-weight: 600;
             color: #182848;
             margin-bottom: 8px;
+        }
+
+        .filter-form {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .filter-content {
+            flex: 1;
+            overflow: auto;
+            padding-right: 6px;
+            overscroll-behavior: contain;
+        }
+
+        .filter-actions {
+            border-top: 1px solid #e5e7eb;
+            padding-top: 10px;
+            background: #fff;
         }
 
         .filter-toggle {
@@ -272,6 +283,18 @@
 
         .collapse {
             margin-top: 6px;
+        }
+        .filter-scroll {
+            max-height: 200px;
+            padding-right: 6px;
+            overflow-y: auto;
+        }
+        .filter-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .filter-scroll::-webkit-scrollbar-thumb {
+            border-radius: 10px;
+            background-color: #cbd5e1;
         }
 
         .form-check {
@@ -549,38 +572,7 @@
 <script src="https://code.jquery.com/jquery-3.7.1.js"> </script>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
-    var toastList = toastElList.map(function (toastEl) {
-        return new bootstrap.Toast(toastEl, {
-            autohide: true,
-            delay: 5000 // Toast auto-hides after 5 seconds
-        });
-    });
-    toastList.forEach(function (toast) {
-        toast.show();
-    });
-});
 
-function showToast(message, status){
-    let bgClass = "bg-primary";
-    if (status === 'success') bgClass = 'bg-success';
-    else if (status === 'error') bgClass = 'bg-danger';
-    else if (status === 'warning') bgClass = 'bg-warning';
-    else if (status === 'info') bgClass = 'bg-info';
-
-    let toastHTML = `
-        <div class="toast align-items-center text-white ${bgClass} border-0" role="alert">
-            <div class="d-flex">
-                <div class="toast-body">${message}</div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto"
-                        data-bs-dismiss="toast"></button>
-            </div>
-        </div>`;
-
-    $(".toast-container").append(toastHTML);
-    new bootstrap.Toast($(".toast-container .toast").last()[0]).show();
-}
 
 $(document).on("click", ".add-to-wishlist", function (e) {
     e.preventDefault();

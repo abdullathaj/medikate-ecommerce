@@ -70,6 +70,8 @@ class ProductAddForm(ModelForm):
         brand= self.cleaned_data.get('brand')
         if brand and not re.fullmatch(r'[a-zA-Z0-9\s]*',brand):
             raise ValidationError('Brand name should only contain Alphabets,Digits and Spaces.')
+        if brand:
+            brand = brand.title()
         return brand
 
 class VariantAddForm(ModelForm):
