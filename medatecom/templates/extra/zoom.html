@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zoom Example</title>
+  <style>
+    #imageZoom {
+      width: 550px;
+      height: 700px;
+      position: relative;
+      overflow: hidden;
+    }
+    #imageZoom img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    #imageZoom::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-image: var(--url);
+      background-size: 200%;
+      background-position: var(--zoom-x) var(--zoom-y);
+      display: var(--display);
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <h3>Zooming</h3>
+  <div id="imageZoom" style="
+    --url: url(https://st.depositphotos.com/1008660/3691/i/450/depositphotos_36913399-stock-photo-tiger.jpg);
+    --zoom-x: 0%; --zoom-y: 0%;
+    --display: none;">
+    <img src="https://st.depositphotos.com/1008660/3691/i/450/depositphotos_36913399-stock-photo-tiger.jpg" alt="">
+  </div>
+
+  <script>
+    let imageZoom = document.getElementById('imageZoom');
+    imageZoom.addEventListener('mousemove', (event) => {
+      imageZoom.style.setProperty('--display','block');
+      let pointer = {
+        x: (event.offsetX * 100) / imageZoom.offsetWidth,
+        y: (event.offsetY * 100) / imageZoom.offsetHeight
+      };
+      imageZoom.style.setProperty('--zoom-x', pointer.x + '%');
+      imageZoom.style.setProperty('--zoom-y', pointer.y + '%');
+    });
+    imageZoom.addEventListener('mouseout', () => {
+      imageZoom.style.setProperty('--display','none');
+    });
+  </script>
+</body>
+</html>

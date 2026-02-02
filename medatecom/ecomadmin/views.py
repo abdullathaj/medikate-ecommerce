@@ -329,7 +329,7 @@ def admin_product_details(request):
             Q(variant_name__icontains=query) |
             Q(product__category__name__icontains=query)
         )
-    paginator=Paginator(variants,10)
+    paginator=Paginator(variants,20)
     page_number=request.GET.get('page')
     page_obj=paginator.get_page(page_number)
 
