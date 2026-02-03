@@ -64,8 +64,8 @@
 
         <!-- Product Information -->
         <div class="col-lg-6">
-            <h2 class="m-3">{{ product.name }}</h2>
-            <span class="product-catagory d-block m-2">{{ product.category.name }}</span>
+           <h2 class="product-title fw-bold m-3">{{ product.name }}</h2>
+            <span class="product-catagory d-block m-3">{{ product.category.name }}</span>
             <div class="product-rating m-3">
                 <span class="star filled">★</span>
                 <span class="star filled">★</span>
@@ -124,6 +124,38 @@
                     class="btn add-to-wishlist wishlist-btn {% if selected_variant.id in wishlist_variant_ids %}active{% endif %}">
                     <i class="fas fa-heart"></i>
                 </button>
+            </div>
+
+            <!-- Service Highlights -->
+            <div class="product-services m-4 mt-3">
+                <div class="d-flex flex-wrap gap-4">
+
+                    <div class="service-item d-flex align-items-center gap-2">
+                        <i class="fas fa-money-bill-wave service-icon"></i>
+                        <span>Cash on Delivery Available</span>
+                    </div>
+
+                    <div class="service-item d-flex align-items-center gap-2">
+                        <i class="fas fa-undo service-icon"></i>
+                        <span>7 Days Replacement</span>
+                    </div>
+
+                    {% comment %} <div class="service-item d-flex align-items-center gap-2">
+                        <i class="fas fa-wallet service-icon"></i>
+                        <span>Refund in 7 Days</span>
+                    </div> {% endcomment %}
+
+                    <div class="service-item d-flex align-items-center gap-2">
+                        <i class="fas fa-shield-alt service-icon"></i>
+                        <span>100% Genuine Product</span>
+                    </div>
+
+                    <div class="service-item d-flex align-items-center gap-2">
+                        <i class="fas fa-truck service-icon"></i>
+                        <span>Free Delivery</span>
+                    </div>
+
+                </div>
             </div>
 
             <!-- Variant Selection -->
@@ -340,9 +372,18 @@
 
 
     /* Product Information */
+
+        .product-title {
+            font-size: 1.8rem;
+            color: #1b427d; /* neutral dark gray */
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 8px;
+        }
+
         .product-catagory {
             font-size: 14px;
-            font-weight: 500;
+            font-weight: 700;
             text-transform: uppercase;
             color: #4b6cb7;
         }
@@ -552,6 +593,34 @@
                 width: 100%;
             }
         }
+
+        .product-services {
+            border-top: 1px solid #e5e7eb;
+            padding-top: 16px;
+        }
+
+        .service-item {
+            font-size: 14px;
+            color: #374151;
+            background: #f9fafb;
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .service-icon {
+            color: #3b82f6;
+            font-size: 16px;
+        }
+
+        @media (max-width: 576px) {
+            .service-item {
+                font-size: 13px;
+                padding: 6px 10px;
+            }
+        }
+
+
 
     /* Variant Buttons */
         .variant-btn {
