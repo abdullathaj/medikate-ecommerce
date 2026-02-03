@@ -140,15 +140,33 @@ class Referral(models.Model):
         return f'{self.referrer.username} has referred {self.referee.username}'
 
     def apply_rewards(self):
-        ''' ADDING 10 RUPEES FOR BOTH THE WALLET OF REFERRER REFEREE '''
+        ''' ADDING 100 RUPEES FOR BOTH THE WALLET OF REFERRER AND REFEREE '''
         if not self.rewarded:
-            referrer_wallet,created= Wallet.objects.get_or_create(user=self.referrer)
-            referrer_wallet.balance += 10
+            # Credit Referrer
+            referrer_wallet, _ = Wallet.objects.get_or_create(user=self.referrer)
+            referrer_wallet.balance += Decimal('100.00')
             referrer_wallet.save()
 
-            referee_wallet,created= Wallet.objects.get_or_create(user=self.referee)
-            referee_wallet.balance += 10
+            WalletTransaction.objects.create(
+                wallet=referrer_wallet,
+                transaction_type='CREDIT',
+                amount=Decimal('100.00'),
+                description='REFERRAL REWARD',
+                transaction_source='REFERRAL'
+            )
+
+            # Credit Referee
+            referee_wallet, _ = Wallet.objects.get_or_create(user=self.referee)
+            referee_wallet.balance += Decimal('100.00')
             referee_wallet.save()
+
+            WalletTransaction.objects.create(
+                wallet=referee_wallet,
+                transaction_type='CREDIT',
+                amount=Decimal('100.00'),
+                description='REFERRAL REWARD',
+                transaction_source='REFERRAL'
+            )
 
             self.rewarded = True
             self.save()

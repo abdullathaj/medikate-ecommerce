@@ -15,6 +15,7 @@ from datetime import timedelta
 from django.utils.dateparse import parse_datetime
 from allauth.socialaccount.models import SocialToken # GOOGLE AUTHENTICATION
 import requests
+from django.db import transaction
 
 
 # VIEWS FOR USER AUTHENTICARION AND AUTHERISATION.
@@ -129,46 +130,32 @@ def otp_verify_view(request):
             return render(request,'auth/otpverify.html')
        
         if entered_otp == stored_otp:
-            user= User.objects.create_user(
-                username=name,
-                email=email,
-                password=password
-            )
-            user.first_name=name
-            user.phone=phone
-            user.save()
+            with transaction.atomic():
+                user= User.objects.create_user(
+                    username=name,
+                    email=email,
+                    password=password
+                )
+                user.first_name=name
+                user.phone=phone
+                user.save()
 
-            # WALLET CREATION in Wallet Model
-            Wallet.objects.get_or_create(user=user)
+                # WALLET CREATION in Wallet Model
+                Wallet.objects.get_or_create(user=user)
 
-            # REFERRAL system
-            if referral_code:
-                try:
-                    referrer=User.objects.get(referral_code=referral_code)
-                    if referrer != user:
-                        referral=Referral.objects.create(referrer=referrer, referee=user)
-                        referral.apply_rewards()
-
-                        WalletTransaction.objects.create(
-                            wallet= user.wallet,
-                            transaction_type= 'CREDIT',
-                            amount= Decimal('10.00'),
-                            description= 'REFERRAL REWARD',
-                            transaction_source= 'REFERRAL'
-                        )
-                        WalletTransaction.objects.create(
-                            wallet= referrer.wallet,
-                            transaction_type= 'CREDIT',
-                            amount= Decimal('10.00'),
-                            description= 'REFERRAL REWARD',
-                            transaction_source= 'REFERRAL'
-                        )
-                        messages.success(request,'Referral successfull. You have credited with ₹10 in your wallet.')
-                    else:
-                        messages.error(request,'You cannot self refer to your account.')
-                    
-                except User.DoesNotExist:
-                    messages.error(request, 'Invalid Referral')
+                # REFERRAL system
+                if referral_code:
+                    try:
+                        referrer=User.objects.get(referral_code=referral_code)
+                        if referrer != user:
+                            referral=Referral.objects.create(referrer=referrer, referee=user)
+                            referral.apply_rewards()
+                            messages.success(request,'Referral successfull. You have credited with ₹100 in your wallet.')
+                        else:
+                            messages.error(request,'You cannot self refer to your account.')
+                        
+                    except User.DoesNotExist:
+                        messages.error(request, 'Invalid Referral')
             
                      
             del request.session['otp']
