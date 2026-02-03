@@ -108,18 +108,39 @@
 
 
              <!-- Action Buttons -->
-                <div class="product-actions">
-                    <a href="{% url 'buy_now' selected_variant.id %}" class="btn btn-primary buy-now-btn mx-2">Buy Now</a>
-                    <a href="#" id="addToCartBtn" data-id= "{{selected_variant.id}}"
-                        class="add-to-cart btn btn-outline-secondary" title="Add to Cart">
-                            <i class="fas fa-shopping-cart"></i> Add to Cart
-                    </a>
-                    <a href="#" id="addToWishlistBtn" data-id='{{selected_variant.id}}'
-                    class="add-to-wishlist btn btn-outline-secondary mx-2 {% if selected_variant.id in wishlist_variant_ids %}in-wishlist{% endif %}" 
-                    title="Add to Wishlist">
+                <div class="product-actions d-flex align-items-center gap-3 flex-wrap">
+                   <!-- BUY NOW -->
+                    {% if selected_variant.out_of_stock %}
+                        <button class="btn buy-now-btn disabled-btn" disabled>
+                            <i class="fas fa-bolt me-2"></i> Out of Stock
+                        </button>
+                    {% else %}
+                        <a href="{% url 'buy_now' selected_variant.id %}"
+                        class="btn buy-now-btn d-flex align-items-center justify-content-center">
+                            <i class="fas fa-bolt me-2"></i> Buy Now
+                        </a>
+                    {% endif %}
+
+                   <!-- ADD TO CART -->
+                    <button type="button"
+                            data-id="{{ selected_variant.id }}"
+                            class="btn add-to-cart add-to-cart-btn d-flex align-items-center justify-content-center
+                                {% if selected_variant.out_of_stock %}disabled-btn{% endif %}"
+                            {% if selected_variant.out_of_stock %}disabled{% endif %}>
+                        <i class="fas fa-shopping-cart me-2"></i>
+                        <span>
+                            {% if selected_variant.out_of_stock %}Out of Stock{% else %}Add to Cart{% endif %}
+                        </span>
+                    </button>
+
+                    <button type="button"
+                            id="addToWishlistBtn"
+                            data-id="{{ selected_variant.id }}"
+                            class="btn add-to-wishlist wishlist-btn {% if selected_variant.id in wishlist_variant_ids %}active{% endif %}">
                         <i class="fas fa-heart"></i>
-                    </a>
+                    </button>
                 </div>
+
              <!-- Variant Selection -->
                 <div class="m-4">
                     <h5>Available Variants</h5>
@@ -143,65 +164,65 @@
 
     <!-- Related Products Section -->
    <section class="related-products-section container my-4">
-    <h2 class="text-center mb-4">Related Products</h2>
-    <div class="row row-cols-2 row-cols-md-4 row-cols-lg-4 g-3 mx-1">
-        {% for related_product in related_products %}
-            <div class="col">
-                <div class="product-card">
-                    <div class="product-thumb">
-                        {% with product_image=related_product.product_image.first %}
-                            {% if product_image %}
-                                <img src="{{ product_image.image.url }}" alt="{{ related_product.name }}" loading="lazy">
-                            {% else %}
-                                <img src="https://via.placeholder.com/150?text={{ related_product.name|urlencode }}" alt="{{ related_product.name }}" loading="lazy">
-                            {% endif %}
-                        {% endwith %}
-                    </div>
-                    <div class="product-details">
-                        {% with variant=related_product.product_variant.first %}
-                            {% if variant %}
-                                <h5><a href="{% url 'product_details' variant.id %}">{{ related_product.name|truncatechars:30 }}</a></h5>
-                            {% else %}
-                                <h5>{{ related_product.name|truncatechars:30 }}</h5>
-                            {% endif %}
-                        {% endwith %}
-                        <div class="product-bottom-details">
-                            {% with variant=related_product.product_variant.first %}
-                                {% if variant %}
-                                    <div class="related-product-price">
-                                        <span class="current-price">₹{{ variant.final_price|floatformat:2 }}</span>
-                                    </div>
-                                    <div class="product-links">
-                                        <a href="#" title="Add to Cart" data-id= "{{variant.id}}"
-                                            class="add-to-cart cart-btn text-decoration-none">
-                                            <i class="fas fa-shopping-cart"></i>
-                                        </a>
-
-                                        <a href="#" 
-                                            title="Add to Wishlist" data-id="{{ variant.id }}"
-                                            class="add-to-wishlist wishlist-btn text-decoration-none {% if variant.id in wishlist_variant_ids %}in-wishlist{% endif %}">
-                                                <i class="fas fa-heart"></i>
-                                        </a>
-                                    </div>
+     <h2 class="text-center mb-4">Related Products</h2>
+        <div class="row row-cols-2 row-cols-md-4 row-cols-lg-4 g-3 mx-1">
+            {% for related_product in related_products %}
+                <div class="col">
+                    <div class="product-card">
+                        <div class="product-thumb">
+                            {% with product_image=related_product.product_image.first %}
+                                {% if product_image %}
+                                    <img src="{{ product_image.image.url }}" alt="{{ related_product.name }}" loading="lazy">
                                 {% else %}
-                                    <div class="related-product-price">N/A</div>
-                                    <div class="product-links">
-                                        <button class="cart-btn text-decoration-none" disabled><i class="fas fa-shopping-cart"></i></button>
-                                        <button class="wishlist-btn text-decoration-none" disabled><i class="fas fa-heart"></i></button>
-                                    </div>
+                                    <img src="https://via.placeholder.com/150?text={{ related_product.name|urlencode }}" alt="{{ related_product.name }}" loading="lazy">
                                 {% endif %}
                             {% endwith %}
                         </div>
+                        <div class="product-details">
+                            {% with variant=related_product.product_variant.first %}
+                                {% if variant %}
+                                    <h5><a href="{% url 'product_details' variant.id %}">{{ related_product.name|truncatechars:30 }}</a></h5>
+                                {% else %}
+                                    <h5>{{ related_product.name|truncatechars:30 }}</h5>
+                                {% endif %}
+                            {% endwith %}
+                            <div class="product-bottom-details">
+                                {% with variant=related_product.product_variant.first %}
+                                    {% if variant %}
+                                        <div class="related-product-price">
+                                            <span class="current-price">₹{{ variant.final_price|floatformat:2 }}</span>
+                                        </div>
+                                        <div class="product-links">
+                                            <a href="#" title="Add to Cart" data-id= "{{variant.id}}"
+                                                class="add-to-cart cart-btn text-decoration-none">
+                                                <i class="fas fa-shopping-cart"></i>
+                                            </a>
+
+                                            <a href="#" 
+                                                title="Add to Wishlist" data-id="{{ variant.id }}"
+                                                class="add-to-wishlist wishlist-btn text-decoration-none {% if variant.id in wishlist_variant_ids %}in-wishlist{% endif %}">
+                                                    <i class="fas fa-heart"></i>
+                                            </a>
+                                        </div>
+                                    {% else %}
+                                        <div class="related-product-price">N/A</div>
+                                        <div class="product-links">
+                                            <button class="cart-btn text-decoration-none" disabled><i class="fas fa-shopping-cart"></i></button>
+                                            <button class="wishlist-btn text-decoration-none" disabled><i class="fas fa-heart"></i></button>
+                                        </div>
+                                    {% endif %}
+                                {% endwith %}
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        {% empty %}
-            <div class="col">
-                <p class="text-center">No related products available.</p>
-            </div>
-        {% endfor %}
-    </div>
-</section>
+            {% empty %}
+                <div class="col">
+                    <p class="text-center">No related products available.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
 
   <style>
 /* =============================
@@ -336,40 +357,130 @@
             }
         }
 
-        .btn-primary,
+    * Action Buttons Wrapper */
+        .product-actions {
+            margin-top: 20px;
+        }
+
+       /* BUY NOW (Primary CTA) */
         .buy-now-btn {
-            background-color: #4b6cb7;
-            border-color: #4b6cb7;
+            background: linear-gradient(135deg, #ff9800, #ff5722);
             color: #fff;
-            padding: 8px 16px;
-            border-radius: 15px;
-            transition: background 0.3s ease, transform 0.2s ease;
+            font-weight: 600;
+            padding: 12px 28px;
+            border-radius: 10px;
+            border: none;
+            transition: all 0.25s ease;
+            min-width: 160px;
         }
-        .btn-primary:hover,
+
         .buy-now-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 87, 34, 0.35);
+            color: #fff;
+        }
+
+        /* ADD TO CART */
+        .add-to-cart-btn {
+            background-color: #fff;
+            border: 2px solid #3b82f6;
+            color: #3b82f6;
+            font-weight: 600;
+            padding: 12px 24px;
+            border-radius: 10px;
+            transition: all 0.25s ease;
+            min-width: 160px;
+        }
+
+        .add-to-cart-btn:hover {
             background-color: #3b82f6;
-            border-color: #3b82f6;
-            transform: translateY(-1px);
+            color: #fff;
+            transform: translateY(-2px);
         }
-        .btn-outline-secondary {
-            color: #6b7280;
-            border-color: #6b7280;
-            padding: 8px 12px;
-            border-radius: 15px;
-            transition: color 0.3s ease, border-color 0.3s ease;
+
+        /* PRODUCT DETAILS  WISHLIST */
+        .product-actions .wishlist-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            border: 1.5px solid #e5e7eb;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.25s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            cursor: pointer;
         }
-        .btn-outline-secondary:hover {
-            color: #4b6cb7;
-            border-color: #4b6cb7;
+
+        .product-actions .wishlist-btn i {
+            color: #9ca3af;
+            font-size: 18px;
+            transition: color 0.25s ease, transform 0.25s ease;
         }
-        .in-wishlist i {
-            color: red;
+
+        /* Hover */
+        .product-actions .wishlist-btn:hover {
+            border-color: #ef4444;
+            background: #fff5f5;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 14px rgba(239,68,68,0.15);
         }
+
+        .product-actions .wishlist-btn:hover i {
+            color: #ef4444;
+            transform: scale(1.1);
+        }
+
+        /* Active (wishlist added) */
+        .product-actions .wishlist-btn.active,
+        .product-actions .wishlist-btn.in-wishlist {
+            background: linear-gradient(135deg, #fee2e2, #fecaca);
+            border-color: #ef4444;
+            box-shadow: 0 8px 18px rgba(239,68,68,0.25);
+        }
+
+        .product-actions .wishlist-btn.active i,
+        .product-actions .wishlist-btn.in-wishlist i {
+            color: #ef4444;
+        }
+
+        /* DISABLED BUY / CART BUTTON */
+        .disabled-btn {
+            background: #e5e7eb !important;
+            border-color: #d1d5db !important;
+            color: #9ca3af !important;
+            cursor: not-allowed !important;
+            box-shadow: none !important;
+            transform: none !important;
+            pointer-events: none; /* hard block */
+        }
+
+        /* Prevent hover animation */
+        .disabled-btn:hover {
+            background: #e5e7eb;
+            color: #9ca3af;
+            transform: none;
+        }
+
+
+        /* Button Press Effect */
+        .buy-now-btn:active,
+        .add-to-cart-btn:active,
+        .wishlist-btn:active {
+            transform: scale(0.97);
+        }
+
+        /* Mobile Layout */
         @media (max-width: 576px) {
-            .btn-primary,
-            .btn-outline-secondary {
-                font-size: 12px;
-                padding: 6px 10px;
+            .product-actions {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .buy-now-btn,
+            .add-to-cart-btn {
+                width: 100%;
             }
         }
 
@@ -468,30 +579,32 @@
             gap: 5px;
         }
 
-        .cart-btn,
-        .wishlist-btn {
-            color: #6b7280;
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        /* RELATED PRODUCTS  ICON BUTTONS */
+        .related-products-section .cart-btn,
+        .related-products-section .wishlist-btn {
             width: 28px;
             height: 28px;
             border-radius: 50%;
             background: #f5f6f8;
             border: none;
+            color: #6b7280;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transition: all 0.3s ease;
         }
 
-        .cart-btn:hover,
-        .wishlist-btn:hover {
+        .related-products-section .cart-btn:hover,
+        .related-products-section .wishlist-btn:hover {
             background: #4b6cb7;
             color: #fff;
         }
 
-        .wishlist-btn.in-wishlist{
+        .related-products-section .wishlist-btn.in-wishlist i {
             color: red;
         }
+
         
     /* Responsive Adjustments */
         @media (max-width: 992px) {

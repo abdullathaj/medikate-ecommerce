@@ -83,6 +83,11 @@ class ProductVariant(models.Model):
             return discounted_price.quantize(Decimal("1"), rounding=ROUND_HALF_UP)
         return self.price
            
+    @property
+    def out_of_stock(self):
+        if self.stock <=0:
+            return True
+        return False
 
 class ProductImage(models.Model): # related_name SHOULD HAVE TO CHANGE TO product_image
     product=models.ForeignKey(Product,on_delete=models.CASCADE,related_name='product_image')
