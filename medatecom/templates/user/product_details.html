@@ -14,62 +14,56 @@
     <!-- Product Details Section -->
     <section class="product-details-section container my-5">
         <div class="row">
-            <!-- Product Images Carousel -->
+            <!-- Product Images + Thumbnails -->
             <div class="col-lg-6">
-                <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
-                    <!-- Carousel Indicators -->
-                    <div class="carousel-indicators">
-                        {% for image in product.product_image.all|slice:":3" %}
-                        <button type="button" data-bs-target="#productCarousel" data-bs-slide-to="{{ forloop.counter0 }}"
-                            {% if forloop.first %}class="active" aria-current="true" {% endif %}
-                            aria-label="Slide {{ forloop.counter }}"></button>
-                        {% endfor %}
-                    </div>
+                <div class="product-gallery d-flex">
 
-                    <!-- Carousel Items -->
-                    <div class="carousel-inner">
-                        {% for image in product.product_image.all|slice:":3" %}
-                            <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                                <div class="image-zoom-container"
-                                    style="--url: url('{{ image.image.url }}'); 
-                                            --zoom-x: 50%; 
-                                            --zoom-y: 50%; 
-                                            --display: none;">
-                                    <img src="{{ image.image.url }}"
-                                        class="d-block w-100"
-                                        alt="{{ product.name }}"
-                                        loading="lazy">
+                    <!-- THUMBNAILS (LEFT ON DESKTOP) -->
+                    {% if product.product_image.count > 1 %}
+                        <div class="product-thumbnails-vertical d-none d-lg-flex">
+                            {% for image in product.product_image.all %}
+                                <div class="thumbnail {% if forloop.first %}active{% endif %}"
+                                    data-bs-target="#productCarousel"
+                                    data-bs-slide-to="{{ forloop.counter0 }}">
+                                    <img src="{{ image.image.url }}" alt="Thumbnail">
                                 </div>
-                            </div>
-                        {% empty %}
-                            <div class="carousel-item active">
-                                <div class="image-zoom-container"
-                                    style="--url: url('https://via.placeholder.com/400'); 
-                                            --zoom-x: 50%; 
-                                            --zoom-y: 50%; 
-                                            --display: none;">
-                                    <img src="https://via.placeholder.com/400"
-                                        class="d-block w-100"
-                                        alt="{{ product.name }}">
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-
-
-                    <!-- Carousel Controls -->
-                    {% if product.product_image.all|length > 1 %}
-                    <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel"
-                        data-bs-slide="prev">
-                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                        <span class="visually-hidden">Previous</span>
-                    </button>
-                    <button class="carousel-control-next" type="button" data-bs-target="#productCarousel"
-                        data-bs-slide="next">
-                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                        <span class="visually-hidden">Next</span>
-                    </button>
+                            {% endfor %}
+                        </div>
                     {% endif %}
+
+                    <!-- MAIN IMAGE -->
+                    <div class="product-carousel-wrapper flex-grow-1">
+                        <div id="productCarousel" class="carousel slide" data-bs-ride="false">
+                            <div class="carousel-inner">
+
+                                {% for image in product.product_image.all %}
+                                    <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                        <div class="image-zoom-container"
+                                            style="--url: url('{{ image.image.url }}');">
+                                            <img src="{{ image.image.url }}"
+                                                class="d-block w-100"
+                                                alt="{{ product.name }}">
+                                        </div>
+                                    </div>
+                                {% endfor %}
+
+                            </div>
+                        </div>
+
+                        <!-- THUMBNAILS BELOW (MOBILE) -->
+                        {% if product.product_image.count > 1 %}
+                            <div class="product-thumbnails-horizontal d-lg-none mt-3">
+                                {% for image in product.product_image.all %}
+                                    <div class="thumbnail {% if forloop.first %}active{% endif %}"
+                                        data-bs-target="#productCarousel"
+                                        data-bs-slide-to="{{ forloop.counter0 }}">
+                                        <img src="{{ image.image.url }}" alt="Thumbnail">
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
                 </div>
             </div>
 
@@ -246,6 +240,9 @@
             height: 400px;
             overflow: hidden;
             cursor: zoom-in;
+            --zoom-x: 50%;
+            --zoom-y: 50%;
+            --display: none;
         }
 
         /* Base Image */
@@ -280,6 +277,72 @@
                 height: 250px;
             }
         }
+
+        /* GALLERY WRAPPER */
+        .product-gallery {
+            gap: 12px;
+        }
+
+        /* LEFT THUMBNAILS (DESKTOP) */
+        .product-thumbnails-vertical {
+            flex-direction: column;
+            gap: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .product-thumbnails-vertical::-webkit-scrollbar {
+            width: 4px;
+        }
+        .product-thumbnails-vertical::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 10px;
+        }
+
+        /* BOTTOM THUMBNAILS (MOBILE) */
+        .product-thumbnails-horizontal {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+        }
+
+        /* THUMBNAIL */
+        .thumbnail {
+            width: 70px;
+            height: 70px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            padding: 4px;
+            background: #fff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* ACTIVE / HOVER */
+        .thumbnail:hover {
+            border-color: #93c5fd;
+        }
+        .thumbnail.active {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 10px rgba(59,130,246,0.25);
+        }
+
+        /* MOBILE SIZE */
+        @media (max-width: 576px) {
+            .thumbnail {
+                width: 60px;
+                height: 60px;
+            }
+        }
+
 
     /* Product Information */
         .product-catagory {
@@ -713,6 +776,19 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
+document.addEventListener('DOMContentLoaded', function () {
+
+    const carousel = document.getElementById('productCarousel');
+    const thumbnails = document.querySelectorAll('.thumbnail');
+
+    carousel.addEventListener('slid.bs.carousel', function (event) {
+        thumbnails.forEach(t => t.classList.remove('active'));
+        if (thumbnails[event.to]) {
+            thumbnails[event.to].classList.add('active');
+        }
+    });
+
+});
 
 $(document).on("click", ".add-to-wishlist", function (e) {
     e.preventDefault();
