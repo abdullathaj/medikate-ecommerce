@@ -258,17 +258,25 @@ def users_profile_update_page(request):
     password_form=UserPasswordChangeForm(user=user)
     email_form=EmailChangeForm()
     
-    # Capture 'next' from GET or POST to persist it
+    
     next_url = request.GET.get('next') or request.POST.get('next')
+
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
 
     if request.method == 'POST':
         if 'update_profile' in request.POST:
             user_form = UserProfileForm(request.POST, instance=user)
             if user_form.is_valid():
                 user_form.save()
+                message = "Profile updated."
                 print(f"{user} updated Profile.")
-                messages.success(request, "Profile updated.")
+                if is_ajax:
+                    return JsonResponse({'status': 'success', 'message': message})
+                messages.success(request, message)
                 return redirect('user_profile_page')
+            else:
+                if is_ajax:
+                    return JsonResponse({'status': 'error', 'errors': user_form.errors})
 
         elif 'update_address' in request.POST:
             address_form = UserAddressForm(request.POST)
@@ -277,21 +285,32 @@ def users_profile_update_page(request):
 
             if address_form.is_valid():
                 address_form.save()
+                message = "Address saved."
                 print(f'{user} is Created new Address.')
-                messages.success(request, "Address saved.")
+                if is_ajax:
+                    return JsonResponse({'status': 'success', 'message': message})
+                messages.success(request, message)
                 if next_url:
                     return redirect(next_url)
                 return redirect('user_profile_page')
+            else:
+                if is_ajax:
+                     return JsonResponse({'status': 'error', 'errors': address_form.errors})
             
         elif 'update_password' in request.POST:
             password_form = UserPasswordChangeForm(user=user, data=request.POST)
             if password_form.is_valid():
                 password_form.save()
                 update_session_auth_hash(request, user) 
+                message = "Password updated successfully."
                 print(f'{user} updated Password.')
-                messages.success(request, "Password updated successfully.")
+                if is_ajax:
+                    return JsonResponse({'status': 'success', 'message': message})
+                messages.success(request, message)
                 return redirect('user_profile_page')
             else:
+                if is_ajax:
+                    return JsonResponse({'status': 'error', 'errors': password_form.errors})
                 for field, error_list in password_form.errors.items():
                     for error in error_list:
                         print(error)
@@ -310,19 +329,28 @@ def users_profile_update_page(request):
                 print(f'OTP for {new_email} : {otp}')
 
                 subject='OTP for Email Change.'
-                message=f'Dear {user},\n\n OTP for email verification for email change is {otp}.\n\n Best Regards,\n\n Team MediKate.'
+                message_text=f'Dear {user},\n\n OTP for email verification for email change is {otp}\n\n Best Regards,\n\n Team MediKate.'
                 from_mail=settings.DEFAULT_FROM_EMAIL
                 recipient_list=[new_email]
 
                 try:
-                    send_mail(subject,message,from_mail,recipient_list)
-                    messages.success(request,f'OTP sent to your given email.\n Plese check it.')
+                    send_mail(subject,message_text,from_mail,recipient_list)
+                    success_msg = f'OTP sent to your given email.\n Plese check it.'
+                    if is_ajax:
+                        return JsonResponse({'status': 'success', 'message': success_msg, 'redirect_url': '/verify_email_otp/'})
+                    messages.success(request, success_msg)
                     return redirect('verify_email_otp')
                 
                 except Exception as e:
                     print(f'error occured as: {str(e)}')
-                    messages.error(request,f'Email couldnt sent. Something went wrong.\n Try again.')
+                    error_msg = f'Email couldnt sent. Something went wrong.\n Try again.'
+                    if is_ajax:
+                        return JsonResponse({'status': 'error', 'message': error_msg})
+                    messages.error(request, error_msg)
                     return redirect('user_profile_update')
+            else:
+                if is_ajax:
+                    return JsonResponse({'status': 'error', 'errors': email_form.errors})
 
     breadcrumbs=[
         {'name': 'Home', 'url':'login_home'},
