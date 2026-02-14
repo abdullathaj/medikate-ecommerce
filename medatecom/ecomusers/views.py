@@ -184,7 +184,7 @@ def user_product_listing(request):
     elif sort == 'name_desc':
         variants = variants.order_by('-product__name', '-variant_name')
 
-    paginator = Paginator(variants, 24)
+    paginator = Paginator(variants, 12)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -258,25 +258,17 @@ def users_profile_update_page(request):
     password_form=UserPasswordChangeForm(user=user)
     email_form=EmailChangeForm()
     
-    
+    # Capture 'next' from GET or POST to persist it
     next_url = request.GET.get('next') or request.POST.get('next')
-
-    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
 
     if request.method == 'POST':
         if 'update_profile' in request.POST:
             user_form = UserProfileForm(request.POST, instance=user)
             if user_form.is_valid():
                 user_form.save()
-                message = "Profile updated."
                 print(f"{user} updated Profile.")
-                if is_ajax:
-                    return JsonResponse({'status': 'success', 'message': message})
-                messages.success(request, message)
+                messages.success(request, "Profile updated.")
                 return redirect('user_profile_page')
-            else:
-                if is_ajax:
-                    return JsonResponse({'status': 'error', 'errors': user_form.errors})
 
         elif 'update_address' in request.POST:
             address_form = UserAddressForm(request.POST)
@@ -285,32 +277,21 @@ def users_profile_update_page(request):
 
             if address_form.is_valid():
                 address_form.save()
-                message = "Address saved."
                 print(f'{user} is Created new Address.')
-                if is_ajax:
-                    return JsonResponse({'status': 'success', 'message': message})
-                messages.success(request, message)
+                messages.success(request, "Address saved.")
                 if next_url:
                     return redirect(next_url)
                 return redirect('user_profile_page')
-            else:
-                if is_ajax:
-                     return JsonResponse({'status': 'error', 'errors': address_form.errors})
             
         elif 'update_password' in request.POST:
             password_form = UserPasswordChangeForm(user=user, data=request.POST)
             if password_form.is_valid():
                 password_form.save()
                 update_session_auth_hash(request, user) 
-                message = "Password updated successfully."
                 print(f'{user} updated Password.')
-                if is_ajax:
-                    return JsonResponse({'status': 'success', 'message': message})
-                messages.success(request, message)
+                messages.success(request, "Password updated successfully.")
                 return redirect('user_profile_page')
             else:
-                if is_ajax:
-                    return JsonResponse({'status': 'error', 'errors': password_form.errors})
                 for field, error_list in password_form.errors.items():
                     for error in error_list:
                         print(error)
@@ -329,28 +310,19 @@ def users_profile_update_page(request):
                 print(f'OTP for {new_email} : {otp}')
 
                 subject='OTP for Email Change.'
-                message_text=f'Dear {user},\n\n OTP for email verification for email change is {otp}\n\n Best Regards,\n\n Team MediKate.'
+                message=f'Dear {user},\n\n OTP for email verification for email change is {otp}.\n\n Best Regards,\n\n Team MediKate.'
                 from_mail=settings.DEFAULT_FROM_EMAIL
                 recipient_list=[new_email]
 
                 try:
-                    send_mail(subject,message_text,from_mail,recipient_list)
-                    success_msg = f'OTP sent to your given email.\n Plese check it.'
-                    if is_ajax:
-                        return JsonResponse({'status': 'success', 'message': success_msg, 'redirect_url': '/verify_email_otp/'})
-                    messages.success(request, success_msg)
+                    send_mail(subject,message,from_mail,recipient_list)
+                    messages.success(request,f'OTP sent to your given email.\n Plese check it.')
                     return redirect('verify_email_otp')
                 
                 except Exception as e:
                     print(f'error occured as: {str(e)}')
-                    error_msg = f'Email couldnt sent. Something went wrong.\n Try again.'
-                    if is_ajax:
-                        return JsonResponse({'status': 'error', 'message': error_msg})
-                    messages.error(request, error_msg)
+                    messages.error(request,f'Email couldnt sent. Something went wrong.\n Try again.')
                     return redirect('user_profile_update')
-            else:
-                if is_ajax:
-                    return JsonResponse({'status': 'error', 'errors': email_form.errors})
 
     breadcrumbs=[
         {'name': 'Home', 'url':'login_home'},
@@ -657,52 +629,6 @@ def users_cart_page(request):
     return render(request, 'user/cart_page.html', context)
 
 
-def refresh_cart_session(request):
-    """
-    Recalculate cart totals and per-item details and refresh `cart_price_data`
-    in session so checkout/payment flows always see correct prices.
-    """
-    cart_items = CartProducts.objects.filter(
-        user=request.user,
-        variant__is_active=True,
-    ).select_related('variant__product')
-
-    original_total_price = Decimal('0')
-    selling_total_price = Decimal('0')
-    discount_total = Decimal('0')
-    cart_item_details = []
-
-    for item in cart_items:
-        original_item_price = item.variant.price * item.quantity
-        selling_item_price = item.total_price
-        item_discount = original_item_price - selling_item_price
-
-        original_total_price += original_item_price
-        selling_total_price += selling_item_price
-        discount_total += item_discount
-
-        cart_item_details.append({
-            'variant_id': item.variant.id,
-            'quantity': item.quantity,
-            'unit_price': str(item.variant.final_price),
-            'item_total': str(item.total_price),
-            'item_discount': str(item_discount),
-        })
-
-    amount_payable = selling_total_price
-
-    data = {
-        'original_total_price': str(original_total_price),
-        'selling_total_price': str(selling_total_price),
-        'discount_total': str(discount_total),
-        'amount_payable': str(amount_payable),
-        'cart_item_details': cart_item_details,
-    }
-
-    request.session['cart_price_data'] = data
-    return data
-
-
 @never_cache
 @login_required(login_url='login')
 def update_cart_quantity(request, cart_item_id):
@@ -746,20 +672,11 @@ def update_cart_quantity(request, cart_item_id):
         cart_item.save()
 
         print(f"Quantity updated for {cart_item.variant} as {cart_item.quantity}.")
-        session_data = refresh_cart_session(request)
-        cart_totals = {
-            'original_total_price': session_data['original_total_price'],
-            'selling_total_price': session_data['selling_total_price'],
-            'discount_total': session_data['discount_total'],
-            'amount_payable': session_data['amount_payable'],
-        }
         return JsonResponse({
                 'status': 'success',
                 'message': f"Quantity updated for {cart_item.variant} as {cart_item.quantity}.",
                 'cart_item_id': cart_item_id,
                 'new_quantity': cart_item.quantity,
-                'item_total': str(cart_item.total_price),
-                'cart_totals': cart_totals,
             })
     except Exception as e:
         return JsonResponse({
@@ -775,22 +692,13 @@ def remove_cart_item(request,cart_item_id):
     """ REMOVING AN ITEM FROM THE CART """
 
     cart_item=get_object_or_404(CartProducts,user=request.user,id=cart_item_id)
-    variant = cart_item.variant
     cart_item.delete()
-
-    print(f'{variant} {variant.variant_name} has removed successfully.')
-    session_data = refresh_cart_session(request)
-    cart_totals = {
-        'original_total_price': session_data['original_total_price'],
-        'selling_total_price': session_data['selling_total_price'],
-        'discount_total': session_data['discount_total'],
-        'amount_payable': session_data['amount_payable'],
-    }
+  
+    print(f'{cart_item.variant} {cart_item.variant.variant_name} has removed successfully.')
     return JsonResponse({
         'status':'success', 
-        'message':f'{variant} {variant.variant_name} has removed successfully.',
+        'message':f'{cart_item.variant} {cart_item.variant.variant_name} has removed successfully.',
         'cart_item_id':cart_item_id,
-        'cart_totals': cart_totals,
     })
 
 
@@ -804,36 +712,20 @@ def save_for_later(request,cart_item_id):
     if WishlistProducts.objects.filter(user=request.user,variant=variant).exists():
         print(f'{variant.product.name} {variant.variant_name} has already in the wishlist.')
         cart_item.delete()
-        session_data = refresh_cart_session(request)
-        cart_totals = {
-            'original_total_price': session_data['original_total_price'],
-            'selling_total_price': session_data['selling_total_price'],
-            'discount_total': session_data['discount_total'],
-            'amount_payable': session_data['amount_payable'],
-        }
         return JsonResponse({
             'status':'warning',
             'message':f'{variant.product.name} {variant.variant_name} has already in the wishlist.',
             'cart_item_id': cart_item_id,
-            'cart_totals': cart_totals,
         })
     
     WishlistProducts.objects.create(user=request.user,variant=variant)
     cart_item.delete()
    
     print(f'{variant.product.name} {variant.variant_name} has added to wishlist.')
-    session_data = refresh_cart_session(request)
-    cart_totals = {
-        'original_total_price': session_data['original_total_price'],
-        'selling_total_price': session_data['selling_total_price'],
-        'discount_total': session_data['discount_total'],
-        'amount_payable': session_data['amount_payable'],
-    }
     return JsonResponse({
         'status':'success',
         'message':f'{variant.product.name} {variant.variant_name} has added to wishlist.',
         'cart_item_id':cart_item_id,
-        'cart_totals': cart_totals,
     })
     
 

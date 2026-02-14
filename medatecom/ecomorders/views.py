@@ -435,7 +435,7 @@ def payment_method(request):
                     for item in variants:
                         if item['variant'].stock < item['quantity']:
                             messages.error(request, f"Insufficient stock for {item['variant']}.")
-                            return redirect('checkout' if is_cart_checkout else 'buy_now', variant_id=item['variant'].id)
+                            return redirect('cart_checkout' if is_cart_checkout else 'buy_now', variant_id=item['variant'].id)
 
                     wallet = None
                     if payment_method == 'WALLET':
@@ -572,7 +572,7 @@ def razorpay_success(request):
                 for item in variants:
                     if item['variant'].stock < item['quantity']:
                         messages.error(request, f"Insufficient stock for {item['variant']}.")
-                        return redirect('checkout' if is_cart_checkout else 'buy_now', variant_id=item['variant'].id)
+                        return redirect('cart_checkout' if is_cart_checkout else 'buy_now', variant_id=item['variant'].id)
                 
                 order = Order.objects.create(
                     user=request.user,

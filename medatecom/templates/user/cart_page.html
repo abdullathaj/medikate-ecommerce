@@ -62,7 +62,7 @@
                                 </div>
                             </div>
                             <div class="col-md-3 text-end">
-                                <p id="item-total-{{ item.id }}">Total: ₹{{ item.total_price|floatformat:2 }}</p>
+                                <p>Total: ₹{{ item.total_price|floatformat:2 }}</p>
                                 <div class="mt-2">
                                     <a href="#" data-id="{{item.id}}"
                                         class="remove-from-cart btn btn-sm btn-danger mb-1">Remove
@@ -83,11 +83,11 @@
             <div class="card p-3 shadow-sm mb-3">
                 <h4>Order Summary</h4>
                 <hr>
-                <p>Original Price: <span id="original-total">₹{{ original_total_price|floatformat:2 }}</span></p>
-                <p>Discount: <span id="discount-total" class="text-success text-decoration-line-through">-₹{{ discount_total|floatformat:2 }}</span></p>
-                <p>Subtotal: <span id="selling-total">₹{{ selling_total_price|floatformat:2 }}</span></p>
+                <p>Original Price: ₹{{ original_total_price|floatformat:2 }}</p>
+                <p>Discount: <span class="text-success text-decoration-line-through">-₹{{ discount_total|floatformat:2 }}</span></p>
+                <p>Subtotal: ₹{{ selling_total_price|floatformat:2 }}</p>
                 <hr>
-                <h5>Payable Amount: <span id="payable-amount">₹{{ payable_amount|floatformat:2 }}</span></h5>
+                <h5>Payable Amount: ₹{{ payable_amount|floatformat:2 }}</h5>
                 <p class="text-muted">Estimated Delivery: {{ estimated_delivery_date }}</p>
 
                 <a href="{% url 'checkout' %}" class="btn btn-outline-success w-100 my-3">Proceed to Checkout</a>
@@ -105,31 +105,6 @@
 <script src="https://code.jquery.com/jquery-3.7.1.js"> </script>
 
 <script>
-
-function updateCartSummary(totals) {
-    if (!totals) return;
-
-    const original = parseFloat(totals.original_total_price || 0).toFixed(2);
-    const discount = parseFloat(totals.discount_total || 0).toFixed(2);
-    const selling = parseFloat(totals.selling_total_price || 0).toFixed(2);
-    const payable = parseFloat(totals.amount_payable || 0).toFixed(2);
-
-    $('#original-total').text('₹' + original);
-    $('#discount-total').text('-₹' + discount);
-    $('#selling-total').text('₹' + selling);
-    $('#payable-amount').text('₹' + payable);
-
-    // If cart becomes empty, show empty message and hide summary
-    if (parseFloat(payable) <= 0) {
-        $('.row').remove();
-        $('.container').append(`
-            <div class="text-center my-5">
-                <p class="text-muted">Your cart is empty.</p>
-                <a href="{% url 'login_home' %}" class="btn btn-primary">Continue Shopping</a>
-            </div>
-        `);
-    }
-}
 
 $(document).on('click','.update-qty', function (e) {
     e.preventDefault();
@@ -150,11 +125,10 @@ $(document).on('click','.update-qty', function (e) {
 
             if (response.status === 'success') {
                  $('#qty-' + cartItemId).text(response.new_quantity); 
-                 if (response.item_total !== undefined) {
-                    $('#item-total-' + cartItemId).text('Total: ₹' + parseFloat(response.item_total).toFixed(2));
-                 }
-                 updateCartSummary(response.cart_totals);
             }
+            setTimeout(() => {
+        location.reload();
+    }, 1200); 
         },
         error: function (response) {
             showToast("Something went wrong. Please try again","error")
@@ -179,7 +153,6 @@ $(document).on('click','.remove-from-cart', function (e){
              $("#cart-item-" + itemId).fadeOut(100, function() {
                 $(this).remove();
             });
-            updateCartSummary(response.cart_totals);
         },
         error: function (response) {
             showToast("Something went wrong. Please try again","error");
@@ -205,7 +178,6 @@ $(document).on('click','.save-for-later', function (e){
              $("#cart-item-" + itemId).fadeOut(100, function() {
                 $(this).remove();
             });
-            updateCartSummary(response.cart_totals);
         },
         error: function (response) {
             showToast("Something went wrong. Please try again","error");
