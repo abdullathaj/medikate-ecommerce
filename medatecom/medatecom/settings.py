@@ -47,6 +47,9 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+    # Cloudinary
+    'cloudinary',
+    'cloudinary_storage',
 ]
 
 # Google authentication and email verification
@@ -107,6 +110,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'medatecom.wsgi.application'
 
 # Database
+
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
@@ -156,8 +160,22 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
+# MEDIA FILES CONFIGURATION
+# MEDIA_URL is required even when using Cloudinary for proper URL generation
 MEDIA_URL = '/media/'
+# MEDIA_ROOT is not needed when using Cloudinary, but kept for compatibility
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# CLOUDINARY STORAGE SETUP
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': config('CLOUDINARY_API_KEY'),
+    'API_SECRET': config('CLOUDINARY_API_SECRET'),
+    'SECURE': True,
+}
+
+# Use Cloudinary for media file storage
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 AUTH_USER_MODEL = 'ecomusers.User'
 

@@ -44,3 +44,5 @@ uritools==6.0.1
 urllib3==2.5.0
 webencodings==0.5.1
 xhtml2pdf==0.2.17
+cloudinary==1.36.0
+django-cloudinary-storage==0.3.0

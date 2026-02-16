@@ -184,7 +184,7 @@ def user_product_listing(request):
     elif sort == 'name_desc':
         variants = variants.order_by('-product__name', '-variant_name')
 
-    paginator = Paginator(variants, 12)
+    paginator = Paginator(variants, 24)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 

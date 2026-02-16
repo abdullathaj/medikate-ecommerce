@@ -33,5 +33,8 @@ urlpatterns = [
 
 ]
 if settings.DEBUG:
-    urlpatterns=urlpatterns+static(settings.STATIC_URL,document_root=settings.STATIC_ROOT)
-    urlpatterns+=static(settings.MEDIA_URL,document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    # Only serve media files locally if not using Cloudinary
+    # Cloudinary handles media file serving, but we keep this for local development fallback
+    if hasattr(settings, 'MEDIA_ROOT') and settings.MEDIA_ROOT:
+        urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
