@@ -1,4 +1,8 @@
 .env
-ecomvenv
-media
-.pyc
+*.env
+venv/
+ecomvenv/
+media/
+staticfiles/
+__pycache__/
+*.pyc

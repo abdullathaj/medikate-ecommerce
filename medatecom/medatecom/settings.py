@@ -73,6 +73,8 @@ LOGIN_REDIRECT_URL = 'login_home'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # White Noice for Static files
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -159,12 +161,13 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # MEDIA FILES CONFIGURATION
-# MEDIA_URL is required even when using Cloudinary for proper URL generation
-MEDIA_URL = '/media/'
-# MEDIA_ROOT is not needed when using Cloudinary, but kept for compatibility
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+MEDIA_URL = '/media/'                # required even when using Cloudinary for proper URL generation
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')   # using Cloudinary, but kept for compatibility
 
 # CLOUDINARY STORAGE SETUP
 CLOUDINARY_STORAGE = {
