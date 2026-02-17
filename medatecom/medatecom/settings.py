@@ -93,18 +93,6 @@ SESSION_SAVE_EVERY_REQUEST = True
 
 ROOT_URLCONF = 'medatecom.urls'
 
-# SECURITY IMPROVEMENTS FOR PRODUCTION
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = 'DENY'
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-SECURE_HSTS_SECONDS = 31536000
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
-SECURE_REFERRER_POLICY = "same-origin"
-
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -177,7 +165,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # MEDIA FILES CONFIGURATION
 
-MEDIA_URL = '/media/'                # required even when using Cloudinary for proper URL generation
+MEDIA_URL = '/media/'         # required even when using Cloudinary for proper URL generation
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')   # using Cloudinary, but kept for compatibility
 
