@@ -61,9 +61,9 @@ AUTHENTICATION_BACKENDS = [
 SITE_ID = 2  # make sure Site with id=2 exists in django_site table
 
 
-ACCOUNT_EMAIL_REQUIRED = True 
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
 ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_LOGIN_METHODS = {'email'}
 SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_LOGIN_ON_GET = True
 
@@ -92,6 +92,19 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_SAVE_EVERY_REQUEST = True
 
 ROOT_URLCONF = 'medatecom.urls'
+
+# SECURITY IMPROVEMENTS FOR PRODUCTION
+if not DEBUG:
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_REFERRER_POLICY = "same-origin"
 
 TEMPLATES = [
     {
@@ -165,7 +178,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # MEDIA FILES CONFIGURATION
 
-MEDIA_URL = '/media/'         # required even when using Cloudinary for proper URL generation
+MEDIA_URL = '/media/'                # required even when using Cloudinary for proper URL generation
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')   # using Cloudinary, but kept for compatibility
 
