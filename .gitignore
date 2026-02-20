@@ -3,3 +3,5 @@ ecomvenv
 media/
 staticfiles/
 .pyc
+__pycache__/
+db.sqlite3
