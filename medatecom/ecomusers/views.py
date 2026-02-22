@@ -495,6 +495,34 @@ def remove_from_wishlist(request):
 # USER CART MANAGEMENT , ADDING PRODUCTS FOR AUTHENTICATED USERS
 # ---------------------------------------------------------------------
 
+def _get_cart_summary(user):
+    """Helper: recalculate cart totals for the given user and return as dict."""
+    cart_items = CartProducts.objects.filter(
+        user=user,
+        variant__is_active=True,
+    ).select_related('variant__product')
+
+    original_total_price = Decimal('0')
+    selling_total_price = Decimal('0')
+    discount_total = Decimal('0')
+    item_count = 0
+
+    for item in cart_items:
+        if item.quantity < 1 or item.variant.stock == 0:
+            continue
+        original_total_price += item.variant.price * item.quantity
+        selling_total_price += item.total_price
+        discount_total += (item.variant.price * item.quantity) - item.total_price
+        item_count += 1
+
+    return {
+        'original_total_price': str(original_total_price.quantize(Decimal('0.01'))),
+        'selling_total_price': str(selling_total_price.quantize(Decimal('0.01'))),
+        'discount_total': str(discount_total.quantize(Decimal('0.01'))),
+        'payable_amount': str(selling_total_price.quantize(Decimal('0.01'))),
+        'item_count': item_count,
+    }
+
 
 @never_cache
 @login_required(login_url='login')
@@ -671,12 +699,17 @@ def update_cart_quantity(request, cart_item_id):
                 })
         cart_item.save()
 
+        cart_summary = _get_cart_summary(request.user)
+        item_total = str(cart_item.total_price.quantize(Decimal('0.01')))
+
         print(f"Quantity updated for {cart_item.variant} as {cart_item.quantity}.")
         return JsonResponse({
                 'status': 'success',
                 'message': f"Quantity updated for {cart_item.variant} as {cart_item.quantity}.",
                 'cart_item_id': cart_item_id,
                 'new_quantity': cart_item.quantity,
+                'item_total': item_total,
+                'cart_summary': cart_summary,
             })
     except Exception as e:
         return JsonResponse({
@@ -693,12 +726,15 @@ def remove_cart_item(request,cart_item_id):
 
     cart_item=get_object_or_404(CartProducts,user=request.user,id=cart_item_id)
     cart_item.delete()
+
+    cart_summary = _get_cart_summary(request.user)
   
     print(f'{cart_item.variant} {cart_item.variant.variant_name} has removed successfully.')
     return JsonResponse({
         'status':'success', 
         'message':f'{cart_item.variant} {cart_item.variant.variant_name} has removed successfully.',
         'cart_item_id':cart_item_id,
+        'cart_summary': cart_summary,
     })
 
 
@@ -712,20 +748,25 @@ def save_for_later(request,cart_item_id):
     if WishlistProducts.objects.filter(user=request.user,variant=variant).exists():
         print(f'{variant.product.name} {variant.variant_name} has already in the wishlist.')
         cart_item.delete()
+        cart_summary = _get_cart_summary(request.user)
         return JsonResponse({
             'status':'warning',
             'message':f'{variant.product.name} {variant.variant_name} has already in the wishlist.',
             'cart_item_id': cart_item_id,
+            'cart_summary': cart_summary,
         })
     
     WishlistProducts.objects.create(user=request.user,variant=variant)
     cart_item.delete()
+
+    cart_summary = _get_cart_summary(request.user)
    
     print(f'{variant.product.name} {variant.variant_name} has added to wishlist.')
     return JsonResponse({
         'status':'success',
         'message':f'{variant.product.name} {variant.variant_name} has added to wishlist.',
         'cart_item_id':cart_item_id,
+        'cart_summary': cart_summary,
     })
     
 

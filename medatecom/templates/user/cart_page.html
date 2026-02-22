@@ -62,7 +62,7 @@
                                 </div>
                             </div>
                             <div class="col-md-3 text-end">
-                                <p>Total: ₹{{ item.total_price|floatformat:2 }}</p>
+                                <p id="item-total-{{item.id}}">Total: ₹{{ item.total_price|floatformat:2 }}</p>
                                 <div class="mt-2">
                                     <a href="#" data-id="{{item.id}}"
                                         class="remove-from-cart btn btn-sm btn-danger mb-1">Remove
@@ -80,14 +80,14 @@
 
         <!-- Right Section: Price Summary -->
         <div class="col-lg-4 col-md-12">
-            <div class="card p-3 shadow-sm mb-3">
+            <div class="card p-3 shadow-sm mb-3" id="order-summary-card">
                 <h4>Order Summary</h4>
                 <hr>
-                <p>Original Price: ₹{{ original_total_price|floatformat:2 }}</p>
-                <p>Discount: <span class="text-success text-decoration-line-through">-₹{{ discount_total|floatformat:2 }}</span></p>
-                <p>Subtotal: ₹{{ selling_total_price|floatformat:2 }}</p>
+                <p>Original Price: ₹<span id="original-price">{{ original_total_price|floatformat:2 }}</span></p>
+                <p>Discount: <span class="text-success text-decoration-line-through">-₹<span id="discount-total">{{ discount_total|floatformat:2 }}</span></span></p>
+                <p>Subtotal: ₹<span id="selling-price">{{ selling_total_price|floatformat:2 }}</span></p>
                 <hr>
-                <h5>Payable Amount: ₹{{ payable_amount|floatformat:2 }}</h5>
+                <h5>Payable Amount: ₹<span id="payable-amount">{{ payable_amount|floatformat:2 }}</span></h5>
                 <p class="text-muted">Estimated Delivery: {{ estimated_delivery_date }}</p>
 
                 <a href="{% url 'checkout' %}" class="btn btn-outline-success w-100 my-3">Proceed to Checkout</a>
@@ -105,6 +105,27 @@
 <script src="https://code.jquery.com/jquery-3.7.1.js"> </script>
 
 <script>
+
+// Helper: update the Order Summary panel from cart_summary JSON
+function updateOrderSummary(summary) {
+    $('#original-price').text(parseFloat(summary.original_total_price).toFixed(2));
+    $('#discount-total').text(parseFloat(summary.discount_total).toFixed(2));
+    $('#selling-price').text(parseFloat(summary.selling_total_price).toFixed(2));
+    $('#payable-amount').text(parseFloat(summary.payable_amount).toFixed(2));
+}
+
+// Helper: if cart is empty, replace the page content with empty-cart message
+function checkEmptyCart() {
+    if ($('.card.mb-3.border-white').length === 0) {
+        $('.row').first().html(`
+            <div class="text-center my-5">
+                <p class="text-muted">Your cart is empty.</p>
+                <a href="{% url 'login_home' %}" class="btn btn-primary">Continue Shopping</a>
+            </div>
+        `);
+        $('#order-summary-card').closest('.col-lg-4').remove();
+    }
+}
 
 $(document).on('click','.update-qty', function (e) {
     e.preventDefault();
@@ -124,11 +145,10 @@ $(document).on('click','.update-qty', function (e) {
             showToast(response.message,response.status);
 
             if (response.status === 'success') {
-                 $('#qty-' + cartItemId).text(response.new_quantity); 
+                 $('#qty-' + cartItemId).text(response.new_quantity);
+                 $('#item-total-' + cartItemId).text('Total: ₹' + parseFloat(response.item_total).toFixed(2));
+                 updateOrderSummary(response.cart_summary);
             }
-            setTimeout(() => {
-        location.reload();
-    }, 1200); 
         },
         error: function (response) {
             showToast("Something went wrong. Please try again","error")
@@ -150,8 +170,12 @@ $(document).on('click','.remove-from-cart', function (e){
         success: function (response) {
             showToast(response.message, response.status);
 
-             $("#cart-item-" + itemId).fadeOut(100, function() {
+             $("#cart-item-" + itemId).fadeOut(300, function() {
                 $(this).remove();
+                if (response.cart_summary) {
+                    updateOrderSummary(response.cart_summary);
+                }
+                checkEmptyCart();
             });
         },
         error: function (response) {
@@ -175,8 +199,12 @@ $(document).on('click','.save-for-later', function (e){
         success: function (response) {
             showToast(response.message, response.status);
 
-             $("#cart-item-" + itemId).fadeOut(100, function() {
+             $("#cart-item-" + itemId).fadeOut(300, function() {
                 $(this).remove();
+                if (response.cart_summary) {
+                    updateOrderSummary(response.cart_summary);
+                }
+                checkEmptyCart();
             });
         },
         error: function (response) {
