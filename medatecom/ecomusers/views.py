@@ -18,6 +18,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from decimal import Decimal
 from django.contrib.auth import update_session_auth_hash
+from django.urls import reverse
 import random
 
 # Create your views here.
@@ -283,8 +284,36 @@ def users_profile_update_page(request):
             if user_form.is_valid():
                 user_form.save()
                 print(f"{user} updated Profile.")
-                messages.success(request, "Profile updated.")
+                success_message = "Profile updated."
+
+                # AJAX request: store message and return JSON instead of redirect
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    messages.success(request, success_message)
+                    return JsonResponse(
+                        {
+                            'status': 'success',
+                            'message': success_message,
+                            'redirect_url': reverse('user_profile_page'),
+                        }
+                    )
+
+                messages.success(request, success_message)
                 return redirect('user_profile_page')
+
+            # Invalid form – for AJAX, return field errors
+            elif request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                errors = {
+                    field: [str(e) for e in error_list]
+                    for field, error_list in user_form.errors.items()
+                }
+                return JsonResponse(
+                    {
+                        'status': 'error',
+                        'message': 'Please correct the errors in the form.',
+                        'errors': errors,
+                    },
+                    status=400,
+                )
 
         elif 'update_address' in request.POST:
             address_form = UserAddressForm(request.POST)
@@ -294,10 +323,39 @@ def users_profile_update_page(request):
             if address_form.is_valid():
                 address_form.save()
                 print(f'{user} is Created new Address.')
-                messages.success(request, "Address saved.")
+                success_message = "Address saved."
+
+                # AJAX request: send JSON, with optional redirect
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    messages.success(request, success_message)
+                    redirect_url = next_url or reverse('user_profile_page')
+                    return JsonResponse(
+                        {
+                            'status': 'success',
+                            'message': success_message,
+                            'redirect_url': redirect_url,
+                        }
+                    )
+
+                messages.success(request, success_message)
                 if next_url:
                     return redirect(next_url)
                 return redirect('user_profile_page')
+
+            # Invalid form – for AJAX, return validation errors
+            elif request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                errors = {
+                    field: [str(e) for e in error_list]
+                    for field, error_list in address_form.errors.items()
+                }
+                return JsonResponse(
+                    {
+                        'status': 'error',
+                        'message': 'Please correct the errors in the address form.',
+                        'errors': errors,
+                    },
+                    status=400,
+                )
             
         elif 'update_password' in request.POST:
             password_form = UserPasswordChangeForm(user=user, data=request.POST)
@@ -305,9 +363,36 @@ def users_profile_update_page(request):
                 password_form.save()
                 update_session_auth_hash(request, user) 
                 print(f'{user} updated Password.')
-                messages.success(request, "Password updated successfully.")
+                success_message = "Password updated successfully."
+
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    messages.success(request, success_message)
+                    return JsonResponse(
+                        {
+                            'status': 'success',
+                            'message': success_message,
+                            'redirect_url': reverse('user_profile_page'),
+                        }
+                    )
+
+                messages.success(request, success_message)
                 return redirect('user_profile_page')
             else:
+                # Collect errors for both AJAX and non-AJAX flows
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    errors = {
+                        field: [str(e) for e in error_list]
+                        for field, error_list in password_form.errors.items()
+                    }
+                    return JsonResponse(
+                        {
+                            'status': 'error',
+                            'message': 'Please correct the errors in the password form.',
+                            'errors': errors,
+                        },
+                        status=400,
+                    )
+
                 for field, error_list in password_form.errors.items():
                     for error in error_list:
                         print(error)
@@ -332,12 +417,35 @@ def users_profile_update_page(request):
 
                 try:
                     send_mail(subject,message,from_mail,recipient_list)
-                    messages.success(request,f'OTP sent to your given email.\n Plese check it.')
+                    success_message = 'OTP sent to your given email. Please check it.'
+
+                    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                        messages.success(request, success_message)
+                        return JsonResponse(
+                            {
+                                'status': 'success',
+                                'message': success_message,
+                                'redirect_url': reverse('verify_email_otp'),
+                            }
+                        )
+
+                    messages.success(request, success_message)
                     return redirect('verify_email_otp')
                 
                 except Exception as e:
                     print(f'error occured as: {str(e)}')
-                    messages.error(request,f'Email couldnt sent. Something went wrong.\n Try again.')
+                    error_message = "Email couldn't be sent. Something went wrong. Try again."
+
+                    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                        return JsonResponse(
+                            {
+                                'status': 'error',
+                                'message': error_message,
+                            },
+                            status=500,
+                        )
+
+                    messages.error(request, error_message)
                     return redirect('user_profile_update')
 
     breadcrumbs=[

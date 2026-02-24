@@ -230,14 +230,16 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === 'success') {
+                            if (data.redirect_url) {
+                                window.location.href = data.redirect_url;
+                                return;
+                            }
+
                             showToast(data.message, 'success');
 
                             // Specific actions based on form
                             if (formId === 'addressForm' || formId === 'passwordForm') {
                                 form.reset();
-                            }
-                            if (data.redirect_url) {
-                                window.location.href = data.redirect_url;
                             }
                         } else if (data.status === 'error') {
                             if (data.errors) {
