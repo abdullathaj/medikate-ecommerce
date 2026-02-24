@@ -12,6 +12,7 @@ from .forms import UserProfileForm,UserAddressForm,UserPasswordChangeForm,EmailC
 from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib import messages
+from django.views.decorators.http import require_POST
 from datetime import timedelta,datetime
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
@@ -240,12 +241,27 @@ def users_profile_page(request):
 
 @never_cache
 @login_required(login_url='login') 
+@require_POST
 def user_delete_address(request, address_id):
-    ''' TO DELETE CURRENT ADDRESSES '''
+    '''Delete a user's address. Supports AJAX (JSON) and normal POST redirects.'''
     address = get_object_or_404(UserAddress, id=address_id, user=request.user)
     print(f'Deleting Address: {address}')
+
     address.delete()
-    messages.success(request, "Address deleted successfully.")
+    success_message = "Address deleted successfully."
+
+    # AJAX request – return JSON payload for frontend handling
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse(
+            {
+                'status': 'success',
+                'message': success_message,
+                'address_id': address_id,
+            }
+        )
+
+    # Fallback for non-AJAX form submissions
+    messages.success(request, success_message)
     return redirect('user_profile_page')
 
 @never_cache
