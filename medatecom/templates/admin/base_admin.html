@@ -4,6 +4,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}MediKate Admin{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
@@ -32,13 +33,14 @@
             box-shadow: 2px 0 6px rgba(0, 0, 0, 0.05);
         }
 
-        .nav-link {
+        .sidebar .nav-link {
             color: #2e7d32;
             font-weight: 500;
+            padding: 10px 16px;
         }
 
-        .nav-link:hover,
-        .nav-link.active {
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
             background-color: #c8e6c9;
             color: #1b5e20;
             border-left: 4px solid #66bb6a;
@@ -61,6 +63,81 @@
             background-color: #81c784;
             color: #fff;
         }
+
+        /* Sidebar toggle button styling */
+        .sidebar-toggler {
+            background: none;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .sidebar-toggler:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* On small screens, sidebar becomes an offcanvas-style panel */
+        @media (max-width: 767.98px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: -280px;
+                width: 260px;
+                height: 100vh;
+                z-index: 1050;
+                transition: left 0.3s ease;
+                padding-top: 16px;
+            }
+
+            .sidebar.show {
+                left: 0;
+            }
+
+            .sidebar-backdrop {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.4);
+                z-index: 1040;
+            }
+
+            .sidebar-backdrop.show {
+                display: block;
+            }
+
+            /* Sidebar close button */
+            .sidebar-close {
+                position: absolute;
+                top: 10px;
+                right: 12px;
+                background: none;
+                border: none;
+                font-size: 22px;
+                color: #2e7d32;
+                cursor: pointer;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .sidebar-toggler {
+                display: none;
+            }
+
+            .sidebar-close {
+                display: none;
+            }
+
+            .sidebar-backdrop {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 
@@ -68,6 +145,10 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
+            <!-- Sidebar Toggle Button (visible on small screens) -->
+            <button class="sidebar-toggler me-2" type="button" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
             <a class="navbar-brand" href="#"><i class="fas fa-leaf me-2"></i>MediKate Admin</a>
             <form class="d-flex ms-auto" method="POST" action="{% url 'admin_logout' %}">
                 {% csrf_token %}
@@ -81,11 +162,17 @@
 
     </div>
 
+    <!-- Backdrop for mobile sidebar -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
+
     <!-- Sidebar and Main Content -->
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
             <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <button class="sidebar-close" type="button" onclick="closeSidebar()">
+                    <i class="fas fa-times"></i>
+                </button>
                 <div class="position-sticky pt-3">
                     <ul class="nav flex-column">
                         <li class="nav-item">
@@ -109,33 +196,33 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url "admin_order_list" %}">
+                            <a class="nav-link" href="{% url 'admin_order_list' %}">
                                 <i class="fa-solid fa-cart-shopping me-2"></i>Orders
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url "admin_coupon_list" %}">
+                            <a class="nav-link" href="{% url 'admin_coupon_list' %}">
                                 <i class="fa-solid fa-ticket me-2"></i>Coupons
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href=" {% url "admin_offer_list" %} ">
-                              <i class=" fa-solid fa-percent me-2"></i>Offers
+                            <a class="nav-link" href="{% url 'admin_offer_list' %}">
+                                <i class="fa-solid fa-percent me-2"></i>Offers
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url "admin_request_list" %}">
+                            <a class="nav-link" href="{% url 'admin_request_list' %}">
                                 <i class="fa-solid fa-bell me-2"></i>Return Requests
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url "admin_sales_report" %}">
-                                <i class="fa-solid fa-chart-pie"></i> Sales Report
+                            <a class="nav-link" href="{% url 'admin_sales_report' %}">
+                                <i class="fa-solid fa-chart-pie me-2"></i>Sales Report
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url "admin_wallet_transactoins" %}">
-                                <i class="fa-solid fa-wallet"></i> Wallet Transactions
+                            <a class="nav-link" href="{% url 'admin_wallet_transactoins' %}">
+                                <i class="fa-solid fa-wallet me-2"></i>Wallet Transactions
                             </a>
                         </li>
                         <li class="nav-item">
@@ -155,7 +242,6 @@
                 {% endblock %}
             </main>
         </div>
-
 
 
         {% if messages %}
@@ -190,15 +276,25 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
         <script>
+            // Toast auto-show
             document.addEventListener("DOMContentLoaded", function () {
                 var toastElList = [].slice.call(document.querySelectorAll('.toast'));
                 toastElList.forEach(function (toastEl) {
                     new bootstrap.Toast(toastEl).show();
                 });
             });
+
+            // Sidebar toggle for mobile
+            function toggleSidebar() {
+                document.getElementById('sidebarMenu').classList.toggle('show');
+                document.getElementById('sidebarBackdrop').classList.toggle('show');
+            }
+
+            function closeSidebar() {
+                document.getElementById('sidebarMenu').classList.remove('show');
+                document.getElementById('sidebarBackdrop').classList.remove('show');
+            }
         </script>
-
-
 
 
 </body>
