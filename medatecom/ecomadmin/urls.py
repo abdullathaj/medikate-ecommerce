@@ -44,4 +44,8 @@ urlpatterns = [
     path('admin_wallet_transactions/', views.admin_wallet_transactions, name='admin_wallet_transactoins'),
     path('admin_wallet_details/<int:transaction_id>/', views.admin_wallet_details, name='admin_wallet_details'),
 
+    # ADMIN CONTACT MESSAGES
+    path('admin_contact_messages/', views.admin_contact_messages, name='admin_contact_messages'),
+    path('admin_contact_detail/<int:message_id>/', views.admin_contact_detail, name='admin_contact_detail'),
+
 ]

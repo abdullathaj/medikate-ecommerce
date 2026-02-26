@@ -3,12 +3,12 @@ from django.http import Http404,JsonResponse
 from django.db import IntegrityError,transaction
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
-from .models import UserAddress,User,WishlistProducts,CartProducts,Wallet,Referral,WalletTransaction
+from .models import UserAddress,User,WishlistProducts,CartProducts,Wallet,Referral,WalletTransaction,ContactMessage
 from ecomproducts.models import Product,ProductVariant,ProductImage,Categories,Coupon
 from django.core.paginator import Paginator
 from django.db import models
 from django.db.models import Min,Q,F,Sum,FloatField,Prefetch,ExpressionWrapper,DecimalField
-from .forms import UserProfileForm,UserAddressForm,UserPasswordChangeForm,EmailChangeForm
+from .forms import UserProfileForm,UserAddressForm,UserPasswordChangeForm,EmailChangeForm,ContactMessageForm
 from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib import messages
@@ -908,3 +908,40 @@ def users_wallet_page(request):
         {'name': 'Wallet', 'url': ''}
     ]
     return render(request,'user/wallet_page.html',{'wallet':wallet, 'transactions':transactions, 'breadcrumbs': breadcrumbs})
+
+
+# ----------------------------------------------------------------------------
+# USER CONTACT / HELP CENTER PAGE
+# ----------------------------------------------------------------------------
+@login_required(login_url='login')
+@never_cache
+def contact_page(request):
+    ''' CONTACT PAGE FOR USERS TO RAISE CONCERNS TO ADMIN '''
+    if request.method == 'POST':
+        form = ContactMessageForm(request.POST)
+        if form.is_valid():
+            contact_message = form.save(commit=False)
+            contact_message.user = request.user
+            contact_message.save()
+            print(f'{request.user} submitted a contact message: {contact_message.title}')
+            messages.success(request, 'Your message has been submitted successfully. We will get back to you soon!')
+            return redirect('contact_page')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = ContactMessageForm()
+
+    # Prvios message
+    user_messages = ContactMessage.objects.filter(user=request.user).order_by('-created_at')
+
+    breadcrumbs = [
+        {'name': 'Home', 'url': 'login_home'},
+        {'name': 'Help Center', 'url': ''},
+    ]
+
+    context = {
+        'form': form,
+        'user_messages': user_messages,
+        'breadcrumbs': breadcrumbs,
+    }
+    return render(request, 'user/contact_page.html', context)

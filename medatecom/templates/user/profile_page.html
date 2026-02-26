@@ -3,7 +3,7 @@
 
 {% block content %}
 <!-- Toast Container -->
-    {% include 'extra/toast.html' %}
+{% include 'extra/toast.html' %}
 
 <div class="container my-4">
     <div class="row justify-content-center">
@@ -42,7 +42,8 @@
                             </p>
 
                             <p class="text-muted small mb-2">
-                                Earn <strong class="text-success">₹100 wallet credits</strong> for every successful referral.
+                                Earn <strong class="text-success">₹100 wallet credits</strong> for every successful
+                                referral.
                             </p>
 
                             <p class="mb-3">
@@ -50,20 +51,20 @@
                             </p>
 
                             {% if referrals %}
-                                <ul class="list-group list-group-flush">
-                                    {% for referral in referrals %}
-                                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                                            <span>{{ referral.referee.username }}</span>
-                                            <span class="badge {{ referral.rewarded|yesno:'bg-success,bg-warning' }}">
-                                                {{ referral.rewarded|yesno:"Rewarded,Pending" }}
-                                            </span>
-                                        </li>
-                                    {% endfor %}
-                                </ul>
+                            <ul class="list-group list-group-flush">
+                                {% for referral in referrals %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span>{{ referral.referee.username }}</span>
+                                    <span class="badge {{ referral.rewarded|yesno:'bg-success,bg-warning' }}">
+                                        {{ referral.rewarded|yesno:"Rewarded,Pending" }}
+                                    </span>
+                                </li>
+                                {% endfor %}
+                            </ul>
                             {% else %}
-                                <p class="text-muted small mb-0">
-                                    No referrals yet. Start sharing your code!
-                                </p>
+                            <p class="text-muted small mb-0">
+                                No referrals yet. Start sharing your code!
+                            </p>
                             {% endif %}
                         </div>
                     </div>
@@ -79,48 +80,49 @@
 
                 <div class="card-body">
                     {% if user.addresses.exists %}
-                        <div class="list-group list-group-flush">
-                            {% for address in user.addresses.all %}
-                                <div class="list-group-item d-flex justify-content-between align-items-start px-0"
-                                     data-address-id="{{ address.id }}">
-                                    <div class="me-3">
-                                        {{ address.addressline_1 }}
-                                        {% if address.addressline_2 %}, {{ address.addressline_2 }}{% endif %},
-                                        {{ address.city }}, {{ address.state }},
-                                        {{ address.nation }} - {{ address.postal_code }}
+                    <div class="list-group list-group-flush">
+                        {% for address in user.addresses.all %}
+                        <div class="list-group-item d-flex justify-content-between align-items-start px-0"
+                            data-address-id="{{ address.id }}">
+                            <div class="me-3">
+                                {{ address.addressline_1 }}
+                                {% if address.addressline_2 %}, {{ address.addressline_2 }}{% endif %},
+                                {{ address.city }}, {{ address.state }},
+                                {{ address.nation }} - {{ address.postal_code }}
 
-                                        {% if address.is_default %}
-                                            <span class="badge bg-success ms-2">Default</span>
-                                        {% endif %}
-                                    </div>
+                                {% if address.is_default %}
+                                <span class="badge bg-success ms-2">Default</span>
+                                {% endif %}
+                            </div>
 
-                                    <div class="text-nowrap">
-                                        <a href="{% url 'edit_address' address.id %}"
-                                           class="btn btn-sm btn-outline-primary me-2">
-                                            Edit
-                                        </a>
+                            <div class="text-nowrap">
+                                <a href="{% url 'edit_address' address.id %}"
+                                    class="btn btn-sm btn-outline-primary me-2">
+                                    Edit
+                                </a>
 
-                                        <form method="post"
-                                              action="{% url 'delete_address' address.id %}"
-                                              class="d-inline address-delete-form"
-                                              data-address-id="{{ address.id }}">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                Delete
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                            {% endfor %}
+                                <form method="post" action="{% url 'delete_address' address.id %}"
+                                    class="d-inline address-delete-form" data-address-id="{{ address.id }}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        Delete
+                                    </button>
+                                </form>
+                            </div>
                         </div>
+                        {% endfor %}
+                    </div>
                     {% else %}
-                        <p class="text-muted mb-0">No addresses added yet.</p>
+                    <p class="text-muted mb-0">No addresses added yet.</p>
                     {% endif %}
                 </div>
             </div>
 
-            <!-- ACTION BUTTON -->
+            <!-- ACTION BUTTONS -->
             <div class="text-end">
+                <a href="{% url 'contact_page' %}" class="btn btn-outline-success me-2">
+                    <i class="fas fa-headset me-1"></i> Help Center
+                </a>
                 <a href="{% url 'user_profile_update' %}" class="btn btn-outline-primary">
                     Update Profile
                 </a>
@@ -131,7 +133,8 @@
 </div>
 
 <!-- Delete Address Confirmation Modal -->
-<div class="modal fade" id="deleteAddressModal" tabindex="-1" aria-labelledby="deleteAddressModalLabel" aria-hidden="true">
+<div class="modal fade" id="deleteAddressModal" tabindex="-1" aria-labelledby="deleteAddressModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">

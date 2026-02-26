@@ -31,6 +31,9 @@ urlpatterns = [
     path('remove_cart_item/<int:cart_item_id>/',views.remove_cart_item,name='remove_cart_item'),
     path('save_for_later/<int:cart_item_id>/',views.save_for_later,name='save_for_later'),
 
-    path('show_details/',views.show_details,name='show_details')
+    path('show_details/',views.show_details,name='show_details'),
+
+    # CONTACT / HELP CENTER
+    path('contact/',views.contact_page,name='contact_page'),
    
 ]

@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserChangeForm
-from .models import User,UserAddress
+from .models import User,UserAddress,ContactMessage
 from django.contrib.auth import password_validation
 from django.contrib.auth.hashers import check_password
 from django.core.exceptions import ValidationError
@@ -160,3 +160,19 @@ class UserPasswordChangeForm(forms.Form):
         self.user.set_password(new_password)
         self.user.save()
         return self.user
+
+
+class ContactMessageForm(forms.ModelForm):
+    class Meta:
+        model = ContactMessage
+        fields = ['subject', 'title', 'message']
+        widgets = {
+            'subject': forms.Select(attrs={'class': 'form-control'}),
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter a brief title'}),
+            'message': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': 'Describe your concern or query in detail...'}),
+        }
+        labels = {
+            'subject': 'Subject Category',
+            'title': 'Title',
+            'message': 'Your Message',
+        }

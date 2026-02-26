@@ -1,0 +1,197 @@
+{% extends 'auth/navbar.html' %}
+{% load static %}
+
+{% block content %}
+{% include 'extra/toast.html' %}
+
+<style>
+    .help-hero {
+        background: linear-gradient(135deg, #00675c 0%, #1a9e8f 100%);
+        color: #fff;
+        border-radius: 12px;
+        padding: 32px 20px;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .card-custom {
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    }
+
+    .scroll-box {
+        max-height: 600px;
+        overflow-y: auto;
+        padding-right: 6px;
+    }
+
+    .scroll-box::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .scroll-box::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 10px;
+    }
+
+    .status-badge {
+        font-size: 12px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+
+    .status-OPEN { background: #fff3cd; color: #856404; }
+    .status-IN_PROGRESS { background: #cce5ff; color: #004085; }
+    .status-RESOLVED { background: #d4edda; color: #155724; }
+    .status-CLOSED { background: #e2e3e5; color: #383d41; }
+
+    .admin-reply-box {
+        background: #f8fffe;
+        border-left: 4px solid #00675c;
+        padding: 12px 16px;
+        margin-top: 12px;
+        border-radius: 4px;
+    }
+
+    .subject-tag {
+        font-size: 12px;
+        background: #e8f3f2;
+        color: #00675c;
+        padding: 2px 8px;
+        border-radius: 12px;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 30px 0;
+        color: #888;
+    }
+
+    /* Responsive: remove fixed height on mobile */
+    @media (max-width: 991px) {
+        .scroll-box {
+            max-height: none;
+            overflow: visible;
+        }
+    }
+</style>
+
+<div class="container my-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+
+            <!-- Hero -->
+            <div class="help-hero">
+                <h3 class="fw-bold mb-1">Help Center</h3>
+                <p class="mb-0 small">Submit your concerns and track responses from our team.</p>
+            </div>
+
+            <div class="row g-4">
+
+                <!-- Contact Form -->
+                <div class="col-lg-6">
+                    <div class="card card-custom">
+                        <div class="card-body p-4 scroll-box">
+
+                            <h5 class="fw-semibold mb-3">Submit a Query</h5>
+
+                            <form method="POST" action="{% url 'contact_page' %}">
+                                {% csrf_token %}
+
+                                <div class="mb-3">
+                                    <label class="form-label">{{ form.subject.label }}</label>
+                                    {{ form.subject }}
+                                    {% if form.subject.errors %}
+                                        <div class="text-danger small">{{ form.subject.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">{{ form.title.label }}</label>
+                                    {{ form.title }}
+                                    {% if form.title.errors %}
+                                        <div class="text-danger small">{{ form.title.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">{{ form.message.label }}</label>
+                                    {{ form.message }}
+                                    {% if form.message.errors %}
+                                        <div class="text-danger small">{{ form.message.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="text-end">
+                                    <button type="submit" class="btn btn-success px-4">
+                                        Submit
+                                    </button>
+                                </div>
+                            </form>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Previous Queries -->
+                <div class="col-lg-6">
+                    <div class="card card-custom">
+                        <div class="card-body p-4">
+
+                            <h5 class="fw-semibold mb-3">My Previous Queries</h5>
+
+                            <div class="scroll-box">
+                                {% if user_messages %}
+                                    {% for msg in user_messages %}
+                                        <div class="card mb-3 shadow-sm">
+                                            <div class="card-body">
+
+                                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                                    <div>
+                                                        <div class="fw-semibold">{{ msg.title }}</div>
+                                                        <span class="subject-tag">{{ msg.get_subject_display }}</span>
+                                                    </div>
+
+                                                    <div class="text-end">
+                                                        <span class="status-badge status-{{ msg.status }}">
+                                                            {{ msg.get_status_display }}
+                                                        </span>
+                                                        <div class="small text-muted">
+                                                            {{ msg.created_at|date:"M d, Y h:i A" }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <p class="text-muted mb-1">{{ msg.message }}</p>
+
+                                                {% if msg.admin_reply %}
+                                                    <div class="admin-reply-box">
+                                                        <strong class="d-block mb-1 text-success small">
+                                                            Admin Reply
+                                                        </strong>
+                                                        <p class="mb-0 small">{{ msg.admin_reply }}</p>
+                                                    </div>
+                                                {% endif %}
+
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="empty-state">
+                                        <p class="mb-0">You haven't submitted any queries yet.</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

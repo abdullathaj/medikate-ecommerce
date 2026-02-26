@@ -1,0 +1,119 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Message Detail - MediKate Admin{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'admin_contact_messages' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-arrow-left me-1"></i> Back to Messages
+    </a>
+</div>
+
+<div class="row g-4">
+    <!-- Message Details -->
+    <div class="col-lg-7">
+        <div class="card shadow-sm" style="border:none; border-radius:14px;">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center"
+                style="border-radius:14px 14px 0 0;">
+                <h5 class="mb-0"><i class="fas fa-envelope-open me-2"></i>Message Details</h5>
+                <span class="badge 
+                    {% if contact_message.status == 'OPEN' %}bg-warning text-dark
+                    {% elif contact_message.status == 'IN_PROGRESS' %}bg-info text-dark
+                    {% elif contact_message.status == 'RESOLVED' %}bg-light text-success
+                    {% else %}bg-secondary
+                    {% endif %}" style="font-size:13px;">
+                    {{ contact_message.get_status_display }}
+                </span>
+            </div>
+            <div class="card-body p-4">
+                <div class="row mb-3">
+                    <div class="col-sm-4"><strong class="text-muted">From:</strong></div>
+                    <div class="col-sm-8">
+                        <strong>{{ contact_message.user.username }}</strong>
+                        <span class="text-muted">({{ contact_message.user.email }})</span>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4"><strong class="text-muted">Subject:</strong></div>
+                    <div class="col-sm-8">
+                        <span class="badge bg-light text-dark">{{ contact_message.get_subject_display }}</span>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4"><strong class="text-muted">Title:</strong></div>
+                    <div class="col-sm-8"><strong>{{ contact_message.title }}</strong></div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4"><strong class="text-muted">Date:</strong></div>
+                    <div class="col-sm-8">{{ contact_message.created_at|date:"M d, Y h:i A" }}</div>
+                </div>
+
+                {% if contact_message.order %}
+                <div class="row mb-3">
+                    <div class="col-sm-4"><strong class="text-muted">Related Order:</strong></div>
+                    <div class="col-sm-8">
+                        <a href="{% url 'admin_order_item_list' contact_message.order.id %}" class="text-success">
+                            Order #{{ contact_message.order.id }}
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+
+                <hr>
+
+                <h6 class="fw-bold mb-2"><i class="fas fa-comment-dots me-1 text-success"></i>User's Message</h6>
+                <div class="p-3 rounded" style="background:#f8f9fa; border:1px solid #e9ecef; line-height:1.7;">
+                    {{ contact_message.message|linebreaksbr }}
+                </div>
+
+                {% if contact_message.admin_reply %}
+                <hr>
+                <h6 class="fw-bold mb-2"><i class="fas fa-user-shield me-1 text-primary"></i>Current Admin Reply</h6>
+                <div class="p-3 rounded" style="background:#e8f5e9; border-left:4px solid #2e7d32; line-height:1.7;">
+                    {{ contact_message.admin_reply|linebreaksbr }}
+                </div>
+                <small class="text-muted">Last updated: {{ contact_message.updated_at|date:"M d, Y h:i A" }}</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Reply / Update Form -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm" style="border:none; border-radius:14px;">
+            <div class="card-header bg-dark text-white" style="border-radius:14px 14px 0 0;">
+                <h5 class="mb-0"><i class="fas fa-reply me-2"></i>Respond & Update</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{% url 'admin_contact_detail' contact_message.id %}">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="status" class="form-label fw-bold">Update Status</label>
+                        <select name="status" id="status" class="form-select">
+                            {% for value, label in status_choices %}
+                            <option value="{{ value }}" {% if contact_message.status == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="admin_reply" class="form-label fw-bold">Admin Reply</label>
+                        <textarea name="admin_reply" id="admin_reply" class="form-control" rows="6"
+                            placeholder="Write your reply to the user here...">{{ contact_message.admin_reply|default:"" }}</textarea>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-paper-plane me-2"></i>Update & Send Reply
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

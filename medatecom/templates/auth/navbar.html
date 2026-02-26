@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,285 +10,295 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Bootstrap CSS CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-<style>
-        
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }
 
-            body {
-                font-family: Arial, sans-serif;
-                min-height: 100vh;
-                display: flex;
-                flex-direction: column;
-                padding-top: 112px; /* top-bar (32px) + navbar (~80px) */
-            }
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-top: 112px;
+            /* top-bar (32px) + navbar (~80px) */
+        }
 
         /* ================= TOP BAR ================= */
 
-            .top-bar {
-                background-color: #00675c;
-                color: #ffffff;
-                font-size: 13px;
-                position: fixed;
-                top: 0;
-                width: 100%;
-                z-index: 1100;
+        .top-bar {
+            background-color: #00675c;
+            color: #ffffff;
+            font-size: 13px;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1100;
+        }
+
+        .top-bar-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 6px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .top-bar-left,
+        .top-bar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .top-bar-left i {
+            margin-right: 5px;
+            font-size: 12px;
+        }
+
+        .separator {
+            opacity: 0.6;
+        }
+
+        .top-bar-center p {
+            margin: 0;
+            font-weight: 500;
+            font-size: 15px;
+        }
+
+        .top-bar-right a {
+            color: #e8f3f2;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .top-bar-right a:hover {
+            color: #ffffff;
+            text-decoration: underline;
+        }
+
+        /* ================= RESPONSIVE ================= */
+        @media (max-width: 768px) {
+            .top-bar-center {
+                display: none;
             }
 
             .top-bar-container {
-                max-width: 1200px;
-                margin: 0 auto;
-                padding: 6px 20px;
-                display: flex;
-                align-items: center;
                 justify-content: space-between;
             }
-
-            .top-bar-left,
-            .top-bar-right {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-            }
-
-            .top-bar-left i {
-                margin-right: 5px;
-                font-size: 12px;
-            }
-
-            .separator {
-                opacity: 0.6;
-            }
-
-            .top-bar-center p {
-                margin: 0;
-                font-weight: 500;
-                font-size: 15px;
-            }
-
-            .top-bar-right a {
-                color: #e8f3f2;
-                text-decoration: none;
-                font-weight: 500;
-                transition: color 0.2s ease;
-            }
-
-            .top-bar-right a:hover {
-                color: #ffffff;
-                text-decoration: underline;
-            }
-
-            /* ================= RESPONSIVE ================= */
-            @media (max-width: 768px) {
-                .top-bar-center {
-                    display: none;
-                }
-
-                .top-bar-container {
-                    justify-content: space-between;
-                }
-            }
+        }
 
 
         /* navbar */
 
-            .navbar {
-                background-color: rgb(227, 233, 231);
-                padding: 10px 20px;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                position: fixed;
-                top: 32px; /* height of top-bar */
-                width: 100%;
-                z-index: 1000;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            }
+        .navbar {
+            background-color: rgb(227, 233, 231);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 32px;
+            /* height of top-bar */
+            width: 100%;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
 
 
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .logo {
+            flex: 0 0 auto;
+        }
+
+        .logo img {
+            height: 50px;
+            width: auto;
+
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .nav-item {
+            color: rgb(53, 53, 53);
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            padding: 10px 20px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item:hover {
+            color: #00675c;
+            font-weight: 600;
+            background-color: #bebebe4c;
+            transform: translateY(-2px);
+        }
+
+
+        .cart-icon,
+        .wishlist-icon {
+            margin: 0 15px;
+            cursor: pointer;
+            font-size: 18px;
+            color: rgb(103, 103, 103);
+        }
+
+        .cart-icon:hover,
+        .wishlist-icon:hover {
+            color: #00675c;
+        }
+
+        .profile-section {
+            flex: 0 0 auto;
+            position: relative;
+            align-items: center;
+        }
+
+        .profile-icon {
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgb(103, 103, 103);
+            font-size: 18px;
+        }
+
+        .profile-icon:hover {
+            color: #1a7a71;
+        }
+
+        .dropdown {
+            display: none;
+            position: absolute;
+            top: 45px;
+            right: 0;
+            background-color: #ffffff;
+            min-width: 150px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            z-index: 1000;
+        }
+
+        .dropdown :hover {
+            border-radius: 10px;
+        }
+
+        .dropdown.show {
+            display: block;
+
+        }
+
+        .dropdown ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .dropdown li {
+            padding: 10px 15px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+
+        .dropdown li:hover {
+            background-color: #f1f5f9;
+            color: #00675c;
+        }
+
+        .dropdown-item.login:hover {
+            background-color: #e6ffed;
+            color: #036416ff;
+            font-weight: 500;
+        }
+
+        .dropdown-item.logout:hover {
+            background-color: #ffe6e6;
+            color: #dc3545;
+            font-weight: 500;
+        }
+
+
+
+        @media (max-width: 768px) {
             .nav-container {
-                max-width: 1200px;
-                margin: 0 auto;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                width: 100%;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 10px;
             }
 
-            .logo {
-                flex: 0 0 auto;
-            }
-
-            .logo img {
-                height: 50px;
-                width: auto;
-                
-            }
-           
-            .nav-links {
-                display: flex;
-                align-items: center;
-                gap: 15px;
-            }
 
             .nav-item {
-                color: rgb(53, 53, 53);
-                text-decoration: none;
-                font-size: 16px;
-                font-weight: 500;
-                padding: 10px 20px;
-                border-radius: 5px;
-                transition: all 0.3s ease;
-            }
-
-            .nav-item:hover {
-                color: #00675c;
-                font-weight: 600;
-                background-color: #bebebe4c;
-                transform: translateY(-2px);
-            }
-
-
-            .cart-icon,.wishlist-icon {
-                margin: 0 15px;
-                cursor: pointer;
-                font-size: 18px;
-                color: rgb(103, 103, 103);
-            }
-            .cart-icon:hover,.wishlist-icon:hover {
-                color: #00675c;
-            }
-
-            .profile-section {
-                flex: 0 0 auto;
-                position: relative;
-                align-items: center;
+                font-size: 14px;
+                padding: 8px 15px;
             }
 
             .profile-icon {
-                width: 40px;
-                height: 40px;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: rgb(103, 103, 103);
-                font-size: 18px;
-            }
-            .profile-icon:hover {
-                color: #1a7a71;
+                width: 35px;
+                height: 35px;
+                font-size: 16px;
             }
 
-            .dropdown {
-                display: none;
-                position: absolute;
-                top: 45px;
-                right: 0;
-                background-color:  #ffffff;
-                min-width: 150px;
-                box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-                border-radius: 10px;          
-                z-index: 1000;            
+            .cart-icon,
+            .wishlist-icon {
+                font-size: 16px;
+                margin: 0 10px;
             }
-            .dropdown :hover{
-                border-radius: 10px;
-            }
+        }
 
-            .dropdown.show {
-                display: block;
-                
+        @media (max-width: 480px) {
+
+            .nav-item {
+                font-size: 13px;
+                padding: 6px 12px;
             }
 
-            .dropdown ul {
-                list-style: none;
-                padding: 0;
-                margin: 0;
+            .profile-icon {
+                width: 32px;
+                height: 32px;
+                font-size: 14px;
             }
 
-            .dropdown li {
-                padding: 10px 15px;
-                font-size: 15px;
-                cursor: pointer;
-                transition: background-color 0.2s,color 0.2s ease;
-                display: flex;
-                align-items: center;
-                gap: 8px;      
-            }
-            
-
-            .dropdown li:hover {
-                background-color: #f1f5f9;   
-                color: #00675c;  
-            }
-            
-            .dropdown-item.login:hover {
-                background-color: #e6ffed;  
-                color: #036416ff;
-                font-weight: 500;             
-            }
-            .dropdown-item.logout:hover {
-                background-color: #ffe6e6;  
-                color: #dc3545;
-                font-weight: 500;
+            .cart-icon,
+            .wishlist-icon {
+                font-size: 14px;
+                margin: 0 8px;
             }
 
-
-    
-            @media (max-width: 768px) {
-                .nav-container {
-                    flex-wrap: wrap;
-                    justify-content: center;
-                    gap: 10px;
-                }
-
-            
-                .nav-item {
-                    font-size: 14px;
-                    padding: 8px 15px;
-                }
-
-                .profile-icon {
-                    width: 35px;
-                    height: 35px;
-                    font-size: 16px;
-                }
-
-                .cart-icon,.wishlist-icon {
-                    font-size: 16px;
-                    margin: 0 10px;
-                }
+            body {
+                padding-top: 120px;
+                /* Adjusted for smaller screens */
             }
+        }
 
-            @media (max-width: 480px) {
-            
-                .nav-item {
-                    font-size: 13px;
-                    padding: 6px 12px;
-                }
 
-                .profile-icon {
-                    width: 32px;
-                    height: 32px;
-                    font-size: 14px;
-                }
+        /* FOOTER */
 
-                .cart-icon,.wishlist-icon {
-                    font-size: 14px;
-                    margin: 0 8px;
-                }
-
-                body {
-                    padding-top: 120px; /* Adjusted for smaller screens */
-                }
-            }
-
-    
-    /* FOOTER */
-        
         .footer {
             background-color: #e1ecebff;
             color: #1a7a71;
@@ -309,7 +320,7 @@
             color: #015048ff;
             text-decoration: underline;
         }
-     
+
 
         .footer-title {
             font-size: 16px;
@@ -363,16 +374,17 @@
             .footer-title {
                 font-size: 15px;
             }
+
             .footer-list a {
                 font-size: 13px;
             }
         }
-
-</style>
+    </style>
 </head>
+
 <body>
 
-   <!-- TOP BAR -->
+    <!-- TOP BAR -->
     <div class="top-bar">
         <div class="top-bar-container">
             <div class="top-bar-left">
@@ -386,7 +398,11 @@
             </div>
 
             <div class="top-bar-right">
-                <a href="#">Help Center</a>
+                {% if request.user.is_authenticated %}
+                <a href="{% url 'contact_page' %}">Help Center</a>
+                {% else %}
+                <a href="{% url 'login' %}">Help Center</a>
+                {% endif %}
                 <a href="#">Track Order</a>
             </div>
         </div>
@@ -409,23 +425,23 @@
                 <a href="{% url 'product_listing' %}" class="nav-item">Product</a>
             </div>
 
-           
+
 
             <!-- Cart, Login/Logout, and Profile Section -->
             <div class="nav-links">
                 <i class="fas fa-shopping-cart cart-icon" onclick="handleCartClick()"></i>
-                 <i class="fas fa-heart wishlist-icon" onclick="handleWishlistClick()"></i>
-                
+                <i class="fas fa-heart wishlist-icon" onclick="handleWishlistClick()"></i>
+
                 <div class="profile-section">
                     <div class="profile-icon" onclick="toggleDropdown()">
                         <i class="fas fa-user"></i>
                     </div>
-                    
+
                     <div class="dropdown" id="profileDropdown">
                         <ul>
                             {% if request.user.is_authenticated %}
                             <li onclick="handleMenuClick('profile')">Profile</li>
-                            <li onclick="handleMenuClick('orders')">Orders</li>                    
+                            <li onclick="handleMenuClick('orders')">Orders</li>
                             <li onclick="handleMenuClick('wallet')">Wallet</li>
                             <li class="dropdown-item logout" onclick="handleMenuClick('logout')">Logout</li>
                             {% else %}
@@ -433,13 +449,13 @@
                             {% endif %}
                         </ul>
                     </div>
-                    
+
                 </div>
             </div>
         </div>
     </nav>
 
-                              <!--  BREADCRUMBS-->
+    <!--  BREADCRUMBS-->
     <div class=" mx-3">
         {% include "extra/breadcrumbs.html" %}
     </div>
@@ -447,78 +463,79 @@
     {% block content %}
     {% endblock %}
 
-   <footer class="footer mt-auto">
-    <div class="container py-5">
-        <div class="row gy-4">
-            <!-- Logo & About -->
-            <div class="col-lg-3 col-md-6">
-                <div class="footer-logo mb-3">
-                    <img src="{% static 'home/images/logo croped4.png' %}" alt="MediKate Logo" width="130">
+    <footer class="footer mt-auto">
+        <div class="container py-5">
+            <div class="row gy-4">
+                <!-- Logo & About -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="footer-logo mb-3">
+                        <img src="{% static 'home/images/logo croped4.png' %}" alt="MediKate Logo" width="130">
+                    </div>
+                    <p style="font-size:14px; color:#495057; line-height:1.7;">
+                        MediKate is your trusted online pharmacy, delivering genuine healthcare products and wellness
+                        essentials at your doorstep.
+                    </p>
                 </div>
-                <p style="font-size:14px; color:#495057; line-height:1.7;">
-                    MediKate is your trusted online pharmacy, delivering genuine healthcare products and wellness essentials at your doorstep.
+
+                <!-- Quick Links -->
+                <div class="col-lg-2 col-md-6">
+                    <h5 class="footer-title">Quick Links</h5>
+                    <ul class="footer-list">
+                        <li><a href="{% url 'userhome' %}">Home</a></li>
+                        <li><a href="{% url 'product_listing' %}">Products</a></li>
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="{% url 'contact_page' %}">Contact</a></li>
+                    </ul>
+                </div>
+
+                <!-- Customer Support -->
+                <div class="col-lg-3 col-md-6">
+                    <h5 class="footer-title">Customer Support</h5>
+                    <ul class="footer-list">
+                        <li><a href="#">FAQs</a></li>
+                        <li><a href="#">Shipping & Delivery</a></li>
+                        <li><a href="#">Returns & Refunds</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                    </ul>
+                </div>
+
+                <!-- Contact & Social -->
+                <div class="col-lg-4 col-md-6">
+                    <h5 class="footer-title">Stay Connected</h5>
+                    <p style="font-size:14px; color:#495057;">Have questions? We’re here to help!</p>
+                    <p style="font-size:14px; color:#495057;">
+                        <i class="fas fa-envelope me-2"></i> support@medikate.com
+                    </p>
+                    <div class="d-flex gap-3 mt-3">
+                        <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Divider -->
+            <hr class="my-4" style="border-color:#d1d8dc;">
+
+            <!-- Footer Bottom -->
+            <div class="text-center">
+                <p style="margin:0; font-size:13px; color:#6c757d;">
+                    &copy; 2025 <strong style="color:#00675c;">MediKate</strong>. All rights reserved.
                 </p>
             </div>
-
-            <!-- Quick Links -->
-            <div class="col-lg-2 col-md-6">
-                <h5 class="footer-title">Quick Links</h5>
-                <ul class="footer-list">
-                    <li><a href="{% url 'userhome' %}">Home</a></li>
-                    <li><a href="{% url 'product_listing' %}">Products</a></li>
-                    <li><a href="#">About Us</a></li>
-                    <li><a href="#">Contact</a></li>
-                </ul>
-            </div>
-
-            <!-- Customer Support -->
-            <div class="col-lg-3 col-md-6">
-                <h5 class="footer-title">Customer Support</h5>
-                <ul class="footer-list">
-                    <li><a href="#">FAQs</a></li>
-                    <li><a href="#">Shipping & Delivery</a></li>
-                    <li><a href="#">Returns & Refunds</a></li>
-                    <li><a href="#">Privacy Policy</a></li>
-                </ul>
-            </div>
-
-            <!-- Contact & Social -->
-            <div class="col-lg-4 col-md-6">
-                <h5 class="footer-title">Stay Connected</h5>
-                <p style="font-size:14px; color:#495057;">Have questions? We’re here to help!</p>
-                <p style="font-size:14px; color:#495057;">
-                    <i class="fas fa-envelope me-2"></i> support@medikate.com
-                </p>
-                <div class="d-flex gap-3 mt-3">
-                    <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
-                    <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
-                    <a href="#" class="social-icon"><i class="fab fa-linkedin-in"></i></a>
-                </div>
-            </div>
         </div>
-
-        <!-- Divider -->
-        <hr class="my-4" style="border-color:#d1d8dc;">
-
-        <!-- Footer Bottom -->
-        <div class="text-center">
-            <p style="margin:0; font-size:13px; color:#6c757d;">
-                &copy; 2025 <strong style="color:#00675c;">MediKate</strong>. All rights reserved.
-            </p>
-        </div>
-    </div>
-</footer>
+    </footer>
 
 
 
     <script>
         function toggleDropdown() {
-           
+
             const dropdown = document.getElementById('profileDropdown');
             if (dropdown) dropdown.classList.toggle('show');
-           
-           
+
+
         }
 
         function handleCartClick() {
@@ -528,7 +545,7 @@
             window.location.href = "{% url 'login' %}";
             {% endif %}
         }
-        function handleWishlistClick(){
+        function handleWishlistClick() {
             {% if request.user.is_authenticated %}
             window.location.href = "{% url 'user_wishlist_page' %}";
             {% else %}
@@ -538,7 +555,7 @@
 
         function handleMenuClick(action) {
             console.log('Clicked:', action);
-            switch(action) {
+            switch (action) {
                 case 'profile':
                     window.location.href = "{% url 'user_profile_page' %}";
                     break;
@@ -559,7 +576,7 @@
             document.getElementById('profileDropdown').classList.remove('show');
         }
 
-        document.addEventListener('click', function(event) {
+        document.addEventListener('click', function (event) {
             const profileSection = document.querySelector('.profile-section');
             if (!profileSection.contains(event.target)) {
                 const dropdown = document.getElementById('profileDropdown');
@@ -568,12 +585,13 @@
                 }
             }
         });
-        
+
     </script>
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     {% block extra_scripts %}
-    
+
     {% endblock%}
 </body>
+
 </html>

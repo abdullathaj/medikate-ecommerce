@@ -171,5 +171,37 @@ class Referral(models.Model):
             self.rewarded = True
             self.save()
 
+# MODEL FOR ADMIN CONTACT
+class ContactMessage(models.Model):
+
+    STATUS_CHOICES = [
+        ('OPEN', 'Open'),
+        ('IN_PROGRESS', 'In Progress'),
+        ('RESOLVED', 'Resolved'),
+        ('CLOSED', 'Closed'),
+    ]
+
+    SUBJECT_CHOICES = [
+        ('ACCOUNT', 'Account Issues'),
+        ('PROFILE', 'Profile Issues'),
+        ('ORDER', 'Order Issues'),
+        ('PAYMENT', 'Payment Issues'),
+        ('REFUND', 'Refund Issues'),
+        ('DELIVERY', 'Delivery Issues'),
+        ('OTHERS', 'Any Other Concerns'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='contact_messages')
+    order = models.ForeignKey('ecomorders.Order', on_delete=models.SET_NULL, null=True, blank=True)
+    subject = models.CharField(max_length=50, choices=SUBJECT_CHOICES, default='ACCOUNT')
+    title = models.CharField(max_length=150)
+    message = models.TextField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='OPEN')
+    admin_reply = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.subject} - {self.user.username}"
 
    

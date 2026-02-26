@@ -1,5 +1,5 @@
 from django.shortcuts import render,redirect,get_object_or_404
-from ecomusers.models import User,Wallet,WalletTransaction,Referral
+from ecomusers.models import User,Wallet,WalletTransaction,Referral,ContactMessage
 from ecomproducts.models import Categories,Product,ProductVariant,ProductImage,Coupon,Offer
 from ecomorders.models import Order,OrderItem,ReturnRequest
 from django.contrib.admin.views.decorators import staff_member_required
@@ -1065,3 +1065,83 @@ def admin_wallet_details(request,transaction_id):
 
     
     return render(request,'admin/wallet_details.html',context )
+
+
+#################################################################################################################################
+
+# ----------------------------------------------------------------------------------------------
+# ADMIN CONTACT MESSAGE MANAGEMENT
+# ----------------------------------------------------------------------------------------------
+
+@staff_member_required(login_url='admin_login')
+@never_cache
+def admin_contact_messages(request):
+    ''' LIST ALL CONTACT MESSAGES FROM USERS WITH SEARCH AND PAGINATION '''
+    contact_messages = ContactMessage.objects.all().select_related('user').order_by('-created_at')
+
+    query = request.GET.get('q', '').strip()
+    if query:
+        contact_messages = contact_messages.filter(
+            Q(user__username__icontains=query) |
+            Q(user__email__icontains=query) |
+            Q(title__icontains=query) |
+            Q(message__icontains=query)
+        )
+
+    # Filter by status
+    status_filter = request.GET.get('status', '')
+    if status_filter:
+        contact_messages = contact_messages.filter(status=status_filter)
+
+    paginator = Paginator(contact_messages, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    breadcrumbs = [
+        {'name': 'Dashboard', 'url': 'admin_dashboard'},
+        {'name': 'Contact Messages', 'url': ''},
+    ]
+
+    context = {
+        'contact_messages': page_obj,
+        'message_count': paginator.count,
+        'query': query,
+        'status_filter': status_filter,
+        'breadcrumbs': breadcrumbs,
+    }
+    return render(request, 'admin/contact_messages.html', context)
+
+
+@staff_member_required(login_url='admin_login')
+@never_cache
+def admin_contact_detail(request, message_id):
+    ''' VIEW AND REPLY TO A SPECIFIC CONTACT MESSAGE '''
+    contact_message = get_object_or_404(ContactMessage, id=message_id)
+
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        admin_reply = request.POST.get('admin_reply', '').strip()
+
+        valid_statuses = [s[0] for s in ContactMessage.STATUS_CHOICES]
+        if new_status in valid_statuses:
+            contact_message.status = new_status
+        
+        if admin_reply:
+            contact_message.admin_reply = admin_reply
+        
+        contact_message.save()
+        messages.success(request, f'Message from {contact_message.user.username} updated successfully.')
+        return redirect('admin_contact_detail', message_id=message_id)
+
+    breadcrumbs = [
+        {'name': 'Dashboard', 'url': 'admin_dashboard'},
+        {'name': 'Contact Messages', 'url': 'admin_contact_messages'},
+        {'name': 'Message Detail', 'url': ''},
+    ]
+
+    context = {
+        'contact_message': contact_message,
+        'status_choices': ContactMessage.STATUS_CHOICES,
+        'breadcrumbs': breadcrumbs,
+    }
+    return render(request, 'admin/contact_detail.html', context)
